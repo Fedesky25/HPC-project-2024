@@ -3,7 +3,9 @@ project(HPC_project_2024 CUDA)
 
 set(CMAKE_CUDA_STANDARD 17)
 
-add_executable(HPC_project_2024 main.cu)
+include_directories(include)
+
+add_executable(HPC_project_2024 main.cu include/utils.cuh src/utils.cu)
 
 set_target_properties(HPC_project_2024 PROPERTIES
         CUDA_SEPARABLE_COMPILATION ON)
