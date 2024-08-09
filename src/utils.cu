@@ -71,7 +71,7 @@ complex_t parse_complex(const char * str) {
                     default:
                         return {r,NAN};
                 }
-            case '/':
+            case '\\':
             {
                 double angle = strtod(str+1, &rest);
                 bool check_end = true;
