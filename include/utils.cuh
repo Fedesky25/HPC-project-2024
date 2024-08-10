@@ -16,18 +16,6 @@ constexpr uint64_t str_to_num(const char str[N+1]) {
 
 using complex_t = std::complex<double>;
 
-complex_t parse_complex(const char * str);
-
-struct ScreenResolution {
-    unsigned width = 1920, height = 1080;
-    ScreenResolution() = default;
-    inline explicit ScreenResolution(const char * str) { parse(str); }
-    inline explicit operator bool () const { return width && height; }
-    void parse(const char * str);
-private:
-    inline void set_invalid() { width = height = 0; }
-};
-
 struct PixelIndex {
     int32_t row, col;
     inline PixelIndex() : row(-1), col(-1) {}
@@ -54,7 +42,6 @@ struct TilesCount {
     uint16_t rows = 0, cols = 0;
     inline TilesCount() = default;
     inline TilesCount(unsigned width, unsigned height) { cover(width, height); }
-    inline explicit TilesCount(ScreenResolution res) { cover(res.width, res.height); }
     void cover(unsigned width, unsigned height);
     inline uint16_t total() const { return rows * cols; }
 };

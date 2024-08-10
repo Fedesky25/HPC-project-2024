@@ -1,13 +1,18 @@
 #ifndef HPC_PROJECT_2024_CLI_CUH
 #define HPC_PROJECT_2024_CLI_CUH
 
-struct Options {
+#include "utils.cuh"
 
-};
-
+/** Prints the usage of the CLI */
 void print_usage();
-int invalid_option(const char * name);
-int missing_value(const char * name);
-int malformed_value(const char * name);
+
+/**
+ * Parses the provided arguments to complete the configuration
+ * @param argc argument count
+ * @param argv argument values
+ * @param config pointer to configuration struct
+ * @return whether errors occurred or not
+ */
+bool parse_args(int argc, char * argv[], Configuration * config);
 
 #endif //HPC_PROJECT_2024_CLI_CUH
