@@ -12,9 +12,15 @@
     return true;                                                           \
 }
 #define CHECK_DISTANCE if(config->particle_distance < 1) {                       \
-    std::cerr << "Paricle distance cannot be lower than 1" << std::endl;\
+    std::cerr << "Particle distance cannot be lower than 1" << std::endl;\
     return true;                                                       \
 }
+#define CHECK_COMPLEX(VAR, NAME) if(isnan(VAR)) { \
+    std::cerr << "Malformed complex number format (" << NAME << ')' << std::endl; \
+    return true;                                  \
+}
+#define INVALID_SCALE_UNIT { std::cerr << "Invalid unit of scale" << std::endl; return 0.0; }
+
 
 double parse_complex_last_number(const char * str, char** rest) {
     switch (*str) {
@@ -114,6 +120,8 @@ complex_t parse_complex(const char * str) {
         }
     }
 }
+
+inline bool isnan(complex_t z) { return isnan(z.real()) || isnan(z.imag()); }
 
 void parse_resolution(const char * str, Canvas * canvas) {
     unsigned width = 0, height = 0;
@@ -258,12 +266,59 @@ void parse_resolution(const char * str, Canvas * canvas) {
     canvas->height = height;
 }
 
+enum class ScaleScaling { NONE, WIDTH, HEIGHT };
+
+double parse_scale(const char * str, ScaleScaling * action) {
+    char * rest;
+    double v = strtod(str, &rest);
+    if(v <= 0.0) {
+        std::cerr << "Scale must be positive" << std::endl;
+        return 0.0;
+    }
+    str = rest;
+    switch (*str) {
+        case 'h':
+        case 'w':
+            if(str[1] != '/' || str[2] != 'u' || str[3] != '\0') INVALID_SCALE_UNIT
+            *action = str[0] == 'h' ? ScaleScaling::HEIGHT : ScaleScaling::WIDTH;
+            break;
+        case 'p':
+            if(str[1] != 'x' || str[2] != '/' || str[3] != 'u' || str[4] != '\0') INVALID_SCALE_UNIT
+            *action = ScaleScaling::NONE;
+            break;
+        case 'u':
+            if(str[1] != '/') INVALID_SCALE_UNIT
+            v = 1/v;
+            switch (str[2]) {
+                case 'h':
+                    if(str[3] != '\0') INVALID_SCALE_UNIT
+                    *action = ScaleScaling::HEIGHT;
+                    break;
+                case 'w':
+                    if(str[3] != '\0') INVALID_SCALE_UNIT
+                    *action = ScaleScaling::WIDTH;
+                    break;
+                case 'p':
+                    if(str[3] != 'x' || str[4] != '\0') INVALID_SCALE_UNIT
+                    *action = ScaleScaling::NONE;
+                    break;
+                default:
+                    INVALID_SCALE_UNIT
+            }
+            break;
+        default:
+            INVALID_SCALE_UNIT
+    }
+    return v;
+}
+
 void print_usage() {
 
 }
 
 bool parse_args(int argc, char * argv[], Configuration * config) {
     char * rest;
+    ScaleScaling action = ScaleScaling::NONE;
     for(int i=1; i<argc; i++) {
         if(argv[i][0] != '-') INVALID_OPTION(argv[i])
         if(argv[i][1] == '-') {
@@ -275,24 +330,54 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
                 CHECK_REMAINING("particle distance")
                 CHECK_DISTANCE
             }
-            else if(strcmp(str, "screen") == 0) {
+            else if(strcmp(str, "resolution") == 0) {
                 CHECK_MISSING("screen resolution")
                 parse_resolution(argv[++i], &(config->canvas));
                 if(!config->canvas.width) return true;
+            }
+            else if(strcmp(str, "center") == 0) {
+                CHECK_MISSING("center")
+                config->canvas.center = parse_complex(argv[++i]);
+                CHECK_COMPLEX(config->canvas.center, "center")
+            }
+            else if(strcmp(str, "scale") == 0) {
+                CHECK_MISSING("scale")
+                config->canvas.scale = parse_scale(argv[++i], &action);
+                if(config->canvas.scale == 0.0) return true;
+            }
+            else if(strcmp(str, "margin") == 0) {
+                CHECK_MISSING("margin")
+                config->margin = strtoul(str, &rest, 10);
+                CHECK_REMAINING("margin")
             }
             else INVALID_OPTION(argv[i]+2)
         }
         else {
             // short name
             switch (argv[i][1]) {
+                case 'm':
+                    CHECK_MISSING("margin")
+                    config->margin = strtoul(argv[++i], &rest, 10);
+                    CHECK_REMAINING("margin")
+                    break;
+                case 'c':
+                    CHECK_MISSING("center (c)")
+                    config->canvas.center = parse_complex(argv[++i]);
+                    CHECK_COMPLEX(config->canvas.center, "center")
+                    break;
+                case 's':
+                    CHECK_MISSING("scale")
+                    config->canvas.scale = parse_scale(argv[++i], &action);
+                    if(config->canvas.scale == 0.0) return true;
+                    break;
                 case 'd':
                     CHECK_MISSING("particle distance (d)")
                     config->particle_distance = strtoul(argv[++i], &rest, 10);
                     CHECK_REMAINING("particle distance (d)")
                     CHECK_DISTANCE
                     break;
-                case 's':
-                    CHECK_MISSING("screen resolution (s)")
+                case 'r':
+                    CHECK_MISSING("screen resolution (r)")
                     parse_resolution(argv[++i], &(config->canvas));
                     if(!config->canvas.width) return true;
                     break;
@@ -313,12 +398,9 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
                         std::cout << "Index of complex number can be 1,2, or 3" << std::endl;
                         return true;
                     }
-                    CHECK_MISSING("complex number (z)");
+                    CHECK_MISSING("complex number (z" << index+1 << ')');
                     config->vars.z[index] = parse_complex(argv[++i]);
-                    if(std::isnan(config->vars.z[index].real()) || std::isnan(config->vars.z[index].imag())) {
-                        std::cerr << "Malformed complex number format of 'z" << index + 1 << '\'' <<std::endl;
-                        return true;
-                    }
+                    CHECK_COMPLEX(config->vars.z[index], 'z' << index+1)
                     break;
                 }
                 case '\0':
@@ -326,6 +408,16 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
                     INVALID_OPTION(argv[i]+1);
             }
         }
+    }
+    switch (action) {
+        case ScaleScaling::WIDTH:
+            config->canvas.scale *= config->canvas.width;
+            break;
+        case ScaleScaling::HEIGHT:
+            config->canvas.scale *= config->canvas.height;
+            break;
+        case ScaleScaling::NONE:
+            break;
     }
     return false;
 }
