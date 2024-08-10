@@ -30,6 +30,9 @@ struct Canvas {
     complex_t center = 0.0;
     /** How many pixel is the unitary distance */
     double scale = 100.0; // px^(-1)
+
+    friend std::ostream& operator<<(std::ostream& os, Canvas& cv);
+
     /**
      * Converts a complex number into its pixel indexes
      * @param z input complex number

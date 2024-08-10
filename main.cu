@@ -16,9 +16,9 @@ int main(int argc, char * argv[]) {
     TilesCount tiles(config);
 
     std::cout << "Configuration:" << std::endl;
-    std::cout << "Complex numbers: " << config.vars.z[0] << ' ' << config.vars.z[1] << ' ' << config.vars.z[2] << std::endl;
-    std::cout << "Real and int numbers: " << config.vars.x << ", " << config.vars.n << std::endl;
-    std::cout << "Screen and tiles: " << config.canvas.width << 'x' << config.canvas.height << std::endl;
+    std::cout << "  Complex numbers: " << config.vars.z[0] << ' ' << config.vars.z[1] << ' ' << config.vars.z[2] << std::endl;
+    std::cout << "  Real and int numbers: " << config.vars.x << ", " << config.vars.n << std::endl;
+    std::cout << "  Canvas: " << config.canvas << std::endl;
     std::cout << "Tiles: " << tiles.rows << 'x' << tiles.cols << " (" << tiles.total() << ")" << std::endl;
     return 0;
 }
