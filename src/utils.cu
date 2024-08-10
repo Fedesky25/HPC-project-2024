@@ -2,8 +2,6 @@
 #include <cstdlib>
 #include <iostream>
 
-#define PI 3.1415926535897932384626433
-
 double parse_complex_last_number(const char * str, char** rest) {
     switch (*str) {
         case '\0':
@@ -264,4 +262,31 @@ void TilesCount::cover(unsigned int width, unsigned int height) {
         rows = cols;
         cols = rev;
     }
+}
+
+PixelIndex Canvas::where(complex_t z) const {
+    auto row = static_cast<int32_t>(std::round(z.real() - center.real())) + (width >> 1);
+    auto col = static_cast<int32_t>(std::round(z.imag() - center.imag())) + (height >> 1);
+    if(row < 0 || row >= width || col < 0 || col > height) return {};
+    else return { row, col };
+}
+
+void Configuration::bounds(complex_t *min, complex_t *max) const {
+    auto extra = 2*margin*particle_distance;
+    double dr = (canvas.width + extra) / canvas.scale * 0.5;
+    double di = (canvas.height + extra) / canvas.scale * 0.5;
+    min->real(canvas.center.real() - dr);
+    min->imag(canvas.center.imag() - di);
+    max->real(canvas.center.real() + dr);
+    max->imag(canvas.center.imag() + di);
+}
+
+unsigned long Configuration::particle_number() const {
+    auto extra = 2*margin*particle_distance;
+    return (canvas.width + extra) * (canvas.height + extra) / (particle_distance*particle_distance);
+}
+
+double Configuration::color(double speed_squared) const {
+    // TODO
+    return 0;
 }
