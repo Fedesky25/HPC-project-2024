@@ -35,9 +35,4 @@ struct TilesCount {
     inline uint16_t total() const { return rows * cols; }
 };
 
-void print_usage();
-int invalid_option(const char * name);
-int missing_value(const char * name);
-int malformed_value(const char * name);
-
 #endif //HPC_PROJECT_2024_UTILS_CUH
