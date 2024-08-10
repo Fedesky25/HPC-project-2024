@@ -48,6 +48,7 @@ struct FnVariables {
 };
 
 struct Configuration {
+    const char * output = "plot.webp";
     FnVariables vars;
     Canvas canvas;
     double color_multiplier = 0.0;

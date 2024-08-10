@@ -16,6 +16,7 @@ int main(int argc, char * argv[]) {
     TilesCount tiles(config);
 
     std::cout << "Configuration:" << std::endl;
+    std::cout << "  Output file: " << config.output << std::endl;
     std::cout << "  Complex numbers: " << config.vars.z[0] << ' ' << config.vars.z[1] << ' ' << config.vars.z[2] << std::endl;
     std::cout << "  Real and int numbers: " << config.vars.x << ", " << config.vars.n << std::endl;
     std::cout << "  Canvas: " << config.canvas << std::endl;

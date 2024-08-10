@@ -324,7 +324,11 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
         if(argv[i][1] == '-') {
             // long name
             const char * str = argv[i]+2;
-            if(strcmp(str, "distance") == 0) {
+            if(strcmp(str, "output") == 0) {
+                CHECK_MISSING("output")
+                config->output = argv[++i];
+            }
+            else if(strcmp(str, "distance") == 0) {
                 CHECK_MISSING("particle distance")
                 config->particle_distance = strtoul(argv[++i], &rest, 10);
                 CHECK_REMAINING("particle distance")
@@ -355,6 +359,10 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
         else {
             // short name
             switch (argv[i][1]) {
+                case 'o':
+                    CHECK_MISSING("output (o)")
+                    config->output = argv[++i];
+                    break;
                 case 'm':
                     CHECK_MISSING("margin")
                     config->margin = strtoul(argv[++i], &rest, 10);
