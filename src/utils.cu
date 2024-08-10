@@ -59,3 +59,8 @@ double Configuration::color(double speed_squared) const {
     // TODO
     return 0;
 }
+
+TilesCount::TilesCount(Configuration &config) {
+    auto extra = config.margin*config.particle_distance*2;
+    cover(config.canvas.width+extra, config.canvas.height+extra);
+}

@@ -38,14 +38,6 @@ struct Canvas {
     PixelIndex where(complex_t z) const;
 };
 
-struct TilesCount {
-    uint16_t rows = 0, cols = 0;
-    inline TilesCount() = default;
-    inline TilesCount(unsigned width, unsigned height) { cover(width, height); }
-    void cover(unsigned width, unsigned height);
-    inline uint16_t total() const { return rows * cols; }
-};
-
 struct FnVariables {
     complex_t z[3] = {1.0, {0.0, 1.0}, {0.7071067811865476, 0.7071067811865476}};
     double x = PI;
@@ -76,6 +68,15 @@ struct Configuration {
      * @return the color hue
      */
     double color(double speed_squared) const;
+};
+
+struct TilesCount {
+    uint16_t rows = 0, cols = 0;
+    inline TilesCount() = default;
+    TilesCount(Configuration& config);
+    inline TilesCount(unsigned width, unsigned height) { cover(width, height); }
+    void cover(unsigned width, unsigned height);
+    inline uint16_t total() const { return rows * cols; }
 };
 
 #endif //HPC_PROJECT_2024_UTILS_CUH
