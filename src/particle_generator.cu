@@ -26,13 +26,13 @@ void rand_complex(complex_t z1, complex_t z2, complex_t * rdm, uint64_t M) {
 void particles(complex_t z1, complex_t z2, complex_t sites[], uint64_t N){
 
     uint64_t n_density = 128*N;
-    complex_t density[n_density];
+    auto density = (complex_t*) malloc(n_density * sizeof(complex_t));
     rand_complex(z1, z2, density, n_density); // Random complex density points
 
     rand_complex(z1, z2, sites, N); // Random complex sites
 
     // Moving sites
-    uint64_t nearest[n_density]; // To save nearest sites
+    auto nearest = (uint64_t*) malloc(n_density * sizeof(uint64_t));// To save nearest sites
     for(uint16_t i=0; i<50; i++){  // Iterating to convergence
         for(uint64_t j=0; j<n_density; j++){ // Iterating on density points
             double current, min = INFINITY;
@@ -46,18 +46,16 @@ void particles(complex_t z1, complex_t z2, complex_t sites[], uint64_t N){
         } // Here nearest[] has been filled in
         for(uint64_t k=0; k<N; k++){ // Iterating on sites
             double ctr = 0;
-            double real_b = 0, imm_b = 0;
+            sites[k] = 0;
             for(uint64_t j=0; j<n_density; j++){ // Iterating on nearest
                 if(nearest[j] == k){  // Finding density points associated to the k-th site
-                    real_b += real(density[j]);
-                    imm_b += imag(density[j]);
+                    sites[k] += density[j];
                     ctr++;
                 }
             }
-            if(ctr != 0){  // Computing barycenter
-                sites[k].real(real_b/ctr);
-                sites[k].imag(imm_b/ctr);
-            }
+            if(ctr != 0) sites[k] /= ctr;
         }
     }
+    free(density);
+    free(nearest);
 }
