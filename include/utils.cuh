@@ -51,7 +51,7 @@ struct Configuration {
     const char * output = "plot.webp";
     FnVariables vars;
     Canvas canvas;
-    double color_multiplier = 0.0;
+    double color_multiplier = 1.0;
     unsigned long particle_distance = 10;
     unsigned long margin = 4;
 
