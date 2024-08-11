@@ -59,11 +59,6 @@ unsigned long Configuration::particle_number() const {
     return (canvas.width + extra) * (canvas.height + extra) / (particle_distance*particle_distance);
 }
 
-double Configuration::color(double speed_squared) const {
-    // TODO
-    return 0;
-}
-
 TilesCount::TilesCount(Configuration &config) {
     auto extra = config.margin*config.particle_distance*2;
     cover(config.canvas.width+extra, config.canvas.height+extra);

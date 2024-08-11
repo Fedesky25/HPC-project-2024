@@ -61,17 +61,21 @@ struct Configuration {
      * @param max pointer to the upper right complex number
      */
     void bounds(complex_t * min, complex_t * max) const;
+
     /**
      * Computes the number of particle to simulate
      * @return number of particles
      */
     unsigned long particle_number() const;
+
     /**
      * Computes the color the particle has given its speed
      * @param speed_squared square of the speed of the particle
      * @return the color hue
      */
-    double color(double speed_squared) const;
+    inline double color(double speed_squared) const {
+        return 0.66667 / (1.0 + color_multiplier / speed_squared);
+    }
 };
 
 struct TilesCount {
