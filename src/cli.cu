@@ -354,6 +354,12 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
                 config->margin = strtoul(str, &rest, 10);
                 CHECK_REMAINING("margin")
             }
+            else if(strcmp(str, "speed") == 0) {
+                CHECK_MISSING("speed")
+                double v = strtod(argv[++i], &rest);
+                CHECK_REMAINING("speed")
+                config->color_multiplier = std::pow(10.0, 2.0*v);
+            }
             else INVALID_OPTION(argv[i]+2)
         }
         else {
@@ -389,6 +395,14 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
                     parse_resolution(argv[++i], &(config->canvas));
                     if(!config->canvas.width) return true;
                     break;
+                case 'v':
+                {
+                    CHECK_MISSING("speed (v)")
+                    double v = strtod(argv[++i], &rest);
+                    CHECK_REMAINING("speed (v)")
+                    config->color_multiplier = std::pow(10.0, 2.0*v);
+                    break;
+                }
                 case 'n':
                     CHECK_MISSING("integer number (n)");
                     config->vars.n = strtol(argv[++i], &rest, 10);
