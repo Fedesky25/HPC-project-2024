@@ -312,10 +312,6 @@ double parse_scale(const char * str, ScaleScaling * action) {
     return v;
 }
 
-void print_usage() {
-
-}
-
 bool parse_args(int argc, char * argv[], Configuration * config) {
     char * rest;
     ScaleScaling action = ScaleScaling::NONE;
@@ -442,4 +438,36 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
             break;
     }
     return false;
+}
+
+void print_usage() {
+    std::cout << "CFSPlt v0.1.0" << std::endl;
+    std::cout << "  Complex functions streamplot  -  Generator of webp videos representing the streamplot of a selection of complex functions" << std::endl << std::endl;
+    std::cout << "SYNOPSIS:" << std::endl;
+    std::cout << "  cfsplt [-c center_point] [-d particle_distance] [-m margin_layers] [-n integer] [-o file] [-r resolution]" << std::endl
+              << "         [-s scale] [-v speed_magnitude] [-x real] [-z1 complex] [-z2 complex] [-z3 complex] function" << std::endl << std::endl;
+    std::cout << "OPTIONS" << std::endl;
+    std::cout << "  Name                 Default        Description" << std::endl;
+    std::cout << "  -o  --output         plot.webp      Path of the output webp file" << std::endl;
+    std::cout << "  -r  --resolution     1920x1080      Pixel sizes of the video: it can be either a supported screen resolution name (such as FHD, WXGA+)" << std::endl
+              << "                                      or a custom size specified in the format <width>x<height>. Optionally, the character '^' may be" << std::endl
+              << "                                      prepended to invert the horizontal and vertical sizes." << std::endl;
+    std::cout << "  -s  --scale          100px/u        Scale used to convert distance between complex numbers to pixels. The required unit must be one of:" << std::endl
+              << "                                      u/px, u/w, u/h, px/u, w/u, h/u; where 'px' is pixel, 'w' is the width of the video (in pixel), 'h'" << std::endl
+              << "                                      is the height of the video (in pixel), and 'u' is the unitary distance" << std::endl;
+    std::cout << "  -c  --center         0+0i           The complex number at the center of the video. See later on supported complex number formats." << std::endl;
+    std::cout << "  -d  --distance       10             Average distance (in pixels) between two nearby particles in the starting positions" << std::endl;
+    std::cout << "  -m  --margin         4              Number of layers of additional particles outside the video. Too low values lead to empty borders." << std::endl;
+    std::cout << "  -v  --speed          0              Order of magnitude of speed around which logarithmic color sensitivity is maximum. Red and blue" << std::endl
+              << "                                      occur when the speed is respectively one order less and more then the specified one." << std::endl;
+    std::cout << "  -n                   0              Integer number used in some functions" << std::endl;
+    std::cout << "  -x                   3.14159...     Real number used in some functions" << std::endl;
+    std::cout << "  -z1                  1              First complex number used in some functions" << std::endl;
+    std::cout << "  -z2                  1i             Second complex number used in some functions" << std::endl;
+    std::cout << "  -z3                  1\\45d          Third complex number used in some functions" << std::endl << std::endl;
+    std::cout << "COMPLEX NUMBER FORMAT" << std::endl;
+    std::cout << "  Complex number can be specified in cartesian and polar coordinates:" << std::endl;
+    std::cout << "  - Cartesian format is the sum of a real and imaginary part. The latter is denote by prepending or appending 'i' or 'j' to the number" << std::endl;
+    std::cout << "  - Polar coords. are in the format <radius>\\<angle><unit>, where the angle unit can be degree (d), radian (r), gon (g), or turns (t)" << std::endl;
+    std::cout << std::endl;
 }
