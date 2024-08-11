@@ -23,7 +23,9 @@ void rand_complex(complex_t z1, complex_t z2, complex_t * rdm, uint64_t M) {
     }
 }
 
-void particles(complex_t z1, complex_t z2, complex_t sites[], uint64_t N){
+complex_t* particles(complex_t z1, complex_t z2, uint64_t N){
+
+    auto sites = (complex_t*) malloc(N * sizeof(complex_t));
 
     uint64_t n_density = 128*N;
     auto density = (complex_t*) malloc(n_density * sizeof(complex_t));
@@ -58,4 +60,5 @@ void particles(complex_t z1, complex_t z2, complex_t sites[], uint64_t N){
     }
     free(density);
     free(nearest);
+    return sites;
 }
