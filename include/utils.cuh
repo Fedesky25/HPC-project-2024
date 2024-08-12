@@ -1,7 +1,6 @@
 #ifndef HPC_PROJECT_2024_UTILS_CUH
 #define HPC_PROJECT_2024_UTILS_CUH
 
-#include <complex>
 #include <cstdint>
 #include "cuda/std/complex"
 
