@@ -1,4 +1,4 @@
-#include "cli.cuh"
+#include "cli.hpp"
 #include <iostream>
 
 #define INVALID_OPTION(NAME) { std::cerr << '"' << NAME << "\" is not a valid option" << std::endl; return true; }

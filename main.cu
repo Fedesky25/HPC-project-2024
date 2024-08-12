@@ -1,6 +1,6 @@
 #include <iostream>
 #include "utils.cuh"
-#include "cli.cuh"
+#include "cli.hpp"
 
 
 int main(int argc, char * argv[]) {
