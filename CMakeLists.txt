@@ -20,6 +20,10 @@ add_executable(HPC_project_2024
         include/particle_generator.cuh src/particle_generator.cu
 )
 
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_compile_definitions(HPC_project_2024 PRIVATE DEBUG)
+endif()
+
 set_target_properties(HPC_project_2024 PROPERTIES
         CUDA_SEPARABLE_COMPILATION ON)
 

@@ -70,16 +70,21 @@ complex_t* particles_parallel(complex_t z1, complex_t z2, int64_t N){
 
     auto sites = (complex_t*) malloc(N * sizeof(complex_t));
     auto count = (int64_t*) malloc(N * sizeof(int64_t));
+    PRINTLN("Generating " << N << " random sites");
     rand_complex(z1, z2, sites, N); // Random complex sites
 
     int64_t n_density = 128*N;
     auto density = (complex_t*) malloc(n_density * sizeof(complex_t));
+    PRINTLN("Generating " << n_density << " density points")
     rand_complex(z1, z2, density, n_density); // Random complex density points
+
+    omp_set_num_threads(10);
 
     // Moving sites
     auto nearest = (int64_t*) malloc(n_density * sizeof(int64_t));// To save nearest sites
-    for(int16_t i=0; i<50; i++){  // Iterating to convergence
+    for(int16_t i=0; i<30; i++){  // Iterating to convergence
 
+        PRINTLN("Iteration " << i+1 << "\n - Finding nearest sites")
         #pragma omp parallel for shared(nearest, density, sites) schedule(static)
         for (int64_t j = 0; j < n_density; j++) { // Iterating on density points
             double current, min = INFINITY;
@@ -92,6 +97,7 @@ complex_t* particles_parallel(complex_t z1, complex_t z2, int64_t N){
             }
         }
 
+        PRINTLN(" - Updating sites")
         for(int64_t k=0; k<N; k++) {
             sites[k] = 0;
             count[k] = 0;

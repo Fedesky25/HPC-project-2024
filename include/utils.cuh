@@ -6,6 +6,15 @@
 
 #define PI 3.1415926535897932384626433
 
+#ifdef DEBUG
+    #include <iostream>
+    #define PRINT(X) std::cout << X;
+    #define PRINTLN(X) std::cout << X << std::endl;
+#else
+    #define PRINT(X)
+    #define PRINTLN(X)
+#endif
+
 template<unsigned N>
 constexpr uint64_t str_to_num(const char str[N+1]) {
     static_assert(N < 9, "Number of characters cannot exceed 8");
