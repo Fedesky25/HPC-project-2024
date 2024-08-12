@@ -29,7 +29,7 @@ int main(int argc, char * argv[]) {
     complex_t min, max;
     config.bounds(&min, &max);
     uint64_t N = config.particle_number();
-    auto particles = particles_parallel(min, max, N);
+    auto particles = particles_gpu(min, max, N);
     tiles.distribute(min, max, particles, N);
 
 
