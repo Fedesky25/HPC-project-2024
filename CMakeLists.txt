@@ -12,6 +12,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler -openmp")
 
 include_directories(include)
+include_directories("${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}")
+message("CUDA TOOLKIT = ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}")
 
 add_executable(HPC_project_2024
         main.cu

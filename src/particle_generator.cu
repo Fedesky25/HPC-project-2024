@@ -5,8 +5,8 @@
 #include "particle_generator.cuh"
 #include <ctime>
 #include <cstdlib>
-#include <cmath>
 #include <omp.h>
+#include <cuda/std/cmath>
 
 
 /**
@@ -41,7 +41,7 @@ complex_t* particles_serial(complex_t z1, complex_t z2, uint64_t N){
         for(uint64_t j=0; j<n_density; j++){ // Iterating on density points
             double current, min = INFINITY;
             for(uint64_t k=0; k<N; k++){  // Iterating on sites to save the nearest site to each density point
-                current = std::norm(density[j]-sites[k]);
+                current = cuda::std::norm(density[j]-sites[k]);
                 if(current < min){
                    nearest[j] = k;
                    min = current;
@@ -84,20 +84,18 @@ complex_t* particles_parallel(complex_t z1, complex_t z2, int64_t N){
     auto nearest = (int64_t*) malloc(n_density * sizeof(int64_t));// To save nearest sites
     for(int16_t i=0; i<30; i++){  // Iterating to convergence
 
-        PRINTLN("Iteration " << i+1 << "\n - Finding nearest sites")
+        PRINT("Iteration " << i+1)
         #pragma omp parallel for shared(nearest, density, sites) schedule(static)
         for (int64_t j = 0; j < n_density; j++) { // Iterating on density points
             double current, min = INFINITY;
             for (int64_t k = 0; k < N; k++) {  // Iterating on sites to save the nearest site to each density point
-                current = std::norm(density[j] - sites[k]);
+                current = cuda::std::norm(density[j] - sites[k]);
                 if (current < min) {
                     nearest[j] = k;
                     min = current;
                 }
             }
         }
-
-        PRINTLN(" - Updating sites")
         for(int64_t k=0; k<N; k++) {
             sites[k] = 0;
             count[k] = 0;
@@ -112,6 +110,7 @@ complex_t* particles_parallel(complex_t z1, complex_t z2, int64_t N){
             if (count[k] == 0) { rand_complex(z1, z2, sites + k, 1); }
             else { sites[k] /= (double)count[k]; }
         }
+        PRINTLN(" -> done")
     }
     free(density);
     free(nearest);
