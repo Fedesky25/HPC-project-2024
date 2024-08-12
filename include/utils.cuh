@@ -72,6 +72,13 @@ struct Configuration {
     void bounds(complex_t * min, complex_t * max) const;
 
     /**
+     * Computes the complete pixel width and height including the margin
+     * @param width pointer to the width variable
+     * @param height pointer to the height variable
+     */
+    void sizes(unsigned * width, unsigned * height) const;
+
+    /**
      * Computes the number of particle to simulate
      * @return number of particles
      */
@@ -85,15 +92,6 @@ struct Configuration {
     inline double color(double speed_squared) const {
         return 0.66667 / (1.0 + color_multiplier / speed_squared);
     }
-};
-
-struct TilesCount {
-    uint16_t rows = 0, cols = 0;
-    inline TilesCount() = default;
-    TilesCount(Configuration& config);
-    inline TilesCount(unsigned width, unsigned height) { cover(width, height); }
-    void cover(unsigned width, unsigned height);
-    inline uint16_t total() const { return rows * cols; }
 };
 
 #endif //HPC_PROJECT_2024_UTILS_CUH

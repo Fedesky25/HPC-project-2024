@@ -18,6 +18,7 @@ add_executable(HPC_project_2024
         include/utils.cuh src/utils.cu
         include/cli.hpp src/cli.cpp
         include/particle_generator.cuh src/particle_generator.cu
+        include/tiles.hpp src/tiles.cpp
 )
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
