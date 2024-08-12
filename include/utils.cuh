@@ -3,6 +3,7 @@
 
 #include <complex>
 #include <cstdint>
+#include "cuda/std/complex"
 
 #define PI 3.1415926535897932384626433
 
@@ -23,7 +24,7 @@ constexpr uint64_t str_to_num(const char str[N+1]) {
     return res;
 }
 
-using complex_t = std::complex<double>;
+using complex_t = cuda::std::complex<double>;
 
 struct PixelIndex {
     int32_t row, col;
