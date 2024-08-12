@@ -8,13 +8,23 @@
 #include "utils.cuh"
 
 /**
- * Generates N complex numbers uniformly distributed
- * in the rectangle of upper-left vertex z1 and lower-right vertex z2
+ * Serially N complex numbers uniformly distributed
+ * in the rectangle of lower-left vertex z1 and upper-right vertex z2
  * @param z1 lower-left vertex
  * @param z2 upper-right vertex
  * @param N number of sites
  * @return particle sites
  */
-complex_t * particles(complex_t z1, complex_t z2, uint64_t N);
+complex_t * particles_serial(complex_t z1, complex_t z2, uint64_t N);
+
+/**
+ * OMP VERSION: Generates N complex numbers uniformly distributed
+ * in the rectangle of lower-left vertex z1 and upper-right vertex z2
+ * @param z1 lower-left vertex
+ * @param z2 upper-right vertex
+ * @param N number of sites
+ * @return particle sites
+ */
+complex_t* particles_parallel(complex_t z1, complex_t z2, int64_t N);
 
 #endif //HPC_PROJECT_2024_PARTICLE_GENERATOR_CUH
