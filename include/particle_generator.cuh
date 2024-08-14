@@ -15,7 +15,7 @@
  * @param N number of sites
  * @return particle sites
  */
-complex_t * particles_serial(complex_t z1, complex_t z2, uint64_t N);
+complex_t * particles_serial(complex_t z1, complex_t z2, uint32_t N);
 
 /**
  * OMP VERSION: Generates N complex numbers uniformly distributed
@@ -25,7 +25,7 @@ complex_t * particles_serial(complex_t z1, complex_t z2, uint64_t N);
  * @param N number of sites
  * @return particle sites
  */
-complex_t* particles_omp(complex_t z1, complex_t z2, int64_t N);
+complex_t* particles_omp(complex_t z1, complex_t z2, uint32_t N);
 
 /**
  * CUDA&OMP VERSION: Generates N complex numbers uniformly distributed
@@ -35,6 +35,6 @@ complex_t* particles_omp(complex_t z1, complex_t z2, int64_t N);
  * @param N number of sites
  * @return particle sites
  */
-complex_t* particles_mixed(complex_t z1, complex_t z2, int64_t N);
+complex_t* particles_mixed(complex_t z1, complex_t z2, uint32_t N);
 
 #endif //HPC_PROJECT_2024_PARTICLE_GENERATOR_CUH
