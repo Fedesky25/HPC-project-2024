@@ -29,7 +29,7 @@ struct PixelIndex {
     int32_t row, col;
     inline PixelIndex() : row(-1), col(-1) {}
     inline PixelIndex(int32_t r, int32_t c) : row(r), col(c) {};
-    inline explicit operator bool () const { return row == -1 || col == -1; }
+    inline explicit operator bool () const { return row >= 0 && col >= 0; }
 };
 
 struct Canvas {

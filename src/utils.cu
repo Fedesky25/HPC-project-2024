@@ -10,8 +10,9 @@ inline unsigned udist(unsigned a, unsigned b) {
 PixelIndex Canvas::where(complex_t z) const {
     auto row = static_cast<int32_t>(std::round(z.real() - center.real())) + (int32_t)(width >> 1);
     auto col = static_cast<int32_t>(std::round(z.imag() - center.imag())) + (int32_t)(height >> 1);
-    if(row < 0 || row >= width || col < 0 || col > height) return {};
-    else return { row, col };
+    if(row >= height) row = -1;
+    if(col >= width) col = -1;
+    return { row, col };
 }
 
 std::ostream &operator<<(std::ostream &os, Canvas &cv) {
