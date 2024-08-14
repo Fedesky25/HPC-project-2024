@@ -3,11 +3,12 @@
 //
 
 #include "particle_generator.cuh"
-#include <cstdlib>
-#include <omp.h>
 #include <cuda/std/cmath>
-#include <random>
 #include <chrono>
+#include <curand.h>
+#include <random>
+#include <thrust/sort.h>
+#include <omp.h>
 
 
 /**
@@ -189,5 +190,111 @@ complex_t* particles_mixed(complex_t z1, complex_t z2, uint32_t N){
     free(density);
     free(nearest);
     free(count);
+    return sites;
+}
+
+__global__ void scale_complex(double real, double imag, complex_t offset, complex_t * data, uint64_t N) {
+    auto index = threadIdx.x + (uint64_t)blockIdx.x * (uint64_t)blockDim.x;
+    if(index >= N) return;
+    auto z = data[index];
+    z.real(z.real() * real);
+    z.imag(z.imag() * imag);
+    z += offset;
+    data[index] = z;
+}
+
+/**
+ * Searches for the first element x such that x <= value
+ * @tparam T type of array element
+ * @param value value to search for
+ * @param data array
+ * @param length length of the array
+ * @return index of the first element x such that x <= value
+ * @see https://en.cppreference.com/w/cpp/algorithm/lower_bound
+ */
+template<class T>
+__device__ uint32_t lower_bound(const T& value, T * data, uint32_t length)
+{
+    uint32_t step, index, first = 0;
+    while (length > 0) {
+        index = first;
+        step = length >> 1;
+        index += step;
+        if (data[index] < value) {
+            first = index + 1;
+            length -= step + 1;
+        }
+        else length = step;
+    }
+    return first;
+}
+
+/**
+ * Updates the position of the sites. To be called after density points are sorted by nearest site
+ * @param density_points
+ * @param N_density
+ * @param sites
+ * @param N_sites
+ * @param nearest
+ */
+__global__ void update_sites(
+        complex_t * density_points, uint32_t N_density,
+        complex_t * sites, uint32_t N_sites,
+        uint32_t * nearest
+) {
+    auto site_index = threadIdx.x + blockIdx.x * blockDim.x;
+    if(site_index >= N_sites) return;
+
+    int64_t count = 0;
+    complex_t sum = 0.0;
+    uint32_t dpoint_index = lower_bound(site_index, nearest, N_density);
+    while(nearest[dpoint_index] == site_index) {
+        sum += density_points[dpoint_index];
+        dpoint_index++;
+        count++;
+    }
+    if(count > 0) sites[site_index] = sum / (double) count;
+}
+
+complex_t* particles_gpu(complex_t z1, complex_t z2, uint32_t N){
+    int64_t n_density = 128*N;
+    auto M = ((N-1) >> 10) + 1; // (n_density + 1023) / 1024 = (n_density-1)/ 2^(10)
+    auto D = ((n_density-1) >> 10) + 1;
+
+    complex_t *d_density, *d_sites;
+    uint32_t *d_nearest;
+    cudaMalloc((void **)&d_density, n_density * sizeof (complex_t));
+    cudaMalloc((void **)&d_sites, N * sizeof (complex_t));
+    cudaMalloc((void **)&d_nearest, n_density * sizeof (uint32_t));
+
+    curandGenerator_t gen;
+    curandCreateGenerator(&gen, CURAND_RNG_PSEUDO_XORWOW);
+    auto seed = std::chrono::system_clock::now().time_since_epoch().count();
+    curandSetPseudoRandomGeneratorSeed(gen, seed);
+
+    auto deltaReal = z2.real()-z1.real();
+    auto deltaImag = z2.imag()-z1.imag();
+
+    curandGenerateUniformDouble(gen, (double*) d_sites, N*2);
+    scale_complex<<<M, 1024>>>(deltaReal, deltaImag, z1, d_sites, N);
+    curandGenerateUniformDouble(gen, (double*) d_density, n_density*2);
+    scale_complex<<<D, 1024>>>(deltaReal, deltaImag, z1, d_density, N);
+
+    PRINT("Arranging particles: ");
+    for(int16_t i=0; i<20; i++){  // Iterating to convergence
+        compute_nearest<<<D, 1024>>>(d_density, n_density, d_sites, N, d_nearest);
+        thrust::sort_by_key(thrust::device, d_nearest, d_nearest + n_density, d_density);
+        update_sites<<<M, 1024>>>(d_density, n_density, d_sites, N, d_nearest);
+        PRINT(' ' << i+1)
+    }
+    PRINTLN(' ');
+
+    auto sites = (complex_t*) malloc(N * sizeof(complex_t));
+    cudaMemcpy(sites, d_sites, N * sizeof (complex_t), cudaMemcpyDeviceToHost);
+
+    cudaFree(d_sites);
+    cudaFree(d_density);
+    cudaFree(d_nearest);
+
     return sites;
 }
