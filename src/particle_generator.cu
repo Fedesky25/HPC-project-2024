@@ -3,10 +3,11 @@
 //
 
 #include "particle_generator.cuh"
-#include <ctime>
 #include <cstdlib>
 #include <omp.h>
 #include <cuda/std/cmath>
+#include <random>
+#include <chrono>
 
 
 /**
@@ -17,10 +18,12 @@
  * @param M number of sites
  */
 void rand_complex(complex_t z1, complex_t z2, complex_t * rdm, uint64_t M) {
-    srand(time(NULL));
+    auto seed = std::chrono::system_clock::now().time_since_epoch().count();
+    std::default_random_engine generator(seed);
+    std::uniform_real_distribution<double> distribution(0.0,1.0);
     for(uint64_t i=0; i<M; i++){
-        rdm[i].real(real(z1) + ((double)rand()/(double)RAND_MAX)*(real(z2)-real(z1)));
-        rdm[i].imag(imag(z1) + ((double)rand()/(double)RAND_MAX)*(imag(z2)-imag(z1)));
+        rdm[i].real(real(z1) + distribution(generator)*(real(z2)-real(z1)));
+        rdm[i].imag(imag(z1) + distribution(generator)*(imag(z2)-imag(z1)));
     }
 }
 
