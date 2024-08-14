@@ -159,9 +159,10 @@ complex_t* particles_mixed(complex_t z1, complex_t z2, int64_t N){
     cudaMalloc((void **)&d_sites, N * sizeof (complex_t));
     cudaMalloc((void **)&d_nearest, n_density * sizeof (int64_t));
 
-    for(int16_t i=0; i<30; i++){  // Iterating to convergence
+    cudaMemcpy(d_density, density, n_density * sizeof (complex_t), cudaMemcpyHostToDevice);
 
-        PRINTLN("Iteration " << i+1 << "\n - Finding nearest sites")
+    PRINT("Arranging particles: ");
+    for(int16_t i=0; i<30; i++){  // Iterating to convergence
         cudaMemcpy(d_sites, sites, N * sizeof (complex_t), cudaMemcpyHostToDevice);
         compute_nearest<<<M, 1024>>>(d_density, n_density, d_sites, N, d_nearest);
         cudaMemcpy(nearest, d_nearest, n_density * sizeof (int64_t), cudaMemcpyDeviceToHost);
@@ -177,10 +178,14 @@ complex_t* particles_mixed(complex_t z1, complex_t z2, int64_t N){
 
         #pragma omp parallel for shared(sites, count) schedule(static)
         for (int64_t k = 0; k < N; k++) {
-            if (count[k] == 0) { rand_complex(z1, z2, sites + k, 1); }
-            else { sites[k] /= (double)count[k]; }
+            if (count[k] == 0) rand_complex(z1, z2, sites + k, 1);
+            else sites[k] /= (double)count[k];
         }
+        PRINT(' ' << i+1)
     }
+    PRINTLN(' ');
+    cudaFree(d_density);
+    cudaFree(d_nearest);
     free(density);
     free(nearest);
     free(count);
