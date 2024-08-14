@@ -32,7 +32,7 @@ complex_t* particles_serial(complex_t z1, complex_t z2, uint32_t N){
 
     auto sites = (complex_t*) malloc(N * sizeof(complex_t));
 
-    auto n_density = 128*(uint64_t)N;
+    auto n_density = 128*(int64_t)N;
     auto density = (complex_t*) malloc(n_density * sizeof(complex_t));
     rand_complex(z1, z2, density, n_density); // Random complex density points
 
@@ -120,15 +120,15 @@ complex_t* particles_omp(complex_t z1, complex_t z2, uint32_t N){
 
 __global__ void compute_nearest(
         complex_t * density_points, int64_t N_density,
-        complex_t * sites, int64_t N_sites,
-        int64_t * nearest
+        complex_t * sites, uint32_t N_sites,
+        uint32_t * nearest
 ){
     auto index = threadIdx.x + blockIdx.x*blockDim.x;
     if(index >= N_density) return;
     double current, min = INFINITY;
     complex_t z = density_points[index];
-    int64_t n;
-    for (int64_t k = 0; k < N_sites; k++) {  // Iterating on sites to save the nearest site to each density point
+    uint32_t n;
+    for (uint32_t k = 0; k < N_sites; k++) {  // Iterating on sites to save the nearest site to each density point
         current = cuda::std::norm(z - sites[k]);
         if (current < min) {
             n = k;
