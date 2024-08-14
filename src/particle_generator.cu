@@ -154,10 +154,10 @@ complex_t* particles_mixed(complex_t z1, complex_t z2, uint32_t N){
 
     auto M = ((n_density-1) >> 10) + 1; // (n_density + 1023) / 1024 = (n_density-1)/ 2^(10)
     complex_t *d_density, *d_sites;
-    int64_t *d_nearest;
+    uint32_t *d_nearest;
     cudaMalloc((void **)&d_density, n_density * sizeof (complex_t));
     cudaMalloc((void **)&d_sites, N * sizeof (complex_t));
-    cudaMalloc((void **)&d_nearest, n_density * sizeof (int64_t));
+    cudaMalloc((void **)&d_nearest, n_density * sizeof (uint32_t));
 
     cudaMemcpy(d_density, density, n_density * sizeof (complex_t), cudaMemcpyHostToDevice);
 
