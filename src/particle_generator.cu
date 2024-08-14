@@ -77,14 +77,12 @@ complex_t* particles_omp(complex_t z1, complex_t z2, int64_t N){
     auto density = (complex_t*) malloc(n_density * sizeof(complex_t));
     PRINTLN("Generating " << n_density << " density points")
     rand_complex(z1, z2, density, n_density); // Random complex density points
+    auto nearest = (int64_t*) malloc(n_density * sizeof(int64_t));// To save nearest sites
 
     omp_set_num_threads(10);
 
-    // Moving sites
-    auto nearest = (int64_t*) malloc(n_density * sizeof(int64_t));// To save nearest sites
     for(int16_t i=0; i<30; i++){  // Iterating to convergence
-
-        PRINT("Iteration " << i+1)
+        PRINTLN("Iteration " << i+1)
         #pragma omp parallel for shared(nearest, density, sites) schedule(static)
         for (int64_t j = 0; j < n_density; j++) { // Iterating on density points
             double current, min = INFINITY;
@@ -107,10 +105,9 @@ complex_t* particles_omp(complex_t z1, complex_t z2, int64_t N){
 
         #pragma omp parallel for shared(sites, count) schedule(static)
         for (int64_t k = 0; k < N; k++) {
-            if (count[k] == 0) { rand_complex(z1, z2, sites + k, 1); }
-            else { sites[k] /= (double)count[k]; }
+            if (count[k] == 0) rand_complex(z1, z2, sites + k, 1);
+            else sites[k] /= (double) count[k];
         }
-        PRINTLN(" -> done")
     }
     free(density);
     free(nearest);
@@ -118,10 +115,11 @@ complex_t* particles_omp(complex_t z1, complex_t z2, int64_t N){
     return sites;
 }
 
-__global__ void nearest_kernel(
+__global__ void compute_nearest(
         complex_t * density_points, int64_t N_density,
         complex_t * sites, int64_t N_sites,
-        int64_t * nearest){
+        int64_t * nearest
+){
     auto index = threadIdx.x + blockIdx.x*blockDim.x;
     if(index >= N_density) return;
     double current, min = INFINITY;
@@ -137,7 +135,7 @@ __global__ void nearest_kernel(
     nearest[index] = n;
 }
 
-complex_t* particles_gpu(complex_t z1, complex_t z2, int64_t N){
+complex_t* particles_mixed(complex_t z1, complex_t z2, int64_t N){
 
     auto sites = (complex_t*) malloc(N * sizeof(complex_t));
     auto count = (int64_t*) malloc(N * sizeof(int64_t));
@@ -162,10 +160,9 @@ complex_t* particles_gpu(complex_t z1, complex_t z2, int64_t N){
 
         PRINTLN("Iteration " << i+1 << "\n - Finding nearest sites")
         cudaMemcpy(d_sites, sites, N * sizeof (complex_t), cudaMemcpyHostToDevice);
-        nearest_kernel<<<M, 1024>>>(d_density, n_density, d_sites, N, d_nearest);
+        compute_nearest<<<M, 1024>>>(d_density, n_density, d_sites, N, d_nearest);
         cudaMemcpy(nearest, d_nearest, n_density * sizeof (int64_t), cudaMemcpyDeviceToHost);
 
-        PRINTLN(" - Updating sites")
         for(int64_t k=0; k<N; k++) {
             sites[k] = 0;
             count[k] = 0;
