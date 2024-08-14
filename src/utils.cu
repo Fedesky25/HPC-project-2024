@@ -8,8 +8,8 @@ inline unsigned udist(unsigned a, unsigned b) {
 }
 
 PixelIndex Canvas::where(complex_t z) const {
-    auto row = static_cast<int32_t>(std::round(z.real() - center.real())) + (width >> 1);
-    auto col = static_cast<int32_t>(std::round(z.imag() - center.imag())) + (height >> 1);
+    auto row = static_cast<int32_t>(std::round(z.real() - center.real())) + (int32_t)(width >> 1);
+    auto col = static_cast<int32_t>(std::round(z.imag() - center.imag())) + (int32_t)(height >> 1);
     if(row < 0 || row >= width || col < 0 || col > height) return {};
     else return { row, col };
 }
@@ -34,7 +34,7 @@ void Configuration::sizes(unsigned int *width, unsigned int *height) const {
     *height = canvas.height + extra;
 }
 
-unsigned long Configuration::particle_number() const {
+uint32_t Configuration::particle_number() const {
     auto extra = 2*margin*particle_distance;
     return (canvas.width + extra) * (canvas.height + extra) / (particle_distance*particle_distance);
 }

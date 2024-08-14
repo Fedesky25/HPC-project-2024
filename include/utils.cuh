@@ -34,7 +34,7 @@ struct PixelIndex {
 
 struct Canvas {
     /** Size in pixel of the canvas */
-    int32_t width = 1920, height = 1080;
+    uint32_t width = 1920, height = 1080;
     /** Center complex point in the canvas */
     complex_t center = 0.0;
     /** How many pixel is the unitary distance */
@@ -82,7 +82,7 @@ struct Configuration {
      * Computes the number of particle to simulate
      * @return number of particles
      */
-    unsigned long particle_number() const;
+    uint32_t particle_number() const;
 
     /**
      * Computes the color the particle has given its speed
