@@ -22,7 +22,7 @@ add_executable(HPC_project_2024
         include/cli.hpp src/cli.cpp
         include/lower_bound.cuh
         include/particle_generator.cuh src/particle_generator.cu
-        include/tiles.hpp src/tiles.cpp
+        include/tiles.cuh src/tiles.cu
         src/canvas.cu include/canvas.cuh
 )
 
