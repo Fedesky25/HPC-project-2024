@@ -9,6 +9,7 @@
 #include <random>
 #include <thrust/sort.h>
 #include <omp.h>
+#include "lower_bound.cuh"
 
 
 /**
