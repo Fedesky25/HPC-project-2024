@@ -14,6 +14,10 @@ std::ostream &operator<<(std::ostream &os, CanvasAdapter &cv) {
     return os << cv.width << 'x' << cv.height << '@' << cv.center << '$' << cv.scale << "px/u";
 }
 
+std::ostream &operator<<(std::ostream &os, EvolutionOptions &eo) {
+    return os << eo.frame_count << "f, " << eo.ms_per_frame << "ms/f, dt=" << eo.delta_time << ", @v=" << eo.speed_factor;
+}
+
 void Configuration::bounds(complex_t *min, complex_t *max) const {
     auto extra = 2*margin*particle_distance;
     double dr = (canvas.width + extra) / canvas.scale * 0.5;

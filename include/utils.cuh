@@ -55,6 +55,8 @@ struct EvolutionOptions {
     float ms_per_frame = 50.0 / 3.0; // 60Hz
     uint32_t frame_count = 900; // 15s
     // default time-scale = 6e-8
+
+    friend std::ostream& operator<<(std::ostream& os, EvolutionOptions& cv);
 };
 
 struct Configuration {
