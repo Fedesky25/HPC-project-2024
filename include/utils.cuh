@@ -131,17 +131,4 @@ struct Configuration {
     uint32_t particle_number() const;
 };
 
-/**
- * Searches for the first element x such that x <= value
- * @tparam T type of array element
- * @tparam I integral type used to represent indexes
- * @param value value to search for
- * @param data array
- * @param length length of the array
- * @return index of the first element x such that x <= value
- * @see https://en.cppreference.com/w/cpp/algorithm/lower_bound
- */
-template<class T, class I>
-__device__ __host__ I lower_bound(T value, T * data, I length);
-
 #endif //HPC_PROJECT_2024_UTILS_CUH

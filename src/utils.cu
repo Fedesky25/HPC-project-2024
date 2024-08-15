@@ -38,21 +38,3 @@ uint32_t Configuration::particle_number() const {
     auto extra = 2*margin*particle_distance;
     return (canvas.width + extra) * (canvas.height + extra) / (particle_distance*particle_distance);
 }
-
-template<class T, class I>
-__device__ __host__ I lower_bound(T value, T * data, I length)
-{
-    static_assert(std::is_integral_v<I>, "Type used as index must be of integral type");
-    I step, index, first = 0;
-    while (length > 0) {
-        index = first;
-        step = length >> 1;
-        index += step;
-        if (data[index] < value) {
-            first = index + 1;
-            length -= step + 1;
-        }
-        else length = step;
-    }
-    return first;
-}

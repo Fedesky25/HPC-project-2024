@@ -20,6 +20,7 @@ add_executable(HPC_project_2024
         main.cu
         include/utils.cuh src/utils.cu
         include/cli.hpp src/cli.cpp
+        include/lower_bound.cuh
         include/particle_generator.cuh src/particle_generator.cu
         include/tiles.hpp src/tiles.cpp
 )
