@@ -318,24 +318,31 @@ double parse_scale(const char * str, ScaleScaling * action) {
 
 bool parse_args(int argc, char * argv[], Configuration * config) {
     static option long_options[] = {
-            { "output",     required_argument, nullptr, 'o' },
-            { "resolution", required_argument, nullptr, 'r' },
-            { "scale",      required_argument, nullptr, 's' },
-            { "center",     required_argument, nullptr, 'c' },
-            { "distance",   required_argument, nullptr, 'd' },
-            { "margin",     required_argument, nullptr, 'm' },
-            { "speed",      required_argument, nullptr, 's' },
-            { "int",        required_argument, nullptr, 'n' },
-            { "real",       required_argument, nullptr, 'x' },
-            { "complex1",   required_argument, nullptr, '1' },
-            { "complex2",   required_argument, nullptr, '2' },
-            { "complex3",   required_argument, nullptr, '3' },
+            { "output",      required_argument, nullptr, 'o' },
+            { "resolution",  required_argument, nullptr, 'r' },
+            { "pixel-scale", required_argument, nullptr, 'p' },
+            { "center",      required_argument, nullptr, 'c' },
+            { "distance",    required_argument, nullptr, 'd' },
+            { "margin",      required_argument, nullptr, 'm' },
+            { "speed-mag",   required_argument, nullptr, 'v' },
+            { "time-scale",  required_argument, nullptr, 't' },
+            { "fps",         required_argument, nullptr, 'f' },
+            { "duration",    required_argument, nullptr, 'D' },
+//            { "lifetime",    required_argument, nullptr, 'l' },
+//            { "background",  required_argument, nullptr, 'B' },
+            { "int",         required_argument, nullptr, 'n' },
+            { "real",        required_argument, nullptr, 'x' },
+            { "complex1",    required_argument, nullptr, '1' },
+            { "complex2",    required_argument, nullptr, '2' },
+            { "complex3",    required_argument, nullptr, '3' },
             { nullptr, 0, nullptr, 0 }
     };
-    static char short_options[] = "o:r:s:c:d:m:s:n:x:1:2:3:";
+    static char short_options[] = "o:r:p:c:d:m:v:t:D:n:x:1:2:3:";
 
     int o, go = 1, index_opt;
     char * rest;
+    double time_scale = 6e-8;
+    unsigned long fps = 60, duration = 15;
     ScaleScaling action = ScaleScaling::NONE;
 
     while(go) {
@@ -355,7 +362,7 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
                 config->canvas.center = parse_complex(optarg);
                 CHECK_COMPLEX(config->canvas.center, "center")
                 break;
-            case 's':
+            case 'p':
                 config->canvas.scale = parse_scale(optarg, &action);
                 if(config->canvas.scale == 0.0) return true;
                 break;
@@ -371,9 +378,25 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
             {
                 double v = strtod(optarg, &rest);
                 CHECK_REMAINING("speed (v)")
-                config->color_multiplier = std::pow(10.0, 2.0*v);
+                config->evolution.speed_factor = std::pow(10.0, 2.0*v);
                 break;
             }
+            case 'f':
+                fps = strtoul(optarg, &rest, 10);
+                CHECK_REMAINING("fps")
+                break;
+            case 't':
+                time_scale = strtod(optarg, &rest);
+                CHECK_REMAINING("time-scale")
+                if(time_scale <= 0) {
+                    std::cerr << "The time scale must be strictly positive" << std::endl;
+                    return true;
+                }
+                break;
+            case 'D':
+                duration = strtoul(optarg, &rest, 10);
+                CHECK_REMAINING("duration")
+                break;
             case 'n':
                 config->vars.n = strtol(optarg, &rest, 10);
                 CHECK_REMAINING("integer number (n)");
@@ -403,6 +426,9 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
         case ScaleScaling::NONE:
             break;
     }
+    config->evolution.delta_time = time_scale / fps;
+    config->evolution.frame_count = duration * fps;
+    config->evolution.ms_per_frame = 1000.0f / (float) fps;
     return false;
 }
 
@@ -415,22 +441,26 @@ void print_usage() {
     std::cout << "OPTIONS" << std::endl;
     std::cout << "  Name                 Default        Description" << std::endl;
     std::cout << "  -o  --output         plot.webp      Path of the output webp file" << std::endl;
+    std::cout << "  -D  --duration       15             Duration in seconds of the webp animation" << std::endl;
+    std::cout << "  -f  --fps            60             Number of frames per seconds i.e. the refresh rate" << std::endl;
     std::cout << "  -r  --resolution     1920x1080      Pixel sizes of the video: it can be either a supported screen resolution name (such as FHD, WXGA+)" << std::endl
               << "                                      or a custom size specified in the format <width>x<height>. Optionally, the character '^' may be" << std::endl
               << "                                      prepended to invert the horizontal and vertical sizes." << std::endl;
+    std::cout << "  -d  --distance       10             Average distance (in pixels) between two nearby particles in the starting positions" << std::endl;
+    std::cout << "  -m  --margin         4              Number of layers of additional particles outside the video. Too low values lead to empty borders." << std::endl;
+    std::cout << "  -v  --speed-mag      0              Order of magnitude of speed around which logarithmic color sensitivity is maximum. Red or blue" << std::endl
+              << "                                      occur when the speed is respectively one order less or more than the specified one." << std::endl;
+    std::cout << "  -t  --time-scale     6e-8           Time scale used to convert 1 real second into the computational time unit. Lower values guarantee"
+              << "                                      a more precise computation of the particle evolution at the cost of less motion." << std::endl;
     std::cout << "  -s  --scale          100px/u        Scale used to convert distance between complex numbers to pixels. The required unit must be one of:" << std::endl
               << "                                      u/px, u/w, u/h, px/u, w/u, h/u; where 'px' is pixel, 'w' is the width of the video (in pixel), 'h'" << std::endl
               << "                                      is the height of the video (in pixel), and 'u' is the unitary distance" << std::endl;
     std::cout << "  -c  --center         0+0i           The complex number at the center of the video. See later on supported complex number formats." << std::endl;
-    std::cout << "  -d  --distance       10             Average distance (in pixels) between two nearby particles in the starting positions" << std::endl;
-    std::cout << "  -m  --margin         4              Number of layers of additional particles outside the video. Too low values lead to empty borders." << std::endl;
-    std::cout << "  -v  --speed          0              Order of magnitude of speed around which logarithmic color sensitivity is maximum. Red and blue" << std::endl
-              << "                                      occur when the speed is respectively one order less and more then the specified one." << std::endl;
-    std::cout << "  -n                   0              Integer number used in some functions" << std::endl;
-    std::cout << "  -x                   3.14159...     Real number used in some functions" << std::endl;
-    std::cout << "  -1                   1              First complex number used in some functions" << std::endl;
-    std::cout << "  -2                   1i             Second complex number used in some functions" << std::endl;
-    std::cout << "  -3                   1\\45d          Third complex number used in some functions" << std::endl << std::endl;
+    std::cout << "  -n  --int            0              Integer number used in some functions" << std::endl;
+    std::cout << "  -x  --real           3.14159...     Real number used in some functions" << std::endl;
+    std::cout << "  -1  --complex1       1              First complex number used in some functions" << std::endl;
+    std::cout << "  -2  --complex2       1i             Second complex number used in some functions" << std::endl;
+    std::cout << "  -3  --complex3       1\\45d          Third complex number used in some functions" << std::endl << std::endl;
     std::cout << "COMPLEX NUMBER FORMAT" << std::endl;
     std::cout << "  Complex number can be specified in cartesian and polar coordinates:" << std::endl;
     std::cout << "  - Cartesian format is the sum of a real and imaginary part. The latter is denote by prepending or appending 'i' or 'j' to the number" << std::endl;

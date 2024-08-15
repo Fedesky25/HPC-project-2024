@@ -50,11 +50,18 @@ struct FnVariables {
     long n = 0;
 };
 
+struct EvolutionOptions {
+    double speed_factor = 1.0, delta_time = 1e-9;
+    float ms_per_frame = 50.0 / 3.0; // 60Hz
+    uint32_t frame_count = 900; // 15s
+    // default time-scale = 6e-8
+};
+
 struct Configuration {
     const char * output = "plot.webp";
     FnVariables vars;
     CanvasAdapter canvas;
-    double color_multiplier = 1.0;
+    EvolutionOptions evolution;
     unsigned long particle_distance = 10;
     unsigned long margin = 4;
 
