@@ -25,33 +25,6 @@ constexpr uint64_t str_to_num(const char str[N+1]) {
 
 using complex_t = cuda::std::complex<double>;
 
-struct CanvasPixel {
-    uint16_t age = -1, multiplicity = 0;
-
-    /**
-     * Computes and saves the hue given the speed
-     * @param square_speed
-     * @param factor
-     */
-    __device__ __host__ inline void set_color(double square_speed, double factor) {
-        hue = static_cast<uint16_t>(65536.0 * square_speed / (square_speed + factor));
-        // 2^(16) / (1 + factor/square_speed)
-    }
-
-    /**
-     * Computes the hue
-     * @return hue in the range [0,1]
-     */
-    __device__ __host__ inline float get_color() const {
-        return (float)hue * 1.0172526041666666e-5f;
-        // v / 2^(16) * (2/3)
-    }
-
-private:
-    uint16_t hue = 0;
-};
-
-using Canvas = CanvasPixel*;
 
 struct CanvasAdapter {
     /** Size in pixel of the canvas */
@@ -69,31 +42,6 @@ struct CanvasAdapter {
      * @return -1 if out of bounds, else the index of the pixel
      */
     int32_t where(complex_t z) const;
-
-    /**
-     * Allocates
-     * @tparam GPU
-     * @param count
-     * @return
-     */
-    template<bool GPU>
-    Canvas * create_proto_canvas(uint32_t count) {
-        Canvas * array;
-        if constexpr (GPU) {
-            cudaMalloc(&array, count * sizeof(Canvas));
-        } else {
-            array = (Canvas*) malloc(count * sizeof(Canvas));
-        }
-        uint32_t bytes = width * height * sizeof(CanvasPixel);
-        for(uint32_t i=0; i < count; i++) {
-            if constexpr (GPU) {
-                cudaMalloc(array+i, bytes);
-            } else {
-                array[i] = (Canvas) malloc(bytes);
-            }
-        }
-        return array;
-    }
 };
 
 struct FnVariables {
