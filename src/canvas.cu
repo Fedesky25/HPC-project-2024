@@ -3,7 +3,9 @@
 #define SATURATION 0.55
 #define LIGHTNESS 0.55
 
-const ARGB background(21,21,25);
+#define BG_R 21
+#define BG_G 21
+#define BG_B 25
 
 bool CanvasPixel::update_age(uint16_t _age) {
     bool ok = true;
@@ -42,13 +44,13 @@ __device__ __host__ void CanvasPixel::set_color(double square_speed, double fact
 
 __device__ __host__ ARGB CanvasPixel::get_color(uint16_t time) const {
     ARGB result;
-    if(time < age || time >= age + multiplicity + 200) result = background;
+    if(time < age || time >= age + multiplicity + 200) result = { BG_R, BG_G, BG_B };
     else if(time <= age + multiplicity) result = color;
     else {
          auto x = (time - age - multiplicity) * 0.005;
-         result.r = static_cast<uint8_t>(cuda::std::round(x*background.r + (1-x)*color.r));
-         result.g = static_cast<uint8_t>(cuda::std::round(x*background.g + (1-x)*color.g));
-         result.b = static_cast<uint8_t>(cuda::std::round(x*background.b + (1-x)*color.b));
+         result.r = static_cast<uint8_t>(cuda::std::round(x*BG_R + (1-x)*color.r));
+         result.g = static_cast<uint8_t>(cuda::std::round(x*BG_G + (1-x)*color.g));
+         result.b = static_cast<uint8_t>(cuda::std::round(x*BG_B + (1-x)*color.b));
     }
     return result;
 }
