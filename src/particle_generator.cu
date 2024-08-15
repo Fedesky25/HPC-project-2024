@@ -204,32 +204,6 @@ __global__ void scale_complex(double real, double imag, complex_t offset, comple
 }
 
 /**
- * Searches for the first element x such that x <= value
- * @tparam T type of array element
- * @param value value to search for
- * @param data array
- * @param length length of the array
- * @return index of the first element x such that x <= value
- * @see https://en.cppreference.com/w/cpp/algorithm/lower_bound
- */
-template<class T>
-__device__ uint32_t lower_bound(const T& value, T * data, uint32_t length)
-{
-    uint32_t step, index, first = 0;
-    while (length > 0) {
-        index = first;
-        step = length >> 1;
-        index += step;
-        if (data[index] < value) {
-            first = index + 1;
-            length -= step + 1;
-        }
-        else length = step;
-    }
-    return first;
-}
-
-/**
  * Updates the position of the sites. To be called after density points are sorted by nearest site
  * @param density_points
  * @param N_density
