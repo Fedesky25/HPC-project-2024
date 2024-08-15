@@ -25,7 +25,7 @@ constexpr uint64_t str_to_num(const char str[N+1]) {
 
 using complex_t = cuda::std::complex<double>;
 
-struct ProtoCanvasPixel {
+struct CanvasPixel {
     uint16_t age = -1, multiplicity = 0;
 
     /**
@@ -33,7 +33,7 @@ struct ProtoCanvasPixel {
      * @param square_speed
      * @param factor
      */
-    __device__ __host__ inline void set_hue(double square_speed, double factor) {
+    __device__ __host__ inline void set_color(double square_speed, double factor) {
         hue = static_cast<uint16_t>(65536.0 * square_speed / (square_speed + factor));
         // 2^(16) / (1 + factor/square_speed)
     }
@@ -42,7 +42,7 @@ struct ProtoCanvasPixel {
      * Computes the hue
      * @return hue in the range [0,1]
      */
-    __device__ __host__ inline float get_hue() const {
+    __device__ __host__ inline float get_color() const {
         return (float)hue * 1.0172526041666666e-5f;
         // v / 2^(16) * (2/3)
     }
@@ -51,7 +51,7 @@ private:
     uint16_t hue = 0;
 };
 
-using ProtoCanvas = ProtoCanvasPixel*;
+using Canvas = CanvasPixel*;
 
 struct CanvasAdapter {
     /** Size in pixel of the canvas */
@@ -77,19 +77,19 @@ struct CanvasAdapter {
      * @return
      */
     template<bool GPU>
-    ProtoCanvas * create_proto_canvas(uint32_t count) {
-        ProtoCanvas * array;
+    Canvas * create_proto_canvas(uint32_t count) {
+        Canvas * array;
         if constexpr (GPU) {
-            cudaMalloc(&array, count * sizeof(ProtoCanvas));
+            cudaMalloc(&array, count * sizeof(Canvas));
         } else {
-            array = (ProtoCanvas*) malloc(count * sizeof(ProtoCanvas));
+            array = (Canvas*) malloc(count * sizeof(Canvas));
         }
-        uint32_t bytes = width * height * sizeof(ProtoCanvasPixel);
+        uint32_t bytes = width * height * sizeof(CanvasPixel);
         for(uint32_t i=0; i < count; i++) {
             if constexpr (GPU) {
                 cudaMalloc(array+i, bytes);
             } else {
-                array[i] = (ProtoCanvas) malloc(bytes);
+                array[i] = (Canvas) malloc(bytes);
             }
         }
         return array;
