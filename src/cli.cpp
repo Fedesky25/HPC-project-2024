@@ -1,5 +1,6 @@
 #include "cli.hpp"
 #include <iostream>
+#include "getopt.h"
 
 #define INVALID_OPTION(NAME) { std::cerr << '"' << NAME << "\" is not a valid option" << std::endl; return true; }
 #define INVALID_RESOLUTION_NAME std::cerr << "Invalid screen resolution name" << std::endl;
@@ -20,6 +21,9 @@
     return true;                                  \
 }
 #define INVALID_SCALE_UNIT { std::cerr << "Invalid unit of scale" << std::endl; return 0.0; }
+
+
+
 
 
 double parse_complex_last_number(const char * str, char** rest) {
@@ -313,117 +317,79 @@ double parse_scale(const char * str, ScaleScaling * action) {
 }
 
 bool parse_args(int argc, char * argv[], Configuration * config) {
+    static option long_options[] = {
+            { "output",     required_argument, nullptr, 'o' },
+            { "resolution", required_argument, nullptr, 'r' },
+            { "scale",      required_argument, nullptr, 's' },
+            { "center",     required_argument, nullptr, 'c' },
+            { "distance",   required_argument, nullptr, 'd' },
+            { "margin",     required_argument, nullptr, 'm' },
+            { "speed",      required_argument, nullptr, 's' },
+            { "int",        required_argument, nullptr, 'n' },
+            { "real",       required_argument, nullptr, 'x' },
+            { "complex1",   required_argument, nullptr, '1' },
+            { "complex2",   required_argument, nullptr, '2' },
+            { "complex3",   required_argument, nullptr, '3' },
+            { nullptr, 0, nullptr, 0 }
+    };
+    static char short_options[] = "o:r:s:c:d:m:s:n:x:1:2:3:";
+
+    int o, go = 1, index_opt;
     char * rest;
     ScaleScaling action = ScaleScaling::NONE;
-    for(int i=1; i<argc; i++) {
-        if(argv[i][0] != '-') INVALID_OPTION(argv[i])
-        if(argv[i][1] == '-') {
-            // long name
-            const char * str = argv[i]+2;
-            if(strcmp(str, "output") == 0) {
-                CHECK_MISSING("output")
-                config->output = argv[++i];
-            }
-            else if(strcmp(str, "distance") == 0) {
-                CHECK_MISSING("particle distance")
-                config->particle_distance = strtoul(argv[++i], &rest, 10);
-                CHECK_REMAINING("particle distance")
-                CHECK_DISTANCE
-            }
-            else if(strcmp(str, "resolution") == 0) {
-                CHECK_MISSING("screen resolution")
-                parse_resolution(argv[++i], &(config->canvas));
-                if(!config->canvas.width) return true;
-            }
-            else if(strcmp(str, "center") == 0) {
-                CHECK_MISSING("center")
-                config->canvas.center = parse_complex(argv[++i]);
+
+    while(go) {
+        o = getopt_long(argc, argv, short_options, long_options, &index_opt);
+        switch (o) {
+            case -1:
+            case '?':
+                go = false;
+                break;
+            case 'o':
+                config->output = optarg;
+                break;
+            case 'm':
+                config->margin = strtoul(optarg, &rest, 10);
+                break;
+            case 'c':
+                config->canvas.center = parse_complex(optarg);
                 CHECK_COMPLEX(config->canvas.center, "center")
-            }
-            else if(strcmp(str, "scale") == 0) {
-                CHECK_MISSING("scale")
-                config->canvas.scale = parse_scale(argv[++i], &action);
+                break;
+            case 's':
+                config->canvas.scale = parse_scale(optarg, &action);
                 if(config->canvas.scale == 0.0) return true;
-            }
-            else if(strcmp(str, "margin") == 0) {
-                CHECK_MISSING("margin")
-                config->margin = strtoul(str, &rest, 10);
-                CHECK_REMAINING("margin")
-            }
-            else if(strcmp(str, "speed") == 0) {
-                CHECK_MISSING("speed")
-                double v = strtod(argv[++i], &rest);
-                CHECK_REMAINING("speed")
+                break;
+            case 'd':
+                config->particle_distance = strtoul(optarg, &rest, 10);
+                CHECK_DISTANCE
+                break;
+            case 'r':
+                parse_resolution(optarg, &(config->canvas));
+                if(!config->canvas.width) return true;
+                break;
+            case 'v':
+            {
+                double v = strtod(optarg, &rest);
+                CHECK_REMAINING("speed (v)")
                 config->color_multiplier = std::pow(10.0, 2.0*v);
+                break;
             }
-            else INVALID_OPTION(argv[i]+2)
-        }
-        else {
-            // short name
-            switch (argv[i][1]) {
-                case 'o':
-                    CHECK_MISSING("output (o)")
-                    config->output = argv[++i];
-                    break;
-                case 'm':
-                    CHECK_MISSING("margin")
-                    config->margin = strtoul(argv[++i], &rest, 10);
-                    CHECK_REMAINING("margin")
-                    break;
-                case 'c':
-                    CHECK_MISSING("center (c)")
-                    config->canvas.center = parse_complex(argv[++i]);
-                    CHECK_COMPLEX(config->canvas.center, "center")
-                    break;
-                case 's':
-                    CHECK_MISSING("scale")
-                    config->canvas.scale = parse_scale(argv[++i], &action);
-                    if(config->canvas.scale == 0.0) return true;
-                    break;
-                case 'd':
-                    CHECK_MISSING("particle distance (d)")
-                    config->particle_distance = strtoul(argv[++i], &rest, 10);
-                    CHECK_REMAINING("particle distance (d)")
-                    CHECK_DISTANCE
-                    break;
-                case 'r':
-                    CHECK_MISSING("screen resolution (r)")
-                    parse_resolution(argv[++i], &(config->canvas));
-                    if(!config->canvas.width) return true;
-                    break;
-                case 'v':
-                {
-                    CHECK_MISSING("speed (v)")
-                    double v = strtod(argv[++i], &rest);
-                    CHECK_REMAINING("speed (v)")
-                    config->color_multiplier = std::pow(10.0, 2.0*v);
-                    break;
-                }
-                case 'n':
-                    CHECK_MISSING("integer number (n)");
-                    config->vars.n = strtol(argv[++i], &rest, 10);
-                    CHECK_REMAINING("integer number (n)");
-                    break;
-                case 'x':
-                    CHECK_MISSING("real number (x)");
-                    config->vars.x = strtod(argv[++i], &rest);
-                    CHECK_REMAINING("real number (x)");
-                    break;
-                case 'z':
-                {
-                    auto index = argv[i][2] - '1';
-                    if(index<0 || index>2) {
-                        std::cout << "Index of complex number can be 1,2, or 3" << std::endl;
-                        return true;
-                    }
-                    CHECK_MISSING("complex number (z" << index+1 << ')');
-                    config->vars.z[index] = parse_complex(argv[++i]);
-                    CHECK_COMPLEX(config->vars.z[index], 'z' << index+1)
-                    break;
-                }
-                case '\0':
-                default:
-                    INVALID_OPTION(argv[i]+1);
+            case 'n':
+                config->vars.n = strtol(optarg, &rest, 10);
+                CHECK_REMAINING("integer number (n)");
+                break;
+            case 'x':
+                config->vars.x = strtod(optarg, &rest);
+                CHECK_REMAINING("real number (x)");
+                break;
+            case '1':
+            case '2':
+            case '3':
+            {
+                auto index = o - '1';
+                config->vars.z[index] = parse_complex(optarg);
+                CHECK_COMPLEX(config->vars.z[index], 'z' << index+1)
+                break;
             }
         }
     }
@@ -462,9 +428,9 @@ void print_usage() {
               << "                                      occur when the speed is respectively one order less and more then the specified one." << std::endl;
     std::cout << "  -n                   0              Integer number used in some functions" << std::endl;
     std::cout << "  -x                   3.14159...     Real number used in some functions" << std::endl;
-    std::cout << "  -z1                  1              First complex number used in some functions" << std::endl;
-    std::cout << "  -z2                  1i             Second complex number used in some functions" << std::endl;
-    std::cout << "  -z3                  1\\45d          Third complex number used in some functions" << std::endl << std::endl;
+    std::cout << "  -1                   1              First complex number used in some functions" << std::endl;
+    std::cout << "  -2                   1i             Second complex number used in some functions" << std::endl;
+    std::cout << "  -3                   1\\45d          Third complex number used in some functions" << std::endl << std::endl;
     std::cout << "COMPLEX NUMBER FORMAT" << std::endl;
     std::cout << "  Complex number can be specified in cartesian and polar coordinates:" << std::endl;
     std::cout << "  - Cartesian format is the sum of a real and imaginary part. The latter is denote by prepending or appending 'i' or 'j' to the number" << std::endl;

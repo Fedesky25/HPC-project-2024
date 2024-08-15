@@ -28,3 +28,7 @@
         <tr><td>WQUXGA</td><td>3840x2400</td></tr>
     </tbody>
 </table>
+
+## getopt
+
+A port of the GNU library `getopt` for Windows was taken from [this repository](https://github.com/Chunde/getopt-for-windows)

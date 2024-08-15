@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.25)
-project(HPC_project_2024 LANGUAGES CXX CUDA)
+project(HPC_project_2024 LANGUAGES CXX CUDA C)
 
 set(CMAKE_CUDA_STANDARD 17)
 set(CMAKE_CXX_STANDARD 17)
@@ -31,6 +31,12 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 endif()
 
 target_link_libraries(HPC_project_2024 CUDA::curand)
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    message("Windows detected -> injecting getopt port")
+    target_sources(HPC_project_2024 PRIVATE getopt-win/getopt.h getopt-win/getopt.c)
+    target_include_directories(HPC_project_2024 PRIVATE getopt-win)
+endif()
 
 set_target_properties(HPC_project_2024 PROPERTIES
         CUDA_SEPARABLE_COMPILATION ON)
