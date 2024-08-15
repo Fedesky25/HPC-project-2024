@@ -37,7 +37,7 @@ void Tiles::cover(unsigned int width, unsigned int height) {
     for(uint_fast16_t i=0; i<N; i++) counts[i] = 0;
 }
 
-__global__ compute_tile(
+__global__ void compute_tile(
         uint32_t N, complex_t * particles, uint_fast16_t * tile_map,
         complex_t min, double hscale, double vscale, uint_fast16_t cols
 ) {
@@ -48,14 +48,13 @@ __global__ compute_tile(
     tile_map[i] = c + r*cols;
 }
 
-__global__ compute_particle_per_tile(uint32_t N, uint_fast16_t * tile_map, uint64_t * count) {
+__global__ void compute_particle_per_tile(uint32_t N, uint_fast16_t * tile_map, uint64_t * count) {
     count[threadIdx.x] = 0;
     auto i = lower_bound(threadIdx.x, tile_map, N);
     while(tile_map[i] == threadIdx.x) {
         count[threadIdx.x]++;
         i++;
     }
-
 }
 
 void Tiles::sort(complex_t &min, complex_t &max,
