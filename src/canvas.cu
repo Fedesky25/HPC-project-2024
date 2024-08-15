@@ -44,7 +44,11 @@ __device__ __host__ void CanvasPixel::set_color(double square_speed, double fact
 
 __device__ __host__ ARGB CanvasPixel::get_color(uint16_t time) const {
     ARGB result;
-    if(time < age || time >= age + multiplicity + 200) result = { BG_R, BG_G, BG_B };
+    if(time < age || time >= age + multiplicity + 200) {
+        result.r = BG_R;
+        result.g = BG_G;
+        result.b = BG_B;
+    }
     else if(time <= age + multiplicity) result = color;
     else {
          auto x = (time - age - multiplicity) * 0.005;
