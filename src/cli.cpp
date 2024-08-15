@@ -123,7 +123,7 @@ complex_t parse_complex(const char * str) {
 
 inline bool isnan(complex_t z) { return isnan(z.real()) || isnan(z.imag()); }
 
-void parse_resolution(const char * str, Canvas * canvas) {
+void parse_resolution(const char * str, CanvasAdapter * canvas) {
     unsigned width = 0, height = 0;
     bool rotate = false;
     if(*str == '^') {
