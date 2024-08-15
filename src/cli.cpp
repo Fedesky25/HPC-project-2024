@@ -324,7 +324,7 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
             { "center",      required_argument, nullptr, 'c' },
             { "distance",    required_argument, nullptr, 'd' },
             { "margin",      required_argument, nullptr, 'm' },
-            { "speed-mag",   required_argument, nullptr, 'v' },
+            { "speed",       required_argument, nullptr, 'v' },
             { "time-scale",  required_argument, nullptr, 't' },
             { "fps",         required_argument, nullptr, 'f' },
             { "duration",    required_argument, nullptr, 'D' },
@@ -378,7 +378,7 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
             {
                 double v = strtod(optarg, &rest);
                 CHECK_REMAINING("speed (v)")
-                config->evolution.speed_factor = std::pow(10.0, 2.0*v);
+                config->evolution.speed_factor = v*v;
                 break;
             }
             case 'f':
@@ -448,8 +448,8 @@ void print_usage() {
               << "                                      prepended to invert the horizontal and vertical sizes." << std::endl;
     std::cout << "  -d  --distance       10             Average distance (in pixels) between two nearby particles in the starting positions" << std::endl;
     std::cout << "  -m  --margin         4              Number of layers of additional particles outside the video. Too low values lead to empty borders." << std::endl;
-    std::cout << "  -v  --speed-mag      0              Order of magnitude of speed around which logarithmic color sensitivity is maximum. Red or blue" << std::endl
-              << "                                      occur when the speed is respectively one order less or more than the specified one." << std::endl;
+    std::cout << "  -v  --speed          1.0            Value of speed around which logarithmic color sensitivity is maximum. Red or blue" << std::endl
+              << "                                      occur when the speed is respectively one order less or more than the specified value." << std::endl;
     std::cout << "  -t  --time-scale     6e-8           Time scale used to convert 1 real second into the computational time unit. Lower values guarantee" << std::endl
               << "                                      a more precise computation of the particle evolution at the cost of less motion." << std::endl;
     std::cout << "  -s  --scale          100px/u        Scale used to convert distance between complex numbers to pixels. The required unit must be one of:" << std::endl
