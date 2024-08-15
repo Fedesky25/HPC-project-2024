@@ -450,7 +450,7 @@ void print_usage() {
     std::cout << "  -m  --margin         4              Number of layers of additional particles outside the video. Too low values lead to empty borders." << std::endl;
     std::cout << "  -v  --speed-mag      0              Order of magnitude of speed around which logarithmic color sensitivity is maximum. Red or blue" << std::endl
               << "                                      occur when the speed is respectively one order less or more than the specified one." << std::endl;
-    std::cout << "  -t  --time-scale     6e-8           Time scale used to convert 1 real second into the computational time unit. Lower values guarantee"
+    std::cout << "  -t  --time-scale     6e-8           Time scale used to convert 1 real second into the computational time unit. Lower values guarantee" << std::endl
               << "                                      a more precise computation of the particle evolution at the cost of less motion." << std::endl;
     std::cout << "  -s  --scale          100px/u        Scale used to convert distance between complex numbers to pixels. The required unit must be one of:" << std::endl
               << "                                      u/px, u/w, u/h, px/u, w/u, h/u; where 'px' is pixel, 'w' is the width of the video (in pixel), 'h'" << std::endl
