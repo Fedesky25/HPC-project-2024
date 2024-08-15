@@ -35,8 +35,8 @@ struct Tiles {
      */
     void sort(
             complex_t& min, complex_t& max,
-            complex_t* particles, uint64_t N,
-            uint_fast16_t ** tile_map_ptr, uint64_t ** count_per_tile_ptr) const;
+            complex_t* particles, uint32_t N,
+            uint_fast16_t ** tile_map_ptr, uint32_t ** count_per_tile_ptr) const;
 };
 
 

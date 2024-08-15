@@ -48,7 +48,7 @@ __global__ void compute_tile(
     tile_map[i] = c + r*cols;
 }
 
-__global__ void compute_particle_per_tile(uint32_t N, uint_fast16_t * tile_map, uint64_t * count) {
+__global__ void compute_particle_per_tile(uint32_t N, uint_fast16_t * tile_map, uint32_t * count) {
     count[threadIdx.x] = 0;
     auto i = lower_bound(threadIdx.x, tile_map, N);
     while(tile_map[i] == threadIdx.x) {
