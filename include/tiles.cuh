@@ -1,5 +1,5 @@
-#ifndef HPC_PROJECT_2024_TILES_HPP
-#define HPC_PROJECT_2024_TILES_HPP
+#ifndef HPC_PROJECT_2024_TILES_CUH
+#define HPC_PROJECT_2024_TILES_CUH
 
 #include "utils.cuh"
 
@@ -25,14 +25,19 @@ struct Tiles {
     void cover(unsigned width, unsigned height);
 
     /**
-     * Groups the N uniformly distributes particles into the tiles
-     * @param min lower-left corner
-     * @param max upper-right corner
-     * @param particles array of particles
+     *
+     * @param min lower-left vertex
+     * @param max upper-right vertex
+     * @param particles device array of particles to be sorted
      * @param N number of particles
+     * @param tile_map_ptr pointer to sorted device array mapping particles to the belonging tile
+     * @param count_per_tile_ptr pointer to device array counting number of particle in each tile
      */
-    void distribute(complex_t& min, complex_t& max, complex_t * particles, uint64_t N);
+    void sort(
+            complex_t& min, complex_t& max,
+            complex_t* particles, uint64_t N,
+            uint_fast16_t ** tile_map_ptr, uint64_t ** count_per_tile_ptr) const;
 };
 
 
-#endif //HPC_PROJECT_2024_TILES_HPP
+#endif //HPC_PROJECT_2024_TILES_CUH
