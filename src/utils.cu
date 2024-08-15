@@ -7,15 +7,14 @@ inline unsigned udist(unsigned a, unsigned b) {
     return (a > b) ? a-b : b-a;
 }
 
-PixelIndex Canvas::where(complex_t z) const {
+int32_t CanvasAdapter::where(complex_t z) const {
     auto row = static_cast<int32_t>(std::round(z.real() - center.real())) + (int32_t)(width >> 1);
     auto col = static_cast<int32_t>(std::round(z.imag() - center.imag())) + (int32_t)(height >> 1);
-    if(row >= height) row = -1;
-    if(col >= width) col = -1;
-    return { row, col };
+    if(row < 0 || row >= height || col < 0 || col > width) return -1;
+    else return col + row * (int32_t)width;
 }
 
-std::ostream &operator<<(std::ostream &os, Canvas &cv) {
+std::ostream &operator<<(std::ostream &os, CanvasAdapter &cv) {
     return os << cv.width << 'x' << cv.height << '@' << cv.center << '$' << cv.scale << "px/u";
 }
 

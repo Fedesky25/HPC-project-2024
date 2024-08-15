@@ -25,14 +25,35 @@ constexpr uint64_t str_to_num(const char str[N+1]) {
 
 using complex_t = cuda::std::complex<double>;
 
-struct PixelIndex {
-    int32_t row, col;
-    inline PixelIndex() : row(-1), col(-1) {}
-    inline PixelIndex(int32_t r, int32_t c) : row(r), col(c) {};
-    inline explicit operator bool () const { return row >= 0 && col >= 0; }
+struct ProtoCanvasPixel {
+    uint16_t age = -1, multiplicity = 0;
+
+    /**
+     * Computes and saves the hue given the speed
+     * @param square_speed
+     * @param factor
+     */
+    __device__ __host__ inline void set_hue(double square_speed, double factor) {
+        hue = static_cast<uint16_t>(65536.0 * square_speed / (square_speed + factor));
+        // 2^(16) / (1 + factor/square_speed)
+    }
+
+    /**
+     * Computes the hue
+     * @return hue in the range [0,1]
+     */
+    __device__ __host__ inline float get_hue() const {
+        return (float)hue * 1.0172526041666666e-5f;
+        // v / 2^(16) * (2/3)
+    }
+
+private:
+    uint16_t hue = 0;
 };
 
-struct Canvas {
+using ProtoCanvas = ProtoCanvasPixel*;
+
+struct CanvasAdapter {
     /** Size in pixel of the canvas */
     uint32_t width = 1920, height = 1080;
     /** Center complex point in the canvas */
@@ -40,14 +61,39 @@ struct Canvas {
     /** How many pixel is the unitary distance */
     double scale = 100.0; // px^(-1)
 
-    friend std::ostream& operator<<(std::ostream& os, Canvas& cv);
+    friend std::ostream& operator<<(std::ostream& os, CanvasAdapter& cv);
 
     /**
      * Converts a complex number into its pixel indexes
      * @param z input complex number
-     * @return pixel index
+     * @return -1 if out of bounds, else the index of the pixel
      */
-    PixelIndex where(complex_t z) const;
+    int32_t where(complex_t z) const;
+
+    /**
+     * Allocates
+     * @tparam GPU
+     * @param count
+     * @return
+     */
+    template<bool GPU>
+    ProtoCanvas * create_proto_canvas(uint32_t count) {
+        ProtoCanvas * array;
+        if constexpr (GPU) {
+            cudaMalloc(&array, count * sizeof(ProtoCanvas));
+        } else {
+            array = (ProtoCanvas*) malloc(count * sizeof(ProtoCanvas));
+        }
+        uint32_t bytes = width * height * sizeof(ProtoCanvasPixel);
+        for(uint32_t i=0; i < count; i++) {
+            if constexpr (GPU) {
+                cudaMalloc(array+i, bytes);
+            } else {
+                array[i] = (ProtoCanvas) malloc(bytes);
+            }
+        }
+        return array;
+    }
 };
 
 struct FnVariables {
@@ -59,7 +105,7 @@ struct FnVariables {
 struct Configuration {
     const char * output = "plot.webp";
     FnVariables vars;
-    Canvas canvas;
+    CanvasAdapter canvas;
     double color_multiplier = 1.0;
     unsigned long particle_distance = 10;
     unsigned long margin = 4;
@@ -83,15 +129,6 @@ struct Configuration {
      * @return number of particles
      */
     uint32_t particle_number() const;
-
-    /**
-     * Computes the color the particle has given its speed
-     * @param speed_squared square of the speed of the particle
-     * @return the color hue
-     */
-    inline double color(double speed_squared) const {
-        return 0.66667 / (1.0 + color_multiplier / speed_squared);
-    }
 };
 
 /**
