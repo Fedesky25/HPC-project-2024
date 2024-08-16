@@ -18,12 +18,7 @@
     auto sites = (complex_t*) malloc(N * sizeof(complex_t));                                        \
     auto n_density = 128*(int64_t)N;                                                                \
     auto density = (complex_t*) malloc(n_density * sizeof(complex_t));                              \
-    auto nearest = (uint32_t*) malloc(n_density * sizeof(uint32_t));                                \
-    std::cout << "Random initial numbers (" << N << " sites, " << n_density << " density points)";  \
-    timers(3) tick(0)                                                                               \
-    rand_complex(z1, z2, sites, N);                                                                 \
-    rand_complex(z1, z2, density, n_density);                                                       \
-    tock_ms(0) std::cout << " generated in " << t_elapsed << "ms" << std::endl;
+    auto nearest = (uint32_t*) malloc(n_density * sizeof(uint32_t));
 
 /**
  * Generates M random complex numbers in the rectangle
@@ -45,7 +40,14 @@ void rand_complex(complex_t z1, complex_t z2, complex_t * rdm, uint64_t M) {
 
 complex_t* particles_serial(complex_t z1, complex_t z2, uint32_t N){
     SETUP_CPU
-    for(uint16_t i=0; i<50; i++){  // Iterating to convergence
+
+    std::cout << "Random initial numbers (" << N << " sites, " << n_density << " density points)";
+    timers(3) tick(0)
+    rand_complex(z1, z2, sites, N);
+    rand_complex(z1, z2, density, n_density);
+    tock_ms(0) std::cout << " generated in " << t_elapsed << "ms" << std::endl;
+
+    for(uint16_t i=0; i<20; i++){  // Iterating to convergence
         for(uint64_t j=0; j<n_density; j++){ // Iterating on density points
             double current, min = INFINITY;
             for(uint64_t k=0; k<N; k++){  // Iterating on sites to save the nearest site to each density point
@@ -74,8 +76,57 @@ complex_t* particles_serial(complex_t z1, complex_t z2, uint32_t N){
 }
 
 
+int rand_complex_omp(
+        complex_t min, complex_t max,
+        complex_t * sites, uint32_t N_sites,
+        complex_t * density, uint64_t N_density
+) {
+    int num_threads;
+    #pragma omp parallel
+    {
+        #pragma omp master
+        num_threads = omp_get_num_threads();
+    };
+    auto seed = std::chrono::system_clock::now().time_since_epoch().count();
+    auto generators = new std::default_random_engine[num_threads];
+    auto dist_real = new std::uniform_real_distribution<double>[num_threads];
+    auto dist_imag = new std::uniform_real_distribution<double>[num_threads];
+    #pragma omp parallel
+    {
+        int t = omp_get_thread_num();
+        generators[t].seed(seed + t);
+        auto re = std::uniform_real_distribution<double>::param_type(min.real(), max.real());
+        auto im = std::uniform_real_distribution<double>::param_type(min.real(), max.real());
+        dist_real[t].param(re);
+        dist_imag[t].param(im);
+    }
+    #pragma omp parallel for schedule(static)
+    for(uint32_t i=0; i<N_sites; i++){
+        auto t = omp_get_thread_num();
+        sites[i].real(real(min) + dist_real[t](generators[t]));
+        sites[i].imag(imag(min) + dist_imag[t](generators[t]));
+    }
+    #pragma omp parallel for schedule(static)
+    for(uint64_t i=0; i<N_density; i++){
+        auto t = omp_get_thread_num();
+        density[i].real(real(min) + dist_real[t](generators[t]));
+        density[i].imag(imag(min) + dist_imag[t](generators[t]));
+    }
+    delete[] generators;
+    delete[] dist_real;
+    delete[] dist_imag;
+    return num_threads;
+}
+
+
 complex_t* particles_omp(complex_t z1, complex_t z2, uint32_t N){
     SETUP_CPU
+
+    std::cout << "Random initial numbers (" << N << " sites, " << n_density << " density points)";  \
+    timers(3) tick(0)
+    rand_complex_omp(min, max, sites, N, density, n_density);
+    tock_ms(0) std::cout << " generated in " << t_elapsed << "ms" << std::endl;
+
     auto count = (int64_t*) malloc(N * sizeof(int64_t));
     omp_set_num_threads(10);
 
@@ -135,14 +186,20 @@ __global__ void compute_nearest(
 
 complex_t* particles_mixed(complex_t z1, complex_t z2, uint32_t N){
     SETUP_CPU
-    auto count = (int64_t*) malloc(N * sizeof(int64_t));
-    auto M = ((n_density-1) >> 10) + 1; // (n_density + 1023) / 1024 = (n_density-1)/ 2^(10)
     complex_t *d_density, *d_sites;
     uint32_t *d_nearest;
     cudaMalloc((void **)&d_density, n_density * sizeof (complex_t));
     cudaMalloc((void **)&d_sites, N * sizeof (complex_t));
     cudaMalloc((void **)&d_nearest, n_density * sizeof (uint32_t));
 
+    std::cout << "Random initial numbers (" << N << " sites, " << n_density << " density points)";  \
+    timers(3) tick(0)
+    rand_complex_omp(z1, z2, sites, N, density, n_density);
+    tock_ms(0) std::cout << " generated in " << t_elapsed << "ms" << std::endl;
+
+    float times[4];
+    auto count = (int64_t*) malloc(N * sizeof(int64_t));
+    auto M = ((n_density-1) >> 10) + 1; // (n_density + 1023) / 1024 = (n_density-1)/ 2^(10)
     cudaMemcpy(d_density, density, n_density * sizeof (complex_t), cudaMemcpyHostToDevice);
 
     PRINT("Arranging particles: ");
