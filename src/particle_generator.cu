@@ -47,7 +47,11 @@ complex_t* particles_serial(complex_t z1, complex_t z2, uint32_t N){
     rand_complex(z1, z2, density, n_density);
     tock_ms(0) std::cout << " generated in " << t_elapsed << "ms" << std::endl;
 
+    float times[2];
+    std::cout << "Lloyd's algorithm:  i | t (ms) | n. c. | s. u." << std::endl;
+    tick(0)
     for(uint16_t i=0; i<20; i++){  // Iterating to convergence
+        tick(1) tick(2)
         for(uint64_t j=0; j<n_density; j++){ // Iterating on density points
             double current, min = INFINITY;
             for(uint64_t k=0; k<N; k++){  // Iterating on sites to save the nearest site to each density point
@@ -58,17 +62,36 @@ complex_t* particles_serial(complex_t z1, complex_t z2, uint32_t N){
                }
             }
         } // Here nearest[] has been filled in
-        for(uint64_t k=0; k<N; k++){ // Iterating on sites
-            double ctr = 0;
+        tock_ms(2) times[0] = t_elapsed; tick(2)
+        for(int64_t k=0; k<N; k++) {
             sites[k] = 0;
-            for(uint64_t j=0; j<n_density; j++){ // Iterating on nearest
-                if(nearest[j] == k){  // Finding density points associated to the k-th site
-                    sites[k] += density[j];
-                    ctr++;
-                }
-            }
-            if(ctr != 0) sites[k] /= ctr;
+            count[k] = 0;
         }
+        for(int64_t j=0; j<n_density; j++){ // Iterating on nearest
+            sites[nearest[j]] += density[j];
+            count[nearest[j]] ++;
+        }
+        for (int64_t k = 0; k < N; k++) {
+            if (count[k] == 0) rand_complex(z1, z2, sites + k, 1);
+            else sites[k] /= (double) count[k];
+        }
+        tock_ms(2) times[1] = t_elapsed; tock_ms(1)
+        float m = 100.0f / t_elapsed;
+        std::cout << "                   " << std::setw(2) << i+1
+                  << " | " << std::setw(6) << std::setprecision(1) << t_elapsed
+                  << " | " << std::setw(5) << std::setprecision(2) << times[0]*m
+                  << " | " << std::setw(5) << std::setprecision(2) << times[1]*m << std::endl;
+//        for(uint64_t k=0; k<N; k++){ // Iterating on sites
+//            double ctr = 0;
+//            sites[k] = 0;
+//            for(uint64_t j=0; j<n_density; j++){ // Iterating on nearest
+//                if(nearest[j] == k){  // Finding density points associated to the k-th site
+//                    sites[k] += density[j];
+//                    ctr++;
+//                }
+//            }
+//            if(ctr != 0) sites[k] /= ctr;
+//        }
     }
     free(density);
     free(nearest);
