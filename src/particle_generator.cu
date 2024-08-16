@@ -257,11 +257,11 @@ complex_t* particles_mixed(complex_t z1, complex_t z2, uint32_t N){
         tock_ms(1)
         float m = 100.0f / t_elapsed;
         std::cout << "                   " << std::setw(2) << i+1
-                  << " | "       << std::setw(6) << std::setprecision(1) << t_elapsed
-                  << " | "      << std::setw(5) << std::setprecision(2) << times[0]*m
-                  << " | "   << std::setw(5) << std::setprecision(2) << times[1]*m
+                  << " | " << std::setw(6) << std::setprecision(1) << t_elapsed
+                  << " | " << std::setw(5) << std::setprecision(2) << times[0]*m
+                  << " | " << std::setw(5) << std::setprecision(2) << times[1]*m
                   << " | " << std::setw(5) << std::setprecision(2) << times[2]*m
-                  << " | "   << std::setw(5) << std::setprecision(2) << times[3]*m << std::endl;
+                  << " | " << std::setw(5) << std::setprecision(2) << times[3]*m << std::endl;
     }
     cudaFree(d_density);
     cudaFree(d_nearest);
