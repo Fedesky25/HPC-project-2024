@@ -2,6 +2,7 @@
 #define HPC_PROJECT_2024_UTILS_CUH
 
 #include <cstdint>
+#include <chrono>
 #include "cuda/std/complex"
 
 #define PI 3.1415926535897932384626433
@@ -14,6 +15,17 @@
     #define PRINT(X)
     #define PRINTLN(X)
 #endif
+
+#define timers(N) std::chrono::steady_clock::time_point _tp[(N)<<1]; float t_elapsed;
+#define tick(I) _tp[(I)<<1] = std::chrono::steady_clock::now();
+#define tock(I, RATIO) { \
+    _tp[1+((I)<<1)] = std::chrono::steady_clock::now(); \
+    t_elapsed = (std::chrono::duration<float, RATIO>(_tp[1+((I)<<1)] - _tp[(I)<<1])).count(); \
+}
+#define tock_us(I) tock(I, std::micro)
+#define tock_ms(I) tock(I, std::milli)
+#define tock_s(I) tock(I, std::ratio<1>)
+
 
 template<unsigned N>
 constexpr uint64_t str_to_num(const char str[N+1]) {
