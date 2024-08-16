@@ -11,6 +11,19 @@
 #include <omp.h>
 #include "lower_bound.cuh"
 
+#include <iostream>
+#include <iomanip>
+
+#define SETUP_CPU \
+    auto sites = (complex_t*) malloc(N * sizeof(complex_t));                                        \
+    auto n_density = 128*(int64_t)N;                                                                \
+    auto density = (complex_t*) malloc(n_density * sizeof(complex_t));                              \
+    auto nearest = (uint32_t*) malloc(n_density * sizeof(uint32_t));                                \
+    std::cout << "Random initial numbers (" << N << " sites, " << n_density << " density points)";  \
+    timers(3) tick(0)                                                                               \
+    rand_complex(z1, z2, sites, N);                                                                 \
+    rand_complex(z1, z2, density, n_density);                                                       \
+    tock_ms(0) std::cout << " generated in " << t_elapsed << "ms" << std::endl;
 
 /**
  * Generates M random complex numbers in the rectangle
@@ -31,17 +44,7 @@ void rand_complex(complex_t z1, complex_t z2, complex_t * rdm, uint64_t M) {
 
 
 complex_t* particles_serial(complex_t z1, complex_t z2, uint32_t N){
-
-    auto sites = (complex_t*) malloc(N * sizeof(complex_t));
-
-    auto n_density = 128*(int64_t)N;
-    auto density = (complex_t*) malloc(n_density * sizeof(complex_t));
-    rand_complex(z1, z2, density, n_density); // Random complex density points
-
-    rand_complex(z1, z2, sites, N); // Random complex sites
-
-    // Moving sites
-    auto nearest = (uint32_t*) malloc(n_density * sizeof(uint32_t));// To save nearest sites
+    SETUP_CPU
     for(uint16_t i=0; i<50; i++){  // Iterating to convergence
         for(uint64_t j=0; j<n_density; j++){ // Iterating on density points
             double current, min = INFINITY;
@@ -72,18 +75,8 @@ complex_t* particles_serial(complex_t z1, complex_t z2, uint32_t N){
 
 
 complex_t* particles_omp(complex_t z1, complex_t z2, uint32_t N){
-
-    auto sites = (complex_t*) malloc(N * sizeof(complex_t));
+    SETUP_CPU
     auto count = (int64_t*) malloc(N * sizeof(int64_t));
-    PRINTLN("Generating " << N << " random sites");
-    rand_complex(z1, z2, sites, N); // Random complex sites
-
-    auto n_density = 128*(int64_t)N;
-    auto density = (complex_t*) malloc(n_density * sizeof(complex_t));
-    PRINTLN("Generating " << n_density << " density points")
-    rand_complex(z1, z2, density, n_density); // Random complex density points
-    auto nearest = (uint32_t*) malloc(n_density * sizeof(uint32_t));// To save nearest sites
-
     omp_set_num_threads(10);
 
     for(int16_t i=0; i<30; i++){  // Iterating to convergence
@@ -141,19 +134,8 @@ __global__ void compute_nearest(
 }
 
 complex_t* particles_mixed(complex_t z1, complex_t z2, uint32_t N){
-
-    auto sites = (complex_t*) malloc(N * sizeof(complex_t));
+    SETUP_CPU
     auto count = (int64_t*) malloc(N * sizeof(int64_t));
-    PRINTLN("Generating " << N << " random sites");
-    rand_complex(z1, z2, sites, N); // Random complex sites
-
-    auto n_density = 128*(int64_t)N;
-    auto density = (complex_t*) malloc(n_density * sizeof(complex_t));
-    PRINTLN("Generating " << n_density << " density points")
-    rand_complex(z1, z2, density, n_density); // Random complex density points
-
-    auto nearest = (uint32_t*) malloc(n_density * sizeof(uint32_t));// To save nearest sites
-
     auto M = ((n_density-1) >> 10) + 1; // (n_density + 1023) / 1024 = (n_density-1)/ 2^(10)
     complex_t *d_density, *d_sites;
     uint32_t *d_nearest;
