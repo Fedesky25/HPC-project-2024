@@ -24,6 +24,7 @@ add_executable(HPC_project_2024
         include/particle_generator.cuh src/particle_generator.cu
         include/tiles.cuh src/tiles.cu
         src/canvas.cu include/canvas.cuh
+        include/evolution.cuh src/evolution.cu
         include/complex_functions.cuh src/complex_functions.cu
 )
 
