@@ -167,8 +167,7 @@ complex_t* particles_mixed(complex_t z1, complex_t z2, uint32_t N){
     for(int16_t i=0; i<30; i++){  // Iterating to convergence
         cudaMemcpy(d_sites, sites, N * sizeof (complex_t), cudaMemcpyHostToDevice);
         compute_nearest<<<M, 1024>>>(d_density, n_density, d_sites, N, d_nearest);
-        cudaMemcpy(nearest, d_nearest, n_density * sizeof (int64_t), cudaMemcpyDeviceToHost);
-
+        cudaMemcpy(nearest, d_nearest, n_density * sizeof (uint32_t), cudaMemcpyDeviceToHost);
         for(int64_t k=0; k<N; k++) {
             sites[k] = 0;
             count[k] = 0;
