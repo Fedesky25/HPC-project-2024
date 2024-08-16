@@ -102,13 +102,13 @@ int rand_complex_omp(
         dist_imag[t].param(im);
     }
     #pragma omp parallel for schedule(static)
-    for(uint32_t i=0; i<N_sites; i++){
+    for(int32_t i=0; i<N_sites; i++){
         auto t = omp_get_thread_num();
         sites[i].real(real(min) + dist_real[t](generators[t]));
         sites[i].imag(imag(min) + dist_imag[t](generators[t]));
     }
     #pragma omp parallel for schedule(static)
-    for(uint64_t i=0; i<N_density; i++){
+    for(int64_t i=0; i<N_density; i++){
         auto t = omp_get_thread_num();
         density[i].real(real(min) + dist_real[t](generators[t]));
         density[i].imag(imag(min) + dist_imag[t](generators[t]));
