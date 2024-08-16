@@ -128,10 +128,11 @@ complex_t* particles_omp(complex_t z1, complex_t z2, uint32_t N){
     tock_ms(0) std::cout << " generated in " << t_elapsed << "ms" << std::endl;
 
     auto count = (int64_t*) malloc(N * sizeof(int64_t));
-    omp_set_num_threads(10);
-
-    for(int16_t i=0; i<30; i++){  // Iterating to convergence
-        PRINTLN("Iteration " << i+1)
+    float times[2];
+    std::cout << "Lloyd's algorithm:  i | t (ms) | n. c. | s. u.    using " << num_threads << " threads" << std::endl;
+    tick(0)
+    for(int16_t i=0; i<20; i++){  // Iterating to convergence
+        tick(1) tick(2)
         #pragma omp parallel for shared(nearest, density, sites) schedule(static)
         for (int64_t j = 0; j < n_density; j++) { // Iterating on density points
             double current, min = INFINITY;
@@ -143,6 +144,7 @@ complex_t* particles_omp(complex_t z1, complex_t z2, uint32_t N){
                 }
             }
         }
+        tock_ms(2) times[0] = t_elapsed; tick(2)
         for(int64_t k=0; k<N; k++) {
             sites[k] = 0;
             count[k] = 0;
@@ -151,16 +153,23 @@ complex_t* particles_omp(complex_t z1, complex_t z2, uint32_t N){
             sites[nearest[j]] += density[j];
             count[nearest[j]] ++;
         }
-
         #pragma omp parallel for shared(sites, count) schedule(static)
         for (int64_t k = 0; k < N; k++) {
             if (count[k] == 0) rand_complex(z1, z2, sites + k, 1);
             else sites[k] /= (double) count[k];
         }
+        tock_ms(2) times[1] = t_elapsed; tock_ms(1)
+        float m = 100.0f / t_elapsed;
+        std::cout << "                   " << std::setw(2) << i+1
+                  << " | " << std::setw(6) << std::setprecision(1) << t_elapsed
+                  << " | " << std::setw(5) << std::setprecision(2) << times[0]*m
+                  << " | " << std::setw(5) << std::setprecision(2) << times[1]*m << std::endl;
     }
     free(density);
     free(nearest);
     free(count);
+    tock_s(0)
+    std::cout << "  :: total " << std::setprecision(3) << t_elapsed << 's' << std::endl;
     return sites;
 }
 
@@ -202,11 +211,17 @@ complex_t* particles_mixed(complex_t z1, complex_t z2, uint32_t N){
     auto M = ((n_density-1) >> 10) + 1; // (n_density + 1023) / 1024 = (n_density-1)/ 2^(10)
     cudaMemcpy(d_density, density, n_density * sizeof (complex_t), cudaMemcpyHostToDevice);
 
-    PRINT("Arranging particles: ");
-    for(int16_t i=0; i<30; i++){  // Iterating to convergence
+    std::cout << "Lloyd's algorithm:  i | t (ms) | s. -> | n. c. | n. <- | s. u." << std::endl << std::fixed;
+    tick(0)
+
+    for(int16_t i=0; i<20; i++){  // Iterating to convergence
+        tick(1) tick(2)
         cudaMemcpy(d_sites, sites, N * sizeof (complex_t), cudaMemcpyHostToDevice);
+        tock_ms(2) times[0] = t_elapsed; tick(2)
         compute_nearest<<<M, 1024>>>(d_density, n_density, d_sites, N, d_nearest);
+        tock_ms(2) times[1] = t_elapsed; tick(2)
         cudaMemcpy(nearest, d_nearest, n_density * sizeof (uint32_t), cudaMemcpyDeviceToHost);
+        tock_ms(2) times[2] = t_elapsed; tick(2)
         for(int64_t k=0; k<N; k++) {
             sites[k] = 0;
             count[k] = 0;
@@ -215,20 +230,28 @@ complex_t* particles_mixed(complex_t z1, complex_t z2, uint32_t N){
             sites[nearest[j]] += density[j];
             count[nearest[j]] ++;
         }
-
         #pragma omp parallel for shared(sites, count) schedule(static)
         for (int64_t k = 0; k < N; k++) {
             if (count[k] == 0) rand_complex(z1, z2, sites + k, 1);
             else sites[k] /= (double)count[k];
         }
-        PRINT(' ' << i+1)
+        tock_ms(2) times[3] = t_elapsed;
+        tock_ms(1)
+        float m = 100.0f / t_elapsed;
+        std::cout << "                   " << std::setw(2) << i+1
+                  << " | "       << std::setw(6) << std::setprecision(1) << t_elapsed
+                  << " | "      << std::setw(5) << std::setprecision(2) << times[0]*m
+                  << " | "   << std::setw(5) << std::setprecision(2) << times[1]*m
+                  << " | " << std::setw(5) << std::setprecision(2) << times[2]*m
+                  << " | "   << std::setw(5) << std::setprecision(2) << times[3]*m << std::endl;
     }
-    PRINTLN(' ');
     cudaFree(d_density);
     cudaFree(d_nearest);
     free(density);
     free(nearest);
     free(count);
+    tock_s(0)
+    std::cout << "  :: total " << std::setprecision(3) << t_elapsed << 's' << std::endl;
     return sites;
 }
 
