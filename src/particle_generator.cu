@@ -265,12 +265,13 @@ complex_t* particles_mixed(complex_t z1, complex_t z2, uint32_t N){
     }
     cudaFree(d_density);
     cudaFree(d_nearest);
+    free(sites);
     free(density);
     free(nearest);
     free(count);
     tock_s(0)
     std::cout << "  :: total " << std::setprecision(3) << t_elapsed << 's' << std::endl;
-    return sites;
+    return d_sites;
 }
 
 __global__ void scale_complex(double real, double imag, complex_t offset, complex_t * data, uint64_t N) {
