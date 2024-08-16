@@ -334,7 +334,7 @@ complex_t* particles_gpu(complex_t z1, complex_t z2, uint32_t N){
     curandGenerateUniformDouble(gen, (double*) d_sites, N*2);
     scale_complex<<<M, 1024>>>(deltaReal, deltaImag, z1, d_sites, N);
     curandGenerateUniformDouble(gen, (double*) d_density, n_density*2);
-    scale_complex<<<D, 1024>>>(deltaReal, deltaImag, z1, d_density, N);
+    scale_complex<<<D, 1024>>>(deltaReal, deltaImag, z1, d_density, n_density);
     tock_ms(0) std::cout << " generated in " << t_elapsed << "ms" << std::endl;
 
     float times[3];
