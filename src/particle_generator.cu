@@ -342,14 +342,9 @@ complex_t* particles_gpu(complex_t z1, complex_t z2, uint32_t N){
         update_sites<<<M, 1024>>>(d_density, n_density, d_sites, N, d_nearest);
         PRINT(' ' << i+1)
     }
-    PRINTLN(' ');
 
-    auto sites = (complex_t*) malloc(N * sizeof(complex_t));
-    cudaMemcpy(sites, d_sites, N * sizeof (complex_t), cudaMemcpyDeviceToHost);
 
-    cudaFree(d_sites);
     cudaFree(d_density);
     cudaFree(d_nearest);
-
-    return sites;
+    return d_sites;
 }
