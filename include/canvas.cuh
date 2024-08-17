@@ -18,7 +18,7 @@ struct CanvasPixel {
      * @param age value of the age
      * @returns whether the operation was successful
      */
-    bool update_age(uint16_t age);
+    __device__ __host__ bool update_age(uint16_t age);
 
     /**
      * Computes and saves the hue given the speed

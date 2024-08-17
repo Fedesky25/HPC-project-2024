@@ -7,7 +7,7 @@
 #define BG_G 21
 #define BG_B 25
 
-bool CanvasPixel::update_age(uint16_t _age) {
+__device__ __host__ bool CanvasPixel::update_age(uint16_t _age) {
     bool ok = true;
     if(age == UINT16_MAX) age = _age;
     else if(age + multiplicity + 1 == _age) multiplicity++;
