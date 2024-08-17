@@ -53,7 +53,10 @@ struct CanvasAdapter {
      * @param z input complex number
      * @return -1 if out of bounds, else the index of the pixel
      */
-    int32_t where(complex_t z) const;
+    #ifdef __CUDACC__
+    __device__ __host__
+    #endif
+    int32_t where(complex_t z);
 };
 
 struct FnVariables {
