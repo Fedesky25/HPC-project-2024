@@ -48,7 +48,7 @@ complex_t* particles_serial(complex_t z1, complex_t z2, uint32_t N){
     tock_ms(0) std::cout << " generated in " << t_elapsed << "ms" << std::endl;
 
     float times[2];
-    std::cout << "Lloyd's algorithm:  i | t (ms) | n. c. | s. u." << std::endl;
+    std::cout << "Lloyd's algorithm:  i | t  (s) | n. c. | s. u." << std::endl << std::fixed;
     tick(0)
     for(uint16_t i=0; i<20; i++){  // Iterating to convergence
         tick(1) tick(2)
@@ -62,7 +62,7 @@ complex_t* particles_serial(complex_t z1, complex_t z2, uint32_t N){
                }
             }
         } // Here nearest[] has been filled in
-        tock_ms(2) times[0] = t_elapsed; tick(2)
+        tock_s(2) times[0] = t_elapsed; tick(2)
         for(int64_t k=0; k<N; k++) {
             sites[k] = 0;
             count[k] = 0;
@@ -75,10 +75,10 @@ complex_t* particles_serial(complex_t z1, complex_t z2, uint32_t N){
             if (count[k] == 0) rand_complex(z1, z2, sites + k, 1);
             else sites[k] /= (double) count[k];
         }
-        tock_ms(2) times[1] = t_elapsed; tock_ms(1)
+        tock_s(2) times[1] = t_elapsed; tock_s(1)
         float m = 100.0f / t_elapsed;
         std::cout << "                   " << std::setw(2) << i+1
-                  << " | " << std::setw(6) << std::setprecision(1) << t_elapsed
+                  << " | " << std::setw(6) << std::setprecision(3) << t_elapsed
                   << " | " << std::setw(5) << std::setprecision(2) << times[0]*m
                   << " | " << std::setw(5) << std::setprecision(2) << times[1]*m << std::endl;
 //        for(uint64_t k=0; k<N; k++){ // Iterating on sites
@@ -93,6 +93,7 @@ complex_t* particles_serial(complex_t z1, complex_t z2, uint32_t N){
 //            if(ctr != 0) sites[k] /= ctr;
 //        }
     }
+    tock_s(0) std::cout << "  :: total " << std::setprecision(3) << t_elapsed << 's' << std::endl;
     free(density);
     free(nearest);
     free(count);
