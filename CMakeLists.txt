@@ -40,7 +40,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     target_include_directories(HPC_project_2024 PRIVATE getopt-win)
 endif()
 
-set_target_properties(HPC_project_2024 PROPERTIES
-        CUDA_SEPARABLE_COMPILATION ON)
+set_target_properties(HPC_project_2024 PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+set_target_properties(HPC_project_2024 PROPERTIES CUDA_ARCHITECTURES all-major)
 
 #target_compile_options(HPC_project_2024 PRIVATE $<$<COMPILE_LANGUAGE:CUDA>: -Xcompiler=-fopenmp>)
