@@ -150,7 +150,7 @@ complex_t* particles_omp(complex_t z1, complex_t z2, uint32_t N){
     tock_ms(0) std::cout << " generated in " << t_elapsed << "ms" << std::endl;
 
     float times[2];
-    std::cout << "Lloyd's algorithm:  i | t  (s) | n. c. | s. u.    using " << num_threads << " threads" << std::endl;
+    std::cout << "Lloyd's algorithm:  i | t  (s) | n. c. | s. u.    using " << num_threads << " threads" << std::endl << std::fixed;
     tick(0)
     for(int16_t i=0; i<20; i++){  // Iterating to convergence
         tick(1) tick(2)
