@@ -76,6 +76,9 @@ __device__ complex_t cosine_mult(complex_t z, FnVariables variables);
 /** @return z1 * sin(z * z2) */
 __device__ complex_t mult_sine(complex_t z, FnVariables variables);
 
+/** @return tan(z) */
+__device__ complex_t tangent(complex_t z, FnVariables variables);
+
 /** @return conj(z)*i */
 __device__ complex_t conjugate_i(complex_t z, FnVariables variables);
 
@@ -85,8 +88,38 @@ __device__ complex_t conjugate_z(complex_t z, FnVariables variables);
 /** @return (z^2 -z1)(z-z2)^2 / (z^2 - z3)  */
 __device__ complex_t fraction(complex_t z, FnVariables variables);
 
-
+/** @return generalization to complex of Fibonacci sequence */
 __device__ complex_t fibonacci(complex_t z, FnVariables variables);
+
+/** @return Euler's gamma */
 __device__ complex_t gamma(complex_t z, FnVariables variables);
+
+/** @return sinh(z) */
+__device__ complex_t hsine(complex_t z, FnVariables variables);
+
+/** @return sinh(z + z1) */
+__device__ complex_t hsine_sum(complex_t z, FnVariables variables);
+
+/** @return sinh(z * z1) */
+__device__ complex_t hcsine_mult(complex_t z, FnVariables variables);
+
+/** @return cosh(z) */
+__device__ complex_t hcosine(complex_t z, FnVariables variables);
+
+/** @return cosh(z + z1) */
+__device__ complex_t hcosine_sum(complex_t z, FnVariables variables);
+
+/** @return cosh(z * z1) */
+__device__ complex_t hcosine_mult(complex_t z, FnVariables variables);
+
+/** @return tanh(z) */
+__device__ complex_t htangent(complex_t z, FnVariables variables);
+
+/** @return tanh(z + z1) */
+__device__ complex_t htangent_sum(complex_t z, FnVariables variables);
+
+/** @return tanh(z * z1) */
+__device__ complex_t htangent_mult(complex_t z, FnVariables variables);
+
 
 #endif //HPC_PROJECT_2024_COMPLEX_FUNCTIONS_CUH

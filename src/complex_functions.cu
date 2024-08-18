@@ -101,6 +101,10 @@ __device__ complex_t mult_sine(complex_t z, FnVariables variables){
     return variables.z[0] * cuda::std::sin(z * variables.z[1]);
 }
 
+__device__ complex_t tangent(complex_t z, FnVariables variables){
+    return cuda::std::tan(z);
+}
+
 __device__ complex_t conjugate_i(complex_t z, FnVariables variables){
     complex_t i;
     i.real(0);
@@ -117,11 +121,55 @@ __device__ complex_t fraction(complex_t z, FnVariables variables){
 }
 
 __device__ complex_t fibonacci(complex_t z, FnVariables variables){
-    // TODO
-    return 0.0;
+    double phi = (1+cuda::std::sqrt(5))/2;
+    return (cuda::std::pow(phi, z) - (cos(PI*z) * cuda::std::pow(phi, -z)))/cuda::std::sqrt(5);
 }
 
 __device__ complex_t gamma(complex_t z, FnVariables variables){
-    // TODO
-    return 0.0;
+    // TODO define dx and tolerance
+    double dx, tol;
+    double x = 0;
+    complex_t gamma = 0, prev;
+    do {
+        prev = gamma;
+        x += dx;
+        gamma += (cuda::std::pow(x, z - (complex_t)1) * cuda::std::exp(-x));
+    } while(cuda::std::norm(gamma-prev) > tol);
+    return gamma;
+}
+
+__device__ complex_t hsine(complex_t z, FnVariables variables){
+    return cuda::std::sinh(z);
+}
+
+__device__ complex_t hsine_sum(complex_t z, FnVariables variables){
+    return cuda::std::sinh(z + variables.z[0]);
+}
+
+__device__ complex_t hsine_mult(complex_t z, FnVariables variables){
+    return cuda::std::sinh(z * variables.z[0]);
+}
+
+__device__ complex_t hcosine(complex_t z, FnVariables variables){
+    return cuda::std::cosh(z);
+}
+
+__device__ complex_t hcosine_sum(complex_t z, FnVariables variables){
+    return cuda::std::cosh(z + variables.z[0]);
+}
+
+__device__ complex_t hcosine_mult(complex_t z, FnVariables variables){
+    return cuda::std::cosh(z * variables.z[0]);
+}
+
+__device__ complex_t htangent(complex_t z, FnVariables variables){
+    return cuda::std::tanh(z);
+}
+
+__device__ complex_t htangent_sum(complex_t z, FnVariables variables){
+    return cuda::std::tanh(z + variables.z[0]);
+}
+
+__device__ complex_t htangent_mult(complex_t z, FnVariables variables){
+    return cuda::std::tanh(z * variables.z[0]);
 }
