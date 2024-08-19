@@ -121,5 +121,8 @@ __device__ complex_t htangent_sum(complex_t z, FnVariables variables);
 /** @return tanh(z * z1) */
 __device__ complex_t htangent_mult(complex_t z, FnVariables variables);
 
+typedef complex_t (*ComplexFunction_t)(complex_t, FnVariables);
+
+ComplexFunction_t get_function_from_string(const char * str);
 
 #endif //HPC_PROJECT_2024_COMPLEX_FUNCTIONS_CUH

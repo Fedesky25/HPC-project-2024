@@ -1,9 +1,11 @@
 #include <iostream>
 #include "utils.cuh"
 #include "cli.hpp"
+#include "getopt.h"
 #include "tiles.cuh"
 #include "particle_generator.cuh"
 #include "fstream"
+#include "complex_functions.cuh"
 
 int main(int argc, char * argv[]) {
     if(argc < 2) {
@@ -13,7 +15,17 @@ int main(int argc, char * argv[]) {
 
     Configuration config;
     auto err = parse_args(argc, argv, &config);
-    if(err) return 2;
+    if(err) return 1;
+
+    if(optind >= argc) {
+        std::cerr << "Missing function to plot" << std::endl;
+        return 1;
+    }
+    auto fn = get_function_from_string(argv[optind]);
+    if(fn == nullptr) {
+        std::cerr << "Function string name not recognized" << std::endl;
+        return 1;
+    }
 
 
     std::cout << "Configuration:" << std::endl;
