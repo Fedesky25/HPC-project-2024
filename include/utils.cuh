@@ -103,4 +103,18 @@ struct Configuration {
     uint32_t particle_number() const;
 };
 
+/**
+ * Copies the provided data into the device memory and returns a device pointer to such copy
+ * @tparam T
+ * @param obj host pointer to data
+ * @return device pointer to a copy of obj
+ */
+template<class T>
+T* devicify(T* obj) {
+    T* d_obj;
+    cudaMalloc(&d_obj, obj, sizeof(T));
+    cudaMemcpy(d_obj, obj, sizeof(T));
+    return d_obj;
+}
+
 #endif //HPC_PROJECT_2024_UTILS_CUH
