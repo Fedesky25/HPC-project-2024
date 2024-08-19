@@ -13,6 +13,11 @@ struct CanvasPixel {
     /** @return whether a particle passed through the pixel  */
     explicit inline operator bool() const { return age != UINT16_MAX; }
 
+    __device__ __host__ inline void reset() {
+        age = UINT16_MAX;
+        multiplicity = 0;
+    }
+
     /**
      * Updates the age of this pixel. Multiplicity is increased if necessary
      * @param age value of the age
@@ -42,7 +47,8 @@ private:
 
 using Canvas = CanvasPixel*;
 
-Canvas * create_canvas(uint32_t count);
+Canvas * create_canvas_host(uint32_t count, CanvasAdapter * adapter);
+Canvas * create_canvas_device(uint32_t count, CanvasAdapter * adapter);
 
 
 #endif //HPC_PROJECT_2024_CANVAS_CUH
