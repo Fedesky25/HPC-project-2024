@@ -101,7 +101,7 @@ __device__ complex_t hsine(complex_t z, FnVariables variables);
 __device__ complex_t hsine_sum(complex_t z, FnVariables variables);
 
 /** @return sinh(z * z1) */
-__device__ complex_t hcsine_mult(complex_t z, FnVariables variables);
+__device__ complex_t hsine_mult(complex_t z, FnVariables variables);
 
 /** @return cosh(z) */
 __device__ complex_t hcosine(complex_t z, FnVariables variables);
