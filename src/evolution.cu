@@ -6,7 +6,7 @@
 
 __global__ void evolve(Canvas* canvas, CanvasAdapter * adapter, EvolutionOptions options, complex_t* particles,
                        uint32_t* belonging_tile, uint32_t* count,
-                       complex_t (*func)(complex_t, FnVariables), FnVariables variables
+                       complex_t (*func)(complex_t, FnVariables*), FnVariables* variables
                        ){
     auto tile_idx = threadIdx.x + threadIdx.y * blockDim.x;
     auto canvas_idx = blockIdx.x + blockIdx.y * gridDim.x;
