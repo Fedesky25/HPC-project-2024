@@ -19,7 +19,14 @@
  * @param func
  * @param variables variables of the function
  */
-__global__ void evolve(Canvas* canvas, CanvasAdapter* adapter, EvolutionOptions options, complex_t* particles,
+__global__ void evolve_gpu(Canvas* canvas, CanvasAdapter* adapter, EvolutionOptions options, complex_t* particles,
                        uint32_t* belonging_tile, uint32_t* count, complex_t (*func)(complex_t), FnVariables* variables);
+
+Canvas* evolve_omp(CanvasAdapter* adapter, EvolutionOptions options, complex_t* particles,
+                   complex_t (*func)(complex_t, FnVariables*), FnVariables* variables);
+
+__device__ __host__ void draw(Canvas* canvas, CanvasAdapter * adapter, EvolutionOptions options,
+                              complex_t (*func)(complex_t, FnVariables*), FnVariables* variables,
+                              complex_t z, unsigned int canvas_idx);
 
 #endif //HPC_PROJECT_2024_EVOLUTION_CUH
