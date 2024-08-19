@@ -3,6 +3,9 @@
 //
 #include "complex_functions.cuh"
 
+#define PHI 1.618033988749895
+#define INV_SQRT_5 0.4472135954999579
+
 __device__ complex_t polynomial1(complex_t z, FnVariables variables){
     return variables.z[0] * z + variables.z[2];
 }
@@ -121,8 +124,7 @@ __device__ complex_t fraction(complex_t z, FnVariables variables){
 }
 
 __device__ complex_t fibonacci(complex_t z, FnVariables variables){
-    double phi = (1+cuda::std::sqrt(5))/2;
-    return (cuda::std::pow(phi, z) - (cos(PI*z) * cuda::std::pow(phi, -z)))/cuda::std::sqrt(5);
+    return (cuda::std::pow(PHI, z) - (cos(PI*z) * cuda::std::pow(PHI, -z))) * INV_SQRT_5;
 }
 
 __device__ complex_t gamma(complex_t z, FnVariables variables){
