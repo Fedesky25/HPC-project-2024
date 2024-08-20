@@ -13,6 +13,7 @@ struct CanvasPixel {
     /** @return whether a particle passed through the pixel  */
     explicit inline operator bool() const { return age != UINT16_MAX; }
 
+    /** Resets the pixel as if a particle never passed through it */
     __device__ __host__ inline void reset() {
         age = UINT16_MAX;
         multiplicity = 0;
@@ -47,7 +48,20 @@ private:
 
 using Canvas = CanvasPixel*;
 
+/**
+ * Creates and initializes an array of canvas on the host
+ * @param count number of canvas to create
+ * @param adapter
+ * @return host pointer to array of canvas
+ */
 Canvas * create_canvas_host(uint32_t count, CanvasAdapter * adapter);
+
+/**
+ * Creates and initializes an array of canvas on the device
+ * @param count number of canvas to create
+ * @param adapter
+ * @return device pointer to array of canvas
+ */
 Canvas * create_canvas_device(uint32_t count, CanvasAdapter * adapter);
 
 
