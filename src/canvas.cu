@@ -68,6 +68,7 @@ Canvas * create_canvas_host(uint32_t count, CanvasAdapter * adapter) {
         for(uint32_t j=0; j<area; j++) c[j].reset();
         p[i] = c;
     }
+    return p;
 }
 
 __global__ void init_canvas_array(Canvas * array, uint32_t len) {
