@@ -56,19 +56,21 @@ Canvas* evolve_omp(CanvasAdapter* adapter, EvolutionOptions options, complex_t* 
                 complex_t (*func)(complex_t, FnVariables*), FnVariables* variables){
 
     Canvas* canvas;
+    int threads;
 
     #pragma omp parallel
+    {
+        #pragma omp master
+        threads = omp_get_num_threads();
+    };
 
-        #pragma omp sections
+    canvas = create_canvas_host(threads, adapter);
 
-            #pragma omp section
-                canvas = create_canvas_host(omp_get_num_threads(), adapter);
-
-        #pragma omp parallel for schedule(static)
-            for (uint64_t i = 0; i < N_particles; i++) {
-                auto tid = omp_get_thread_num();
-                draw(canvas, adapter, options, func, variables, particles[i], tid);
-            }
+    #pragma omp parallel for schedule(static)
+        for (uint64_t i = 0; i < N_particles; i++) {
+            auto tid = omp_get_thread_num();
+            draw(canvas, adapter, options, func, variables, particles[i], tid);
+        }
 
     return canvas;
 }
