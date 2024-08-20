@@ -55,14 +55,20 @@ __global__ void evolve_gpu(Canvas* canvas, CanvasAdapter * adapter, EvolutionOpt
 Canvas* evolve_omp(CanvasAdapter* adapter, EvolutionOptions options, complex_t* particles, uint64_t N_particles,
                 complex_t (*func)(complex_t, FnVariables*), FnVariables* variables){
 
-    Canvas* canvas; // = (Canvas*) malloc(sizeof (Canvas) * omp_get_num_threads())
-    //TODO: create canvases
+    Canvas* canvas;
 
-    #pragma omp parallel for schedule(static)
-    for(uint64_t i=0; i<N_particles; i++){
-        auto tid = omp_get_thread_num();
-        draw(canvas, adapter, options, func, variables, particles[i], tid);
-    }
+    #pragma omp parallel
+
+        #pragma omp sections
+
+            #pragma omp section
+                canvas = create_canvas_host(omp_get_num_threads(), adapter);
+
+        #pragma omp parallel for schedule(static)
+            for (uint64_t i = 0; i < N_particles; i++) {
+                auto tid = omp_get_thread_num();
+                draw(canvas, adapter, options, func, variables, particles[i], tid);
+            }
 
     return canvas;
 }
