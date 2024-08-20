@@ -106,40 +106,23 @@ int rand_complex_omp(
         complex_t * sites, uint32_t N_sites,
         complex_t * density, uint64_t N_density
 ) {
-    int num_threads;
-    #pragma omp parallel
-    {
-        #pragma omp master
-        num_threads = omp_get_num_threads();
-    };
     auto seed = std::chrono::system_clock::now().time_since_epoch().count();
-    auto generators = new std::default_random_engine[num_threads];
-    auto dist_real = new std::uniform_real_distribution<double>[num_threads];
-    auto dist_imag = new std::uniform_real_distribution<double>[num_threads];
     #pragma omp parallel
     {
-        int t = omp_get_thread_num();
-        generators[t].seed(seed + t);
-        auto re = std::uniform_real_distribution<double>::param_type(min.real(), max.real());
-        auto im = std::uniform_real_distribution<double>::param_type(min.real(), max.real());
-        dist_real[t].param(re);
-        dist_imag[t].param(im);
-    }
-    #pragma omp parallel for schedule(static)
-    for(int32_t i=0; i<N_sites; i++){
-        auto t = omp_get_thread_num();
-        sites[i].real(real(min) + dist_real[t](generators[t]));
-        sites[i].imag(imag(min) + dist_imag[t](generators[t]));
-    }
-    #pragma omp parallel for schedule(static)
-    for(int64_t i=0; i<N_density; i++){
-        auto t = omp_get_thread_num();
-        density[i].real(real(min) + dist_real[t](generators[t]));
-        density[i].imag(imag(min) + dist_imag[t](generators[t]));
-    }
-    delete[] generators;
-    delete[] dist_real;
-    delete[] dist_imag;
+        std::default_random_engine generator(seed + omp_get_thread_num());
+        std::uniform_real_distribution<double> dist_real(min.real(), max.real());
+        std::uniform_real_distribution<double> dist_imag(min.real(), max.real());
+        #pragma omp for schedule(static)
+        for(int32_t i=0; i<N_sites; i++){
+            sites[i].real(real(min) + dist_real(generator));
+            sites[i].imag(imag(min) + dist_imag(generator));
+        }
+        #pragma omp for schedule(static)
+        for(int64_t i=0; i<N_density; i++){
+            density[i].real(real(min) + dist_real(generators));
+            density[i].imag(imag(min) + dist_imag(generators));
+        }
+    };
     return num_threads;
 }
 
