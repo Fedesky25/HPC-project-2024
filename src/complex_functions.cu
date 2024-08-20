@@ -6,6 +6,15 @@
 #define PHI 1.618033988749895
 #define INV_SQRT_5 0.4472135954999579
 
+__device__ complex_t complex_log(complex_t z, long k){
+    complex_t phase;
+    phase.real(0);
+    phase.imag(cuda::std::arg(z) + 2*PI*k);
+    return (log(cuda::std::abs(z)) + phase);
+}
+
+// ------------------------------------------------------------------------------------- polynomial
+
 __device__ complex_t polynomial1(complex_t z, FnVariables* variables){
     return variables->z[0] * z + variables->z[2];
 }
@@ -22,12 +31,7 @@ __device__ complex_t polynomial_fact(complex_t z, FnVariables* variables){
     return (z-variables->z[0])*(z-variables->z[1])*(z-variables->z[2]);
 }
 
-__device__ complex_t complex_log(complex_t z, long k){
-    complex_t phase;
-    phase.real(0);
-    phase.imag(cuda::std::arg(z) + 2*PI*k);
-    return (log(cuda::std::abs(z)) + phase);
-}
+// ------------------------------------------------------------------------------------- power
 
 __device__ complex_t int_power(complex_t z, FnVariables* variables){
     return cuda::std::pow(z, variables->n);
@@ -40,6 +44,8 @@ __device__ complex_t real_power(complex_t z, FnVariables* variables){
 __device__ complex_t complex_power(complex_t z, FnVariables* variables){
     return cuda::std::exp(complex_log(z, variables->n) * variables->z[0]);
 }
+
+// ------------------------------------------------------------------------------------- exponential
 
 __device__ complex_t exponential0(complex_t z, FnVariables* variables){
     return cuda::std::exp(z);
@@ -69,51 +75,73 @@ __device__ complex_t exponential6(complex_t z, FnVariables* variables){
     return real_power(z, variables) * cuda::std::exp(z);
 }
 
-__device__ complex_t log1(complex_t z, FnVariables* variables){
-    return variables->z[0] * complex_log(z, variables->n);
+// ------------------------------------------------------------------------------------- logarithm
+
+__device__ complex_t log_simple(complex_t z, FnVariables* variables){
+    return complex_log(z, variables->n);
 }
 
-__device__ complex_t log2(complex_t z, FnVariables* variables){
-    return z * complex_log(z, variables->n);
+__device__ complex_t log_parametric(complex_t z, FnVariables* vars){
+    return vars->z[0] * complex_log(vars->z[1] + z * vars->z[2], vars->n);
 }
 
-__device__ complex_t log3(complex_t z, FnVariables* variables){
-    return complex_log(z + variables->z[0], variables->n);
+__device__ complex_t log_mul(complex_t z, FnVariables* vars){
+    return z * complex_log(z, vars->n);
 }
 
-__device__ complex_t sine(complex_t z, FnVariables* variables){
+// ------------------------------------------------------------------------------------- trigonometric
+
+__device__ inline complex_t sin_simple(complex_t z, FnVariables *) {
     return cuda::std::sin(z);
 }
 
-__device__ complex_t cosine(complex_t z, FnVariables* variables){
+__device__ inline complex_t cos_simple(complex_t z, FnVariables *) {
     return cuda::std::cos(z);
 }
 
-__device__ complex_t sine_sum(complex_t z, FnVariables* variables){
-    return cuda::std::sin(z + variables->z[0]);
-}
-
-__device__ complex_t sine_mult(complex_t z, FnVariables* variables){
-    return cuda::std::sin(z * variables->z[0]);
-}
-
-__device__ complex_t cosine_mult(complex_t z, FnVariables* variables){
-    return cuda::std::cos(z * variables->z[0]);
-}
-__device__ complex_t mult_sine(complex_t z, FnVariables* variables){
-    return variables->z[0] * cuda::std::sin(z * variables->z[1]);
-}
-
-__device__ complex_t tangent(complex_t z, FnVariables* variables){
+__device__ inline complex_t tan_simple(complex_t z, FnVariables *) {
     return cuda::std::tan(z);
 }
 
-__device__ complex_t conjugate_i(complex_t z, FnVariables* variables){
-    complex_t i;
-    i.real(0);
-    i.imag(1);
-    return i * cuda::std::conj(z);
+__device__ complex_t sin_parametric(complex_t z, FnVariables * vars) {
+    return vars->z[0] * cuda::std::sin(vars->z[1] + z * vars->z[2]);
 }
+
+__device__ complex_t cos_parametric(complex_t z, FnVariables * vars) {
+    return vars->z[0] * cuda::std::cos(vars->z[1] + z * vars->z[2]);
+}
+
+__device__ complex_t tan_parametric(complex_t z, FnVariables * vars) {
+    return vars->z[0] * cuda::std::tan(vars->z[1] + z * vars->z[2]);
+}
+
+// ------------------------------------------------------------------------------------- hyperbolic
+
+__device__ inline complex_t sinh_simple(complex_t z, FnVariables *) {
+    return cuda::std::sinh(z);
+}
+
+__device__ inline complex_t cosh_simple(complex_t z, FnVariables *) {
+    return cuda::std::cosh(z);
+}
+
+__device__ inline complex_t tanh_simple(complex_t z, FnVariables *) {
+    return cuda::std::tanh(z);
+}
+
+__device__ complex_t sinh_parametric(complex_t z, FnVariables * vars) {
+    return vars->z[0] * cuda::std::sinh(vars->z[1] + z * vars->z[2]);
+}
+
+__device__ complex_t cosh_parametric(complex_t z, FnVariables * vars) {
+    return vars->z[0] * cuda::std::cosh(vars->z[1] + z * vars->z[2]);
+}
+
+__device__ complex_t tanh_parametric(complex_t z, FnVariables * vars) {
+    return vars->z[0] * cuda::std::tanh(vars->z[1] + z * vars->z[2]);
+}
+
+// ------------------------------------------------------------------------------------- special
 
 __device__ complex_t conjugate_z(complex_t z, FnVariables* variables){
     return variables->z[0] * cuda::std::conj(z);
@@ -138,42 +166,6 @@ __device__ complex_t gamma(complex_t z, FnVariables* variables){
         gamma += (cuda::std::pow(x, z - (complex_t)1) * cuda::std::exp(-x));
     } while(cuda::std::norm(gamma-prev) > tol);
     return gamma;
-}
-
-__device__ complex_t hsine(complex_t z, FnVariables* variables){
-    return cuda::std::sinh(z);
-}
-
-__device__ complex_t hsine_sum(complex_t z, FnVariables* variables){
-    return cuda::std::sinh(z + variables->z[0]);
-}
-
-__device__ complex_t hsine_mult(complex_t z, FnVariables* variables){
-    return cuda::std::sinh(z * variables->z[0]);
-}
-
-__device__ complex_t hcosine(complex_t z, FnVariables* variables){
-    return cuda::std::cosh(z);
-}
-
-__device__ complex_t hcosine_sum(complex_t z, FnVariables* variables){
-    return cuda::std::cosh(z + variables->z[0]);
-}
-
-__device__ complex_t hcosine_mult(complex_t z, FnVariables* variables){
-    return cuda::std::cosh(z * variables->z[0]);
-}
-
-__device__ complex_t htangent(complex_t z, FnVariables* variables){
-    return cuda::std::tanh(z);
-}
-
-__device__ complex_t htangent_sum(complex_t z, FnVariables* variables){
-    return cuda::std::tanh(z + variables->z[0]);
-}
-
-__device__ complex_t htangent_mult(complex_t z, FnVariables* variables){
-    return cuda::std::tanh(z * variables->z[0]);
 }
 
 template<unsigned N>
@@ -205,27 +197,23 @@ __device__ ComplexFunction_t d_zxp = exponential4;
 __device__ ComplexFunction_t d_pow_n_exp = exponential5;
 __device__ ComplexFunction_t d_pow_r_exp = exponential6;
 
-__device__ ComplexFunction_t d_ln = log1;
-__device__ ComplexFunction_t d_mul_ln = log2;
-__device__ ComplexFunction_t d_ln_sum = log3;
+__device__ ComplexFunction_t d_ln = log_simple;
+__device__ ComplexFunction_t d_ln_p = log_parametric;
+__device__ ComplexFunction_t d_ln_mul = log_mul;
 
-__device__ ComplexFunction_t d_sin = sine;
-__device__ ComplexFunction_t d_sin_sum = sine_sum;
-__device__ ComplexFunction_t d_sin_mul = sine_mult;
-__device__ ComplexFunction_t d_mul_sin_mul = mult_sine;
-__device__ ComplexFunction_t d_cos = cosine;
-__device__ ComplexFunction_t d_cos_mul = cosine_mult;
-__device__ ComplexFunction_t d_tan = tangent;
+__device__ ComplexFunction_t d_sin = sin_simple;
+__device__ ComplexFunction_t d_cos = cos_simple;
+__device__ ComplexFunction_t d_tan = tan_simple;
+__device__ ComplexFunction_t d_sin_p = sin_parametric;
+__device__ ComplexFunction_t d_cos_p = cos_parametric;
+__device__ ComplexFunction_t d_tan_p = tan_parametric;
 
-__device__ ComplexFunction_t d_sinh = hsine;
-__device__ ComplexFunction_t d_sinh_sum = hsine_sum;
-__device__ ComplexFunction_t d_sinh_mul = hsine_mult;
-__device__ ComplexFunction_t d_cosh = hcosine;
-__device__ ComplexFunction_t d_cosh_sum = hcosine_sum;
-__device__ ComplexFunction_t d_cosh_mul = hcosine_mult;
-__device__ ComplexFunction_t d_tanh = htangent;
-__device__ ComplexFunction_t d_tanh_sum = htangent_sum;
-__device__ ComplexFunction_t d_tanh_mul = htangent_mult;
+__device__ ComplexFunction_t d_sinh = sinh_simple;
+__device__ ComplexFunction_t d_cosh = cosh_simple;
+__device__ ComplexFunction_t d_tanh = tanh_simple;
+__device__ ComplexFunction_t d_sinh_p = sinh_parametric;
+__device__ ComplexFunction_t d_cosh_p = cosh_parametric;
+__device__ ComplexFunction_t d_tanh_p = tanh_parametric;
 
 __device__ ComplexFunction_t d_mul_conj = conjugate_z;
 __device__ ComplexFunction_t d_frac = fraction;
@@ -256,10 +244,10 @@ ComplexFunction_t get_function_from_string(const char * str) {
         case 3:
             switch (bytes_to_uint<3>(str)) {
                 case bytes_to_uint<3>("*ln"):
-                    cudaMemcpyFromSymbol(&fn, d_mul_ln, sizeof(ComplexFunction_t));
+                    cudaMemcpyFromSymbol(&fn, d_ln_mul, sizeof(ComplexFunction_t));
                     break;
                 case bytes_to_uint<3>("ln+"):
-                    cudaMemcpyFromSymbol(&fn, d_ln_sum, sizeof(ComplexFunction_t));
+                    cudaMemcpyFromSymbol(&fn, d_ln_p, sizeof(ComplexFunction_t));
                     break;
                 case bytes_to_uint<3>("exp"):
                     cudaMemcpyFromSymbol(&fn, d_exp, sizeof(ComplexFunction_t));
@@ -283,14 +271,14 @@ ComplexFunction_t get_function_from_string(const char * str) {
             break;
         case 4:
             switch (bytes_to_uint<4>(str)) {
-                case bytes_to_uint<4>("sin+"):
-                    cudaMemcpyFromSymbol(&fn, d_sin_sum, sizeof(ComplexFunction_t));
+                case bytes_to_uint<4>("$sin"):
+                    cudaMemcpyFromSymbol(&fn, d_sin_p, sizeof(ComplexFunction_t));
                     break;
-                case bytes_to_uint<4>("sin*"):
-                    cudaMemcpyFromSymbol(&fn, d_sin_mul, sizeof(ComplexFunction_t));
+                case bytes_to_uint<4>("$cos"):
+                    cudaMemcpyFromSymbol(&fn, d_cos_p, sizeof(ComplexFunction_t));
                     break;
-                case bytes_to_uint<4>("cos*"):
-                    cudaMemcpyFromSymbol(&fn, d_cosh_mul, sizeof(ComplexFunction_t));
+                case bytes_to_uint<4>("$tan"):
+                    cudaMemcpyFromSymbol(&fn, d_tan_p, sizeof(ComplexFunction_t));
                     break;
                 case bytes_to_uint<4>("sinh"):
                     cudaMemcpyFromSymbol(&fn, d_sinh, sizeof(ComplexFunction_t));
@@ -329,26 +317,14 @@ ComplexFunction_t get_function_from_string(const char * str) {
                 case bytes_to_uint<5>("exp^r"):
                     cudaMemcpyFromSymbol(&fn, d_exp_pow_r, sizeof(ComplexFunction_t));
                     break;
-                case bytes_to_uint<5>("*sin*"):
-                    cudaMemcpyFromSymbol(&fn, d_mul_sin_mul, sizeof(ComplexFunction_t));
+                case bytes_to_uint<5>("$sinh"):
+                    cudaMemcpyFromSymbol(&fn, d_sinh_p, sizeof(ComplexFunction_t));
                     break;
-                case bytes_to_uint<5>("sinh+"):
-                    cudaMemcpyFromSymbol(&fn, d_sinh_sum, sizeof(ComplexFunction_t));
+                case bytes_to_uint<5>("$cosh"):
+                    cudaMemcpyFromSymbol(&fn, d_cosh_p, sizeof(ComplexFunction_t));
                     break;
-                case bytes_to_uint<5>("sinh*"):
-                    cudaMemcpyFromSymbol(&fn, d_sinh_mul, sizeof(ComplexFunction_t));
-                    break;
-                case bytes_to_uint<5>("cosh+"):
-                    cudaMemcpyFromSymbol(&fn, d_cosh_sum, sizeof(ComplexFunction_t));
-                    break;
-                case bytes_to_uint<5>("cosh*"):
-                    cudaMemcpyFromSymbol(&fn, d_cosh_mul, sizeof(ComplexFunction_t));
-                    break;
-                case bytes_to_uint<5>("tanh+"):
-                    cudaMemcpyFromSymbol(&fn, d_tanh_sum, sizeof(ComplexFunction_t));
-                    break;
-                case bytes_to_uint<5>("tanh*"):
-                    cudaMemcpyFromSymbol(&fn, d_tanh_mul, sizeof(ComplexFunction_t));
+                case bytes_to_uint<5>("$tanh"):
+                    cudaMemcpyFromSymbol(&fn, d_tanh_p, sizeof(ComplexFunction_t));
                     break;
                 case bytes_to_uint<5>("*conj"):
                     cudaMemcpyFromSymbol(&fn, d_mul_conj, sizeof(ComplexFunction_t));
