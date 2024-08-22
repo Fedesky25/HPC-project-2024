@@ -27,7 +27,6 @@ int main(int argc, char * argv[]) {
         return 1;
     }
 
-
     std::cout << "Configuration:" << std::endl;
     std::cout << "  Output file: " << config.output << std::endl;
     std::cout << "  Complex numbers: " << config.vars.z[0] << ' ' << config.vars.z[1] << ' ' << config.vars.z[2] << std::endl;
@@ -44,10 +43,20 @@ int main(int argc, char * argv[]) {
     complex_t min, max;
     config.bounds(&min, &max);
     uint64_t N = config.particle_number();
-//    auto p1 = particles_omp(min, max, N);
-//    tiles.distribute(min, max, p1, N);
-//    auto particles = particles_mixed(min, max, N);
-//    tiles.distribute(min, max, particles, N);
+
+    complex_t * points;
+
+    switch (config.mode) {
+        case ExecutionMode::Serial:
+            points = particles_serial(min, max, N);
+            break;
+        case ExecutionMode::OpenMP:
+            points = particles_omp(min, max, N);
+            break;
+        case ExecutionMode::GPU:
+            points = particles_gpu(min, max, N);
+            break;
+    }
 
 
     return 0;
