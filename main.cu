@@ -21,8 +21,8 @@ int main(int argc, char * argv[]) {
         std::cerr << "Missing function to plot" << std::endl;
         return 1;
     }
-    auto fn = get_function_from_string(argv[optind]);
-    if(fn == nullptr) {
+    auto fn = strtofn(argv[optind]);
+    if(fn == FunctionChoice::NONE) {
         std::cerr << "Function string name not recognized" << std::endl;
         return 1;
     }
