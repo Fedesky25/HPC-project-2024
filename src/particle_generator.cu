@@ -101,7 +101,7 @@ complex_t* particles_serial(complex_t z1, complex_t z2, uint32_t N){
 }
 
 
-int rand_complex_omp(
+void rand_complex_omp(
         complex_t min, complex_t max,
         complex_t * sites, uint32_t N_sites,
         complex_t * density, uint64_t N_density
@@ -119,21 +119,20 @@ int rand_complex_omp(
         }
         #pragma omp for schedule(static)
         for(int64_t i=0; i<N_density; i++){
-            density[i].real(real(min) + dist_real(generators));
-            density[i].imag(imag(min) + dist_imag(generators));
+            density[i].real(real(min) + dist_real(generator));
+            density[i].imag(imag(min) + dist_imag(generator));
         }
     };
-    return num_threads;
 }
 
 
 complex_t* particles_omp(complex_t z1, complex_t z2, uint32_t N){
     SETUP_CPU PRINT_INITIAL timers(3) tick(0)
-    int num_threads = rand_complex_omp(z1, z2, sites, N, density, n_density);
+    rand_complex_omp(z1, z2, sites, N, density, n_density);
     tock_ms(0) std::cout << " generated in " << t_elapsed << "ms" << std::endl;
 
     float times[2];
-    std::cout << "Lloyd's algorithm:  i | t  (s) | n. c. | s. u.    using " << num_threads << " threads" << std::endl << std::fixed;
+    std::cout << "Lloyd's algorithm:  i | t  (s) | n. c. | s. u.    using " << std::endl << std::fixed;
     tick(0)
     for(int16_t i=0; i<20; i++){  // Iterating to convergence
         tick(1) tick(2)
