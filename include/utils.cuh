@@ -74,13 +74,16 @@ struct EvolutionOptions {
     friend std::ostream& operator<<(std::ostream& os, EvolutionOptions& cv);
 };
 
+enum class ExecutionMode { Serial, OpenMP, GPU };
+
 struct Configuration {
-    const char * output = "plot.webp";
     FnVariables vars;
     CanvasAdapter canvas;
     EvolutionOptions evolution;
+    const char * output = "plot.webp";
     unsigned long particle_distance = 10;
     unsigned long margin = 4;
+    ExecutionMode mode = ExecutionMode::GPU;
 
     /**
      * Computes the portion of the Gauss plane where the particles begin

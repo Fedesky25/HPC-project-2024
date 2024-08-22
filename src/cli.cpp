@@ -318,9 +318,10 @@ double parse_scale(const char * str, ScaleScaling * action) {
 
 bool parse_args(int argc, char * argv[], Configuration * config) {
     static option long_options[] = {
+            { "parallel",    required_argument, nullptr, 'p' },
             { "output",      required_argument, nullptr, 'o' },
-            { "resolution",  required_argument, nullptr, 'r' },
-            { "pixel-scale", required_argument, nullptr, 'p' },
+            { "resolution",  required_argument, nullptr, 'R' },
+            { "pixel-scale", required_argument, nullptr, 's' },
             { "center",      required_argument, nullptr, 'c' },
             { "distance",    required_argument, nullptr, 'd' },
             { "margin",      required_argument, nullptr, 'm' },
@@ -331,13 +332,13 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
 //            { "lifetime",    required_argument, nullptr, 'l' },
 //            { "background",  required_argument, nullptr, 'B' },
             { "int",         required_argument, nullptr, 'n' },
-            { "real",        required_argument, nullptr, 'x' },
+            { "real",        required_argument, nullptr, 'r' },
             { "complex1",    required_argument, nullptr, '1' },
             { "complex2",    required_argument, nullptr, '2' },
             { "complex3",    required_argument, nullptr, '3' },
             { nullptr, 0, nullptr, 0 }
     };
-    static char short_options[] = "o:r:p:c:d:m:v:t:D:n:x:1:2:3:";
+    static char short_options[] = "p:o:R:s:c:d:m:v:t:f:D:n:r:1:2:3:";
 
     int o, go = 1, index_opt;
     char * rest;
@@ -352,6 +353,14 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
             case '?':
                 go = false;
                 break;
+            case 'X':
+                if(strcmp(optarg, "none") == 0) config->mode = ExecutionMode::Serial;
+                else if(strcmp(optarg, "openmp") == 0) config->mode = ExecutionMode::OpenMP;
+                else if(strcmp(optarg, "gpu") == 0) config->mode = ExecutionMode::GPU;
+                else {
+                    std::cerr << "Unrecognized parallelization option" << std::endl;
+                    return true;
+                }
             case 'o':
                 config->output = optarg;
                 break;
@@ -362,7 +371,7 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
                 config->canvas.center = parse_complex(optarg);
                 CHECK_COMPLEX(config->canvas.center, "center")
                 break;
-            case 'p':
+            case 's':
                 config->canvas.scale = parse_scale(optarg, &action);
                 if(config->canvas.scale == 0.0) return true;
                 break;
@@ -370,7 +379,7 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
                 config->particle_distance = strtoul(optarg, &rest, 10);
                 CHECK_DISTANCE
                 break;
-            case 'r':
+            case 'R':
                 parse_resolution(optarg, &(config->canvas));
                 if(!config->canvas.width) return true;
                 break;
@@ -401,7 +410,7 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
                 config->vars.n = strtol(optarg, &rest, 10);
                 CHECK_REMAINING("integer number (n)");
                 break;
-            case 'x':
+            case 'r':
                 config->vars.x = strtod(optarg, &rest);
                 CHECK_REMAINING("real number (x)");
                 break;
@@ -436,14 +445,15 @@ void print_usage() {
     std::cout << "CFSPlt v0.1.0" << std::endl;
     std::cout << "  Complex functions streamplot  -  Generator of webp videos representing the streamplot of a selection of complex functions" << std::endl << std::endl;
     std::cout << "SYNOPSIS:" << std::endl;
-    std::cout << "  cfsplt [-c center_point] [-d particle_distance] [-m margin_layers] [-n integer] [-o file] [-r resolution]" << std::endl
-              << "         [-s scale] [-v speed_magnitude] [-x real] [-z1 complex] [-z2 complex] [-z3 complex] function" << std::endl << std::endl;
+    std::cout << "  cfsplt [-c center_point] [-d particle_distance] [-D duration] [-f fps] [-m margin_layers] [-n integer] [-o file] [-p parallelization]" << std::endl
+              << "         [-r real] [-R resolution] [-s pixel_scale] [-t time_scale] [-v speed] [-1 complex] [-2 complex] [-3 complex] function" << std::endl << std::endl;
     std::cout << "OPTIONS" << std::endl;
     std::cout << "  Name                 Default        Description" << std::endl;
+    std::cout << "  -p  --parallel       gpu            Which parallelization to adopt in computations. It must be one of: none, openmp, gpu" << std::endl;
     std::cout << "  -o  --output         plot.webp      Path of the output webp file" << std::endl;
     std::cout << "  -D  --duration       15             Duration in seconds of the webp animation" << std::endl;
     std::cout << "  -f  --fps            60             Number of frames per seconds i.e. the refresh rate" << std::endl;
-    std::cout << "  -r  --resolution     1920x1080      Pixel sizes of the video: it can be either a supported screen resolution name (such as FHD, WXGA+)" << std::endl
+    std::cout << "  -R  --resolution     1920x1080      Pixel sizes of the video: it can be either a supported screen resolution name (such as FHD, WXGA+)" << std::endl
               << "                                      or a custom size specified in the format <width>x<height>. Optionally, the character '^' may be" << std::endl
               << "                                      prepended to invert the horizontal and vertical sizes." << std::endl;
     std::cout << "  -d  --distance       10             Average distance (in pixels) between two nearby particles in the starting positions" << std::endl;
@@ -452,12 +462,12 @@ void print_usage() {
               << "                                      occur when the speed is respectively one order less or more than the specified value." << std::endl;
     std::cout << "  -t  --time-scale     6e-8           Time scale used to convert 1 real second into the computational time unit. Lower values guarantee" << std::endl
               << "                                      a more precise computation of the particle evolution at the cost of less motion." << std::endl;
-    std::cout << "  -s  --scale          100px/u        Scale used to convert distance between complex numbers to pixels. The required unit must be one of:" << std::endl
+    std::cout << "  -s  --pixel-scale    100px/u        Scale used to convert distance between complex numbers to pixels. The required unit must be one of:" << std::endl
               << "                                      u/px, u/w, u/h, px/u, w/u, h/u; where 'px' is pixel, 'w' is the width of the video (in pixel), 'h'" << std::endl
               << "                                      is the height of the video (in pixel), and 'u' is the unitary distance" << std::endl;
     std::cout << "  -c  --center         0+0i           The complex number at the center of the video. See later on supported complex number formats." << std::endl;
     std::cout << "  -n  --int            0              Integer number used in some functions" << std::endl;
-    std::cout << "  -x  --real           3.14159...     Real number used in some functions" << std::endl;
+    std::cout << "  -r  --real           3.14159...     Real number used in some functions" << std::endl;
     std::cout << "  -1  --complex1       1              First complex number used in some functions" << std::endl;
     std::cout << "  -2  --complex2       1i             Second complex number used in some functions" << std::endl;
     std::cout << "  -3  --complex3       1\\45d          Third complex number used in some functions" << std::endl << std::endl;
