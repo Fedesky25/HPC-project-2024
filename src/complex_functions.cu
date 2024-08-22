@@ -304,7 +304,7 @@ __host__ ComplexFunction_t get_function_host(FunctionChoice choice) {
     return h_fns[(int)choice];
 }
 
-__host__ ComplexFunction_t get_function_device(FunctionChoice choice) {
+__host__ ComplexFunction_t get_function_global(FunctionChoice choice) {
     ComplexFunction_t fn;
     cudaMemcpyFromSymbol(&fn, d_fns[(int)choice], sizeof(ComplexFunction_t));
     return fn;
