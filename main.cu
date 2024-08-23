@@ -65,16 +65,19 @@ int main(int argc, char * argv[]) {
         case ExecutionMode::GPU:
         {
             Tiles tiles(&config);
-            std::cout << "  Tiles: " << tiles.rows << 'x' << tiles.cols << '=' << tiles.total() << " with "
-                      << (float) N / (float) tiles.total() << " particles each" << std::endl;
+            unsigned tiles_count = tiles.total();
+            std::cout << "  Tiles: " << tiles.rows << 'x' << tiles.cols << '=' << tiles_count << " with "
+                      << (float) N / (float) tiles_count << " particles each" << std::endl;
             points = particles_gpu(min, max, N);
             uint_fast16_t *tile_map, *count_per_tile;
+            timers(1) tick(0)
             tiles.sort(min, max, points, N, &tile_map, &count_per_tile);
             canvas_count = 0;
-            unsigned tiles_count = tiles.total();
             for(unsigned i=0; i<tiles_count; i++) {
                 if(count_per_tile[i] > canvas_count) canvas_count = count_per_tile[i];
             }
+            tock_ms(0)
+            std::cout << "Particles sorted by tiles in " << t_elapsed << "ms" << std::endl;
             CANVAS_OUTPUT
             auto canvases = create_canvas_device(canvas_count, &config.canvas);
             break;
