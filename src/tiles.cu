@@ -74,7 +74,17 @@ void Tiles::sort(complex_t &min, complex_t &max,
     auto hscale = cols / (max.real() - min.real());
     auto vscale = rows / (max.imag() - min.imag());
     auto M = 1 + (N - 1)/total();
+    float times[3];
+    timers(2) tick(0) tick(1)
     compute_tile<<<M, total()>>>(N, particles, tile_map, min, hscale, vscale, cols);
+    tock_us(1) times[0] = t_elapsed; tick(1)
     thrust::sort_by_key(thrust::device, tile_map, tile_map + N, particles);
+    tock_us(1) times[1] = t_elapsed; tick(1)
     compute_particle_per_tile<<<1, total()>>>(N, tile_map, count_per_tile);
+    tock_us(1) times[2] = t_elapsed;
+    tock_us(0)
+    float m = 100.0f / t_elapsed;
+    std::cout.precision(1);
+    std::cout << "Particles sorted by tile in " << std::fixed << t_elapsed << "us {comp: " << times[0]*m
+              << ", sort: " << times[1]*m << ", count: " << times[2]*m << '}' << std::endl;
 }
