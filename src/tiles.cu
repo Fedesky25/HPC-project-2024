@@ -69,7 +69,7 @@ void Tiles::sort(complex_t &min, complex_t &max,
 ) const {
     cudaMalloc(tile_map_ptr, N * sizeof(uint_fast16_t));
     auto tile_map = *tile_map_ptr;
-    cudaMalloc(count_per_tile_ptr, total() * sizeof(uint64_t));
+    cudaMalloc(count_per_tile_ptr, total() * sizeof(uint32_t));
     auto count_per_tile = *count_per_tile_ptr;
     auto hscale = cols / (max.real() - min.real());
     auto vscale = rows / (max.imag() - min.imag());
