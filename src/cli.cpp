@@ -353,9 +353,9 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
             case '?':
                 go = false;
                 break;
-            case 'X':
+            case 'p':
                 if(strcmp(optarg, "none") == 0) config->mode = ExecutionMode::Serial;
-                else if(strcmp(optarg, "openmp") == 0) config->mode = ExecutionMode::OpenMP;
+                else if(strcmp(optarg, "omp") == 0) config->mode = ExecutionMode::OpenMP;
                 else if(strcmp(optarg, "gpu") == 0) config->mode = ExecutionMode::GPU;
                 else {
                     std::cerr << "Unrecognized parallelization option" << std::endl;
