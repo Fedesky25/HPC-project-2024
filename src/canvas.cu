@@ -7,6 +7,28 @@
 #define BG_G 21
 #define BG_B 25
 
+void ARGB::print(FILE *file) const {
+    fputc(((a&0xf0)>>4) + 'a', file);
+    fputc( (a&0x0f)     + 'a', file);
+    fputc(((r&0xf0)>>4) + 'a', file);
+    fputc( (r&0x0f)     + 'a', file);
+    fputc(((g&0xf0)>>4) + 'a', file);
+    fputc( (g&0x0f)     + 'a', file);
+    fputc(((b&0xf0)>>4) + 'a', file);
+    fputc( (b&0x0f)     + 'a', file);
+}
+
+void ARGB::print_base64(FILE *file) const {
+    int c = (r & 0x3f) + ';';
+    fputc(c, file);
+    c = ((r & 0xc0) >> 6) + ((b & 0x0f) << 2) + ';';
+    fputc(c, file);
+    c = ((b & 0xf0) >> 4) + (g & 0x03) + ';';
+    fputc(c, file);
+    c = ((c & 0xfc) >> 2) + ';';
+    fputc(c, file);
+}
+
 __device__ __host__ bool CanvasPixel::update_age(uint16_t _age) {
     bool ok = true;
     if(age == UINT16_MAX) age = _age;

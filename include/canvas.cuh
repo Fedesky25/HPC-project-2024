@@ -7,6 +7,18 @@ struct ARGB {
     uint8_t a, r, g, b;
     inline ARGB() = default;
     inline ARGB(uint8_t red, uint8_t green, uint8_t blue) : a(0), r(red), g(green), b(blue) {}
+
+    /**
+     * Print the ARGB values in hexadecimal format
+     * @param file output file
+     */
+    void print(FILE * file) const;
+
+    /**
+     * Prints the RGB values using 4 characters (base64 variant encoding)
+     * @param file output file
+     */
+    void print_base64(FILE * file) const;
 };
 
 struct CanvasPixel {
