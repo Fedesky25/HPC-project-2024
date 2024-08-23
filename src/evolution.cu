@@ -52,14 +52,15 @@ __global__ void evolve_gpu(Canvas* canvas, CanvasAdapter * adapter, EvolutionOpt
 
 // Divide particle evolution between threads by #pragma omp parallel for.
 // Each thread writes particles on its own canvas
-Canvas* evolve_omp(Canvas* canvas, CanvasAdapter* adapter, EvolutionOptions options, complex_t* particles, uint64_t N_particles,
+void evolve_omp(Canvas* canvas, CanvasAdapter* adapter, EvolutionOptions options, complex_t* particles, uint64_t N_particles,
                 complex_t (*func)(complex_t, FnVariables*), FnVariables* variables){
 
-    #pragma omp parallel for schedule(static)
-        for (uint64_t i = 0; i < N_particles; i++) {
-            auto tid = omp_get_thread_num();
+    #pragma omp parallel
+    {
+        auto tid = omp_get_thread_num();
+        #pragma omp for schedule(static)
+        for (int64_t i = 0; i < N_particles; i++) {
             draw(canvas, adapter, options, func, variables, particles[i], tid);
         }
-
-    return canvas;
+    }
 }
