@@ -7,6 +7,12 @@ Tiles::~Tiles() {
     delete[] counts;
 }
 
+Tiles::Tiles(Configuration * config) {
+    unsigned width, height;
+    config->sizes(&width, &height);
+    cover(width, height);
+}
+
 void Tiles::cover(unsigned int width, unsigned int height) {
     unsigned rev = 0;
     if(height > width) {

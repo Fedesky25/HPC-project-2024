@@ -11,7 +11,7 @@ struct Tiles {
 
     ~Tiles();
     inline Tiles() = default;
-    inline Tiles(unsigned width, unsigned height) { cover(width, height); }
+    Tiles(Configuration * config);
 
     /** @returns total number of tiles */
     inline auto total() const { return rows * cols; }
