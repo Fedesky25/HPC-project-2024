@@ -82,6 +82,7 @@ __device__ __host__ ARGB CanvasPixel::get_color(uint16_t time) const {
 }
 
 Canvas * create_canvas_host(uint32_t count, CanvasAdapter * adapter) {
+    timers(1) tick(0)
     auto p = new Canvas [count];
     auto area = adapter->height * adapter->width;
     #pragma omp parallel for schedule(static,1)
@@ -90,6 +91,9 @@ Canvas * create_canvas_host(uint32_t count, CanvasAdapter * adapter) {
         for(uint32_t j=0; j<area; j++) c[j].reset();
         p[i] = c;
     }
+    tock_us(0)
+    std::cout << "Initialized " << (((area * sizeof(CanvasPixel) - 1) >> 20)+1) << "MB for " << count
+              << " canvases in " << t_elapsed << "us" << std::endl;
     return p;
 }
 
@@ -102,6 +106,7 @@ __global__ void init_canvas_array(Canvas * array, uint32_t len) {
 }
 
 Canvas * create_canvas_device(uint32_t count, CanvasAdapter * adapter) {
+    timers(1) tick(0)
     auto array_bytes = count * sizeof(Canvas);
     auto len = adapter->width * adapter->height;
     auto canvas_bytes = len * sizeof(CanvasPixel);
@@ -112,5 +117,8 @@ Canvas * create_canvas_device(uint32_t count, CanvasAdapter * adapter) {
     cudaMemcpy(d_array, h_array, array_bytes, cudaMemcpyHostToDevice);
     free(h_array);
     init_canvas_array<<<count, 1024>>>(d_array, len);
+    tock_us(0)
+    std::cout << "Initialized " << (((canvas_bytes-1) >> 20)+1) << "MB for " << count
+              << " canvases in " << t_elapsed << "us" << std::endl;
     return d_array;
 }
