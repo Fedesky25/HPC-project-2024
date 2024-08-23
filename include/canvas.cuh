@@ -76,5 +76,21 @@ Canvas * create_canvas_host(uint32_t count, CanvasAdapter * adapter);
  */
 Canvas * create_canvas_device(uint32_t count, CanvasAdapter * adapter);
 
+/**
+ * Computes on the CPU the number of canvas to create
+ * @param count_per_tile particle count per tile
+ * @param tiles number of tiles
+ * @return canvas number
+ */
+uint32_t get_canvas_count_serial(uint32_t * count_per_tile, uint32_t tiles);
+
+/**
+ * Computes on the GPU the number of canvas to create
+ * @param count_per_tile particle count per tile
+ * @param tiles number of tiles
+ * @return canvas number
+ */
+uint32_t get_canvas_count_device(uint32_t * count_per_tile, uint32_t tiles);
+
 
 #endif //HPC_PROJECT_2024_CANVAS_CUH

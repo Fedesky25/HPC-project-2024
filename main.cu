@@ -9,12 +9,6 @@
 #include "canvas.cuh"
 #include "omp.h"
 
-#define CANVAS_OUTPUT { \
-    auto size = sizeof(CanvasPixel) * config.canvas.width * config.canvas.height * canvas_count; \
-    size = 1 + ((size-1) >> 20);                                                                 \
-    std::cout << "Number of canvases: " << canvas_count << " (" << size << "MB)" << std::endl;   \
-}
-
 
 int main(int argc, char * argv[]) {
     if(argc < 2) {
@@ -58,8 +52,7 @@ int main(int argc, char * argv[]) {
         {
             points = particles_omp(min, max, N);
             canvas_count = omp_get_max_threads();
-            CANVAS_OUTPUT
-            auto canvases = create_canvas_device(canvas_count, &config.canvas);
+            auto canvases = create_canvas_host(canvas_count, &config.canvas);
             break;
         }
         case ExecutionMode::GPU:
@@ -69,16 +62,10 @@ int main(int argc, char * argv[]) {
             std::cout << "  Tiles: " << tiles.rows << 'x' << tiles.cols << '=' << tiles_count << " with "
                       << (float) N / (float) tiles_count << " particles each" << std::endl;
             points = particles_gpu(min, max, N);
-            uint_fast16_t *tile_map, *count_per_tile;
-            timers(1) tick(0)
+            uint_fast16_t * tile_map;
+            uint32_t * count_per_tile;
             tiles.sort(min, max, points, N, &tile_map, &count_per_tile);
-            canvas_count = 0;
-            for(unsigned i=0; i<tiles_count; i++) {
-                if(count_per_tile[i] > canvas_count) canvas_count = count_per_tile[i];
-            }
-            tock_ms(0)
-            std::cout << "Particles sorted by tiles in " << t_elapsed << "ms" << std::endl;
-            CANVAS_OUTPUT
+            canvas_count = get_canvas_count_serial(count_per_tile, tiles_count);
             auto canvases = create_canvas_device(canvas_count, &config.canvas);
             break;
         }

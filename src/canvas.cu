@@ -1,4 +1,5 @@
 #include "canvas.cuh"
+#include "thrust/extrema.h"
 
 #define SATURATION 0.55
 #define LIGHTNESS 0.55
@@ -91,9 +92,9 @@ Canvas * create_canvas_host(uint32_t count, CanvasAdapter * adapter) {
         for(uint32_t j=0; j<area; j++) c[j].reset();
         p[i] = c;
     }
-    tock_us(0)
+    tock_ms(0)
     std::cout << "Initialized " << (((area * sizeof(CanvasPixel) - 1) >> 20)+1) << "MB for " << count
-              << " canvases in " << t_elapsed << "us" << std::endl;
+              << " canvases in " << t_elapsed << "ms" << std::endl;
     return p;
 }
 
@@ -117,8 +118,31 @@ Canvas * create_canvas_device(uint32_t count, CanvasAdapter * adapter) {
     cudaMemcpy(d_array, h_array, array_bytes, cudaMemcpyHostToDevice);
     free(h_array);
     init_canvas_array<<<count, 1024>>>(d_array, len);
-    tock_us(0)
+    tock_ms(0)
     std::cout << "Initialized " << (((canvas_bytes-1) >> 20)+1) << "MB for " << count
-              << " canvases in " << t_elapsed << "us" << std::endl;
+              << " canvases in " << t_elapsed << "ms" << std::endl;
     return d_array;
+}
+
+uint32_t get_canvas_count_serial(uint32_t * count_per_tile, uint32_t tiles) {
+    timers(1) tick(0)
+    auto size = tiles * sizeof(uint32_t);
+    auto h_cpt = (uint32_t*) malloc(size);
+    cudaMemcpy(h_cpt, count_per_tile, size, cudaMemcpyDeviceToHost);
+    uint32_t max_c = h_cpt[0];
+    for(int i=1; i<tiles; i++) if(h_cpt[i] > max_c) max_c = h_cpt[i];
+    free(h_cpt);
+    tock_us(0)
+    std::cout << "Canvas number found in " << t_elapsed << "us" << std::endl;
+    return max_c;
+}
+
+uint32_t get_canvas_count_device(uint32_t * count_per_tile, uint32_t tiles) {
+    timers(1) tick(0)
+    uint32_t max;
+    auto max_ptr = thrust::max_element(thrust::device, count_per_tile, count_per_tile+tiles);
+    cudaMemcpy(&max, max_ptr, sizeof(uint32_t), cudaMemcpyDeviceToHost);
+    tock_us(0)
+    std::cout << "Canvas number found in " << t_elapsed << "us" << std::endl;
+    return max;
 }
