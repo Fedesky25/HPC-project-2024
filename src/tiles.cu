@@ -66,12 +66,13 @@ uint32_t * Tiles::sort(complex_t &min, complex_t &max, complex_t *particles, uin
     uint32_t * offsets;
     auto hscale = cols / (max.real() - min.real());
     auto vscale = rows / (max.imag() - min.imag());
-    auto M = 1 + (N - 1)/total();
+    auto tile_count = total();
+    auto M = 1 + (N - 1)/tile_count;
     tick(1)
     cudaMalloc(&tile_map, N * sizeof(unsigned int));
-    cudaMalloc(&offsets, total() * sizeof(uint32_t));
+    cudaMalloc(&offsets, (tile_count) * sizeof(uint32_t));
     tock_us(1) times[0] = t_elapsed; tick(1)
-    compute_tile<<<M, total()>>>(N, particles, tile_map, min, hscale, vscale, cols);
+    compute_tile<<<M, tile_count>>>(N, particles, tile_map, min, hscale, vscale, cols);
     tock_us(1) times[1] = t_elapsed; tick(1)
     thrust::sort_by_key(thrust::device, tile_map, tile_map + N, particles);
     tock_us(1) times[2] = t_elapsed; tick(1)
