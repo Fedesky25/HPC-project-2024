@@ -30,13 +30,9 @@ struct Tiles {
      * @param max upper-right vertex
      * @param particles device array of particles to be sorted
      * @param N number of particles
-     * @param tile_map_ptr pointer to sorted device array mapping particles to the belonging tile
-     * @param count_per_tile_ptr pointer to device array counting number of particle in each tile
+     * @returns device pointer to array containing the index of the first particle of each tile
      */
-    void sort(
-            complex_t& min, complex_t& max,
-            complex_t* particles, uint32_t N,
-            uint_fast16_t ** tile_map_ptr, uint32_t ** count_per_tile_ptr) const;
+    uint32_t * sort(complex_t& min, complex_t& max, complex_t* particles, uint32_t N) const;
 };
 
 

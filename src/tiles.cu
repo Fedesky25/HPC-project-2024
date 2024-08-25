@@ -54,37 +54,40 @@ __global__ void compute_tile(
     tile_map[i] = c + r*cols;
 }
 
-__global__ void compute_particle_per_tile(uint32_t N, uint_fast16_t * tile_map, uint32_t * count) {
-    count[threadIdx.x] = 0;
-    auto i = lower_bound(threadIdx.x, tile_map, N);
-    while(tile_map[i] == threadIdx.x) {
-        count[threadIdx.x]++;
-        i++;
-    }
+__global__ void compute_offset_per_tile(uint32_t N, unsigned int * tile_map, uint32_t * offsets) {
+    auto tile = threadIdx.x + blockIdx.x * blockDim.x;
+    offsets[tile] = lower_bound(threadIdx.x, tile_map, N);
 }
 
-void Tiles::sort(complex_t &min, complex_t &max,
-                 complex_t *particles, uint32_t N,
-                 uint_fast16_t **tile_map_ptr, uint32_t **count_per_tile_ptr
-) const {
-    cudaMalloc(tile_map_ptr, N * sizeof(uint_fast16_t));
-    auto tile_map = *tile_map_ptr;
-    cudaMalloc(count_per_tile_ptr, total() * sizeof(uint32_t));
-    auto count_per_tile = *count_per_tile_ptr;
+uint32_t * Tiles::sort(complex_t &min, complex_t &max, complex_t *particles, uint32_t N) const {
+    timers(2) tick(0)
+    float times[4];
+    unsigned int * tile_map;
+    uint32_t * offsets;
     auto hscale = cols / (max.real() - min.real());
     auto vscale = rows / (max.imag() - min.imag());
     auto M = 1 + (N - 1)/total();
-    float times[3];
-    timers(2) tick(0) tick(1)
-    compute_tile<<<M, total()>>>(N, particles, tile_map, min, hscale, vscale, cols);
+    tick(1)
+    cudaMalloc(&tile_map, N * sizeof(unsigned int));
+    cudaMalloc(&offsets, total() * sizeof(uint32_t));
     tock_us(1) times[0] = t_elapsed; tick(1)
-    thrust::sort_by_key(thrust::device, tile_map, tile_map + N, particles);
+    compute_tile<<<M, total()>>>(N, particles, tile_map, min, hscale, vscale, cols);
     tock_us(1) times[1] = t_elapsed; tick(1)
-    compute_particle_per_tile<<<1, total()>>>(N, tile_map, count_per_tile);
-    tock_us(1) times[2] = t_elapsed;
+    thrust::sort_by_key(thrust::device, tile_map, tile_map + N, particles);
+    tock_us(1) times[2] = t_elapsed; tick(1)
+    auto block_dim = rows, grid_dim = cols;
+    if(block_dim > grid_dim) {
+        // for sure one between rows and cols is less than 32 i.e. the dimension of a warp
+        block_dim = cols;
+        grid_dim = rows;
+    }
+    compute_offset_per_tile<<<grid_dim, block_dim>>>(N, tile_map, offsets);
+    tock_us(1) times[3] = t_elapsed;
+    cudaFree(tile_map);
     tock_us(0)
     float m = 100.0f / t_elapsed;
     std::cout.precision(1);
-    std::cout << "Particles sorted by tile in " << std::fixed << t_elapsed << "us {comp: " << times[0]*m
-              << ", sort: " << times[1]*m << ", count: " << times[2]*m << '}' << std::endl;
+    std::cout << "Particles sorted by tile in " << std::fixed << t_elapsed << "us {alloc: " << times[0]*m
+              << ", comp: " << times[1]*m << ", sort: " << times[2]*m << ", offsets: " << times[3]*m << '}' << std::endl;
+    return offsets;
 }
