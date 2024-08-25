@@ -2,7 +2,6 @@
 // Created by Sofyh02 on 15/08/2024.
 //
 #include "evolution.cuh"
-#include "lower_bound.cuh"
 #include <omp.h>
 
 __device__ __host__ void draw(Canvas* canvas, CanvasAdapter * adapter, EvolutionOptions options,
