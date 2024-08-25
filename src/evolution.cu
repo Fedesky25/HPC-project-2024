@@ -35,19 +35,15 @@ __device__ __host__ void draw(Canvas* canvas, CanvasAdapter * adapter, Evolution
     }
 }
 
-__global__ void evolve_gpu(Canvas* canvas, CanvasAdapter * adapter, EvolutionOptions options, complex_t* particles,
-                       uint32_t* belonging_tile, uint32_t* count,
-                       complex_t (*func)(complex_t, FnVariables*), FnVariables* variables
+__global__ void evolve_gpu(Configuration * config, Canvas* canvas, complex_t* particles,
+                           const uint32_t * offsets, ComplexFunction_t func
                        ){
-    auto tile_idx = threadIdx.x + threadIdx.y * blockDim.x;
-    auto canvas_idx = blockIdx.x + blockIdx.y * gridDim.x;
-
-    if(canvas_idx >= count[tile_idx]) return;
-
-    auto particle_idx = lower_bound(tile_idx, belonging_tile, blockDim.x * blockDim.y);
-    particle_idx += canvas_idx;
-    auto z = particles[particle_idx];
-    draw(canvas, adapter, options, func, variables, z, canvas_idx);
+    auto tile_idx = threadIdx.x;
+    auto count = offsets[tile_idx+1] - offsets[tile_idx];
+    auto canvas_idx = blockIdx.x;
+    if(canvas_idx >= count) return;
+    auto z = particles[offsets[tile_idx] + canvas_idx];
+    draw(canvas, &config->canvas, config->evolution, func, &config->vars, z, canvas_idx);
 }
 
 // Divide particle evolution between threads by #pragma omp parallel for.
