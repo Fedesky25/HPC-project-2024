@@ -124,14 +124,17 @@ Canvas * create_canvas_device(uint32_t count, CanvasAdapter * adapter) {
     return d_array;
 }
 
-uint32_t get_canvas_count_serial(uint32_t * count_per_tile, uint32_t tiles) {
+uint32_t get_canvas_count_serial(const uint32_t * offsets, uint32_t tiles) {
     timers(1) tick(0)
-    auto size = tiles * sizeof(uint32_t);
-    auto h_cpt = (uint32_t*) malloc(size);
-    cudaMemcpy(h_cpt, count_per_tile, size, cudaMemcpyDeviceToHost);
-    uint32_t max_c = h_cpt[0];
-    for(int i=1; i<tiles; i++) if(h_cpt[i] > max_c) max_c = h_cpt[i];
-    free(h_cpt);
+    auto size = (tiles+1) * sizeof(uint32_t);
+    auto h_ofs = (uint32_t*) malloc(size);
+    cudaMemcpy(h_ofs, offsets, size, cudaMemcpyDeviceToHost);
+    uint32_t max_c = h_ofs[1], v;
+    for(int i=1; i<tiles; i++) {
+        v = h_ofs[i+1] - h_ofs[i];
+        if(v > max_c) max_c = v;
+    }
+    free(h_ofs);
     tock_us(0)
     std::cout << "Canvas number found in " << t_elapsed << "us" << std::endl;
     return max_c;

@@ -7,6 +7,7 @@
 #include "fstream"
 #include "complex_functions.cuh"
 #include "canvas.cuh"
+#include "evolution.cuh"
 #include "omp.h"
 
 
@@ -62,11 +63,13 @@ int main(int argc, char * argv[]) {
             std::cout << "  Tiles: " << tiles.rows << 'x' << tiles.cols << '=' << tiles_count << " with "
                       << (float) N / (float) tiles_count << " particles each" << std::endl;
             points = particles_gpu(min, max, N);
-            uint_fast16_t * tile_map;
-            uint32_t * count_per_tile;
-            tiles.sort(min, max, points, N, &tile_map, &count_per_tile);
-            canvas_count = get_canvas_count_serial(count_per_tile, tiles_count);
+            auto tile_offsets = tiles.sort(min, max, points, N);
+            canvas_count = get_canvas_count_serial(tile_offsets, tiles_count);
             auto canvases = create_canvas_device(canvas_count, &config.canvas);
+            evolve_gpu<<<canvas_count, tiles_count>>>(&config, canvases, points, tile_offsets,
+                                                      get_function_global(fn_choice));
+            cudaFree(tile_offsets);
+            cudaFree(points);
             break;
         }
     }
