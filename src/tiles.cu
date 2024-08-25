@@ -70,7 +70,7 @@ uint32_t * Tiles::sort(complex_t &min, complex_t &max, complex_t *particles, uin
     auto M = 1 + (N - 1)/tile_count;
     tick(1)
     cudaMalloc(&tile_map, N * sizeof(unsigned int));
-    cudaMalloc(&offsets, (tile_count) * sizeof(uint32_t));
+    cudaMalloc(&offsets, (1+tile_count) * sizeof(uint32_t));
     tock_us(1) times[0] = t_elapsed; tick(1)
     compute_tile<<<M, tile_count>>>(N, particles, tile_map, min, hscale, vscale, cols);
     tock_us(1) times[1] = t_elapsed; tick(1)
@@ -83,6 +83,7 @@ uint32_t * Tiles::sort(complex_t &min, complex_t &max, complex_t *particles, uin
         grid_dim = rows;
     }
     compute_offset_per_tile<<<grid_dim, block_dim>>>(N, tile_map, offsets);
+    cudaMemcpy(offsets + tile_count, &N, sizeof(uint32_t), cudaMemcpyHostToDevice);
     tock_us(1) times[3] = t_elapsed;
     cudaFree(tile_map);
     tock_us(0)
