@@ -121,7 +121,7 @@ T* devicify(T* obj) {
 }
 
 template<class T>
-inline T rounding_division(T numerator, T denominator) {
+__device__ __host__ inline T rounding_division(T numerator, T denominator) {
     static_assert(cuda::std::is_integral<T>::value, "Numbers in rounding division must be integral");
     return (1 + (numerator<<1)/denominator) >> 1;
 }
