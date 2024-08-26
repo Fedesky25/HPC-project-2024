@@ -438,6 +438,10 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
     config->evolution.delta_time = time_scale / fps;
     config->evolution.frame_count = duration * fps;
     config->evolution.ms_per_frame = 1000.0f / (float) fps;
+    if(config->evolution.frame_count > 64800) {
+        std::cerr << "Number of frames cannot exceed 64800 i.e. 4:30min at 240Hz or 18min at 60Hz" << std::endl;
+        return true;
+    }
     return false;
 }
 
