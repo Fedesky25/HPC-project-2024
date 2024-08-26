@@ -51,11 +51,10 @@ struct CanvasPixel {
      * @param time time index
      * @return color of the pixel now
      */
-    __device__ __host__ ARGB get_color(uint16_t time) const;
+    __device__ __host__ uint32_t get_color(int32_t time, int32_t frame_count) const;
 
 private:
-    ARGB color;
-    uint16_t age = UINT16_MAX, multiplicity = 0;
+    uint16_t age = UINT16_MAX, multiplicity = 0, hue = 0;
 };
 
 using Canvas = CanvasPixel*;
