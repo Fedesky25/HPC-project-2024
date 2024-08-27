@@ -1,15 +1,21 @@
 // The possible hue of particle span the range [0, 2/3] and we encode it in an uint16_t
-// This means that 2/3 is encoded by UINT16_MAX = 2^16 - 1 = 65535
-// For consistency, all color channels which span [0,1] are encoded in the range [0, 3/2 * 65535] ~ [0, 98302]
-// using 17 bits of an int32_t (the sign allows for differences without issues)
-// When converting this 17-bit channel into a classical 8-bit channel one must
-// multiply the number by 2/3 * (2^8 - 1)/(2^16 - 1) = 2/(3 * 257) = 2/771
+// The integer value M representing 2/3 is chosen such that
+//  - 3/2*M, which encodes 1, should be an exact int
+//  - 3/4*M, which encodes 0.5, should be an exact int
+//  - the down-conversion to a 8-bit range [0,255] is easy
+// Thus we choose M = 255 * 256 = 65280  =>  3/2*M = 97920
+// The down-conversion is easy since x -> 255/97920*x = x / (3*128) = (x>>7)/3
 
 #include "canvas.cuh"
 #include "thrust/extrema.h"
 
-#define SATURATION 0.55
-#define LIGHTNESS 0.55
+#define MANUAL_DIV_3 0
+#define INT_FOR_1       97920
+#define INT_FOR_2over3  65280
+#define INT_FOR_1over2  48960
+#define INT_FOR_1over3  32640
+#define INT_FOR_1over4  24480
+#define INT_FOR_1over6  16320
 
 #define BG_R 21
 #define BG_G 21
@@ -45,14 +51,39 @@ __device__ __host__ bool CanvasPixel::update_age(uint16_t _age) {
     return ok;
 }
 
+/**
+ * Perform the rounded division by 3*128
+ * @param x integer value between 0 and 97920
+ * @return
+ */
+__device__ __host__ inline uint8_t reduce_to_255(int32_t x) {
+    #if MANUAL_DIV_3
+    // x/(128*3) --> (2x/(3*128) + 1)/2 = (x/(3*64) + 1)>>1;
+    // since 1/3 = 1/4 + 1/16 + 1/64 + 1/256 + 1/1024 + ...
+    // divide by 3 up with powers up to 4^6
+    // because 97920 / 4^6 = 97920 >> 12 = 23 < 2^6 = 64
+    // and     97920 / 4^5 = 97920 >> 10 = 95 > 2^6 = 64
+    int32_t q, y= 0;
+    x = x >> 6;
+    for(int i=0; i<6; i++) {
+        q = x >> 2;
+        x = q + (x&3);
+        y += q;
+    }
+    return (y+1) >> 1;
+    #else
+    return (x/192 + 1) >> 1;
+    #endif
+}
+
 __device__ __host__ uint8_t fixed_pqt_to_component(int32_t p, int32_t q, int32_t t) {
-    if(t < 0) t += 98302;
-    else if(t > 98302) t -= 98302;
+    if(t < 0) t += INT_FOR_1;
+    else if(t > INT_FOR_1) t -= INT_FOR_1;
     int32_t result = p;
-    if(t < 0x4000) result += 6 * (q-p) * t;
-    else if(t < 49152) result = q; // 49152 = 3 * 2^14
-    else if(t < 0xffff) result += 6 * (q-p) * (0xffff - t);
-    return rounding_division(result << 1, 771);
+    if(t < INT_FOR_1over6) result += 6 * (q-p) * t;
+    else if(t < INT_FOR_1over2) result = q;
+    else if(t < INT_FOR_2over3) result += 6 * (q-p) * (INT_FOR_2over3 - t);
+    return reduce_to_255(result)
 }
 
 /**
@@ -65,27 +96,27 @@ __device__ __host__ uint8_t fixed_pqt_to_component(int32_t p, int32_t q, int32_t
  */
 __device__ __host__ uint32_t fixed_HSLA_to_RGBA(int32_t h, int32_t s, int32_t l, int32_t alpha) {
     uint8_t bgra[4];
-    bgra[3] = rounding_division(alpha << 1, 771);
+    bgra[3] = reduce_to_255(alpha);
     if(s == 0) {
-        bgra[0] = bgra[1] = bgra[2] = rounding_division(l << 1, 771);
+        bgra[0] = bgra[1] = bgra[2] = reduce_to_255(l);
     }
     else {
-        // S*(L<0.5? L : 1-L)  =>  s * (l<49152 ? l : 98302 - l) / 98302
+        // S*(L<0.5? L : 1-L)  =>  s * (l<48960 ? l : 97920 - l) / 97920
         // but the product may exceed the value represented by int32_t i.e. 2^31 - 1
-        // e.g. s=98302, l=49151  =>  4_831_641_602 > 2_147_483_648 = 2^31 - 1
-        // therefore pre-divide both side by 2 and finally divide by 3/2*65535/4 = 24575.625
-        auto q = l + (s >> 1) * ((l < 49152 ? l : 98302-l) >> 1) * 2 / 24576;
+        // e.g. s=97920, l=48960  =>  4_794_163_200 > 2_147_483_648 = 2^31 - 1
+        // therefore pre-divide both side by 2 and finally divide by 97920/4 = 24480
+        auto q = l + (s >> 1) * ((l < INT_FOR_1over2 ? l : INT_FOR_1-l) >> 1) / INT_FOR_1over4;
         auto p = 2 * l - q;
-        bgra[0] = fixed_pqt_to_component(p, q, h - 32767);    // blue
+        bgra[0] = fixed_pqt_to_component(p, q, h - INT_FOR_1over3);    // blue
         bgra[1] = fixed_pqt_to_component(p, q, h);            // green
-        bgra[2] = fixed_pqt_to_component(p, q, h + 32767);    // red
+        bgra[2] = fixed_pqt_to_component(p, q, h + INT_FOR_1over3);    // red
     }
     uint32_t result = *((uint32_t*)bgra);
     return result;
 }
 
 __device__ __host__ void CanvasPixel::set_color(double square_speed, double factor) {
-    hue = static_cast<uint16_t>(UINT16_MAX * square_speed / (square_speed + factor));
+    hue = static_cast<uint16_t>(INT_FOR_2over3 * square_speed / (square_speed + factor));
 }
 
 __device__ __host__ uint32_t CanvasPixel::get_color(int32_t time, int32_t frame_count) const {
