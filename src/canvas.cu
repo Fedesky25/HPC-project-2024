@@ -16,6 +16,7 @@
 #define INT_FOR_1over3  32640
 #define INT_FOR_1over4  24480
 #define INT_FOR_1over6  16320
+#define INT_FOR_1over12  8160
 
 #define BG_R 21
 #define BG_G 21
@@ -76,13 +77,15 @@ __device__ __host__ inline uint8_t reduce_to_255(int32_t x) {
     #endif
 }
 
-__device__ __host__ uint8_t fixed_pqt_to_component(int32_t p, int32_t q, int32_t t) {
+__device__ __host__ uint8_t fixed_ldt_to_component(int32_t l, int32_t d, int32_t t) {
+    // maximum value for q = 92920*(1 + 1/2) = 146880
+    // maximum value for p =
     if(t < 0) t += INT_FOR_1;
     else if(t > INT_FOR_1) t -= INT_FOR_1;
-    int32_t result = p;
-    if(t < INT_FOR_1over6) result += 6 * (q-p) * t;
-    else if(t < INT_FOR_1over2) result = q;
-    else if(t < INT_FOR_2over3) result += 6 * (q-p) * (INT_FOR_2over3 - t);
+    int32_t result = l - d;
+    if(t < INT_FOR_1over6) result += (d*t)/INT_FOR_1over12;
+    else if(t < INT_FOR_1over2) result += 2*d;
+    else if(t < INT_FOR_2over3) result += d*(INT_FOR_2over3 - t)/INT_FOR_1over12;
     return reduce_to_255(result)
 }
 
@@ -105,11 +108,10 @@ __device__ __host__ uint32_t fixed_HSLA_to_RGBA(int32_t h, int32_t s, int32_t l,
         // but the product may exceed the value represented by int32_t i.e. 2^31 - 1
         // e.g. s=97920, l=48960  =>  4_794_163_200 > 2_147_483_648 = 2^31 - 1
         // therefore pre-divide both side by 2 and finally divide by 97920/4 = 24480
-        auto q = l + (s >> 1) * ((l < INT_FOR_1over2 ? l : INT_FOR_1-l) >> 1) / INT_FOR_1over4;
-        auto p = 2 * l - q;
-        bgra[0] = fixed_pqt_to_component(p, q, h - INT_FOR_1over3);    // blue
-        bgra[1] = fixed_pqt_to_component(p, q, h);            // green
-        bgra[2] = fixed_pqt_to_component(p, q, h + INT_FOR_1over3);    // red
+        auto delta = (s >> 1) * ((l < INT_FOR_1over2 ? l : INT_FOR_1-l) >> 1) / INT_FOR_1over4;
+        bgra[0] = fixed_ldt_to_component(l, delta, h - INT_FOR_1over3);    // blue
+        bgra[1] = fixed_ldt_to_component(l, delta, h);                      // green
+        bgra[2] = fixed_ldt_to_component(l, delta, h + INT_FOR_1over3);    // red
     }
     uint32_t result = *((uint32_t*)bgra);
     return result;
