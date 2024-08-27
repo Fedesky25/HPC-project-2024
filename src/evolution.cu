@@ -16,7 +16,7 @@ __device__ __host__ void draw(Canvas* canvas, CanvasAdapter * adapter, Evolution
         elapsed = 0.0;
         do {
             v = func(z, variables);
-            dz = v * dt;
+            dz = dt/2 * (v + func(z + dt*v, variables));
             D = (adapter->scale * cuda::std::abs(dz));
             if (D > 1) {
                 dz /= D;
@@ -44,6 +44,7 @@ __global__ void evolve_gpu(Configuration * config, Canvas* canvas, complex_t* pa
     auto z = particles[offsets[tile_idx] + canvas_idx];
     draw(canvas, &config->canvas, config->evolution, func, &config->vars, z, canvas_idx);
 }
+
 
 // Divide particle evolution between threads by #pragma omp parallel for.
 // Each thread writes particles on its own canvas
