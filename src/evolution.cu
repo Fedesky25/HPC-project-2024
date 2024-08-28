@@ -3,10 +3,12 @@
 //
 #include "evolution.cuh"
 #include <omp.h>
+#include <time.h>
+#include <stdlib.h>
 
 __device__ __host__ void draw(Canvas* canvas, CanvasAdapter * adapter, EvolutionOptions options,
-                                       complex_t (*func)(complex_t, FnVariables*), FnVariables* variables,
-                                       complex_t z, unsigned int canvas_idx){
+                              ComplexFunction_t func, FnVariables* variables,
+                              complex_t z, uint32_t offset, unsigned int canvas_idx){
     complex_t v, dz;
     double D, elapsed;
     auto dt = options.delta_time;
@@ -25,8 +27,12 @@ __device__ __host__ void draw(Canvas* canvas, CanvasAdapter * adapter, Evolution
                 elapsed += dt;
             }
             auto pixel_idx = adapter->where(z);
+
             if (pixel_idx != -1) {
-                canvas[canvas_idx][pixel_idx].update_age(j);
+                if(canvas[canvas_idx][pixel_idx]){
+                    return;
+                }
+                canvas[canvas_idx][pixel_idx].update_age((offset + j) % steps);
                 canvas[canvas_idx][pixel_idx].set_color(cuda::std::norm(v), options.speed_factor);
             }
             z += dz;
@@ -42,7 +48,7 @@ __global__ void evolve_gpu(Configuration * config, Canvas* canvas, complex_t* pa
     auto canvas_idx = blockIdx.x;
     if(canvas_idx >= count) return;
     auto z = particles[offsets[tile_idx] + canvas_idx];
-    draw(canvas, &config->canvas, config->evolution, func, &config->vars, z, canvas_idx);
+    draw(canvas, &config->canvas, config->evolution, func, &config->vars, z, offset, canvas_idx);
 }
 
 // Divide particle evolution between threads by #pragma omp parallel for.
@@ -55,7 +61,7 @@ void evolve_omp(Canvas* canvas, CanvasAdapter* adapter, EvolutionOptions options
         auto tid = omp_get_thread_num();
         #pragma omp for schedule(static)
         for (int64_t i = 0; i < N_particles; i++) {
-            draw(canvas, adapter, options, func, variables, particles[i], tid);
+            draw(canvas, adapter, options, func, variables, particles[i], offset, tid);
         }
     }
 }
