@@ -48,7 +48,7 @@ __global__ void evolve_gpu(Configuration * config, Canvas* canvas, complex_t* pa
     auto canvas_idx = blockIdx.x;
     if(canvas_idx >= count) return;
     auto z = particles[offsets[tile_idx] + canvas_idx];
-    draw(canvas, &config->canvas, config->evolution, func, &config->vars, z, offset, canvas_idx);
+    draw(canvas, &config->canvas, config->evolution, func, &config->vars, z, canvas_idx);
 }
 
 // Divide particle evolution between threads by #pragma omp parallel for.
@@ -61,7 +61,7 @@ void evolve_omp(Canvas* canvas, CanvasAdapter* adapter, EvolutionOptions options
         auto tid = omp_get_thread_num();
         #pragma omp for schedule(static)
         for (int64_t i = 0; i < N_particles; i++) {
-            draw(canvas, adapter, options, func, variables, particles[i], offset, tid);
+            draw(canvas, adapter, options, func, variables, particles[i], tid);
         }
     }
 }
