@@ -39,15 +39,32 @@ __device__ __host__ void draw(Canvas* canvas, CanvasAdapter * adapter, Evolution
     }
 }
 
-__global__ void evolve_gpu(Configuration * config, Canvas* canvas, complex_t* particles,
-                           const uint32_t * offsets, ComplexFunction_t func
+__global__ void evolve_kernel(Configuration * config, Canvas* canvas, complex_t* particles,
+                           const uint32_t * offsets, uint32_t* rand_offsets, ComplexFunction_t func
                        ){
     auto tile_idx = threadIdx.x;
     auto count = offsets[tile_idx+1] - offsets[tile_idx];
     auto canvas_idx = blockIdx.x;
     if(canvas_idx >= count) return;
     auto z = particles[offsets[tile_idx] + canvas_idx];
-    draw(canvas, &config->canvas, config->evolution, func, &config->vars, z, canvas_idx);
+    auto offset = rand_offsets[offsets[tile_idx] + canvas_idx];
+    draw(canvas, &config->canvas, config->evolution, func, &config->vars, z, offset, canvas_idx);
+}
+
+void evolve_gpu(Configuration * config, Canvas* canvas, complex_t* particles, uint64_t N_particles,
+                   const uint32_t* offsets, ComplexFunction_t func, uint32_t tiles_count, uint32_t canvas_count){
+
+    uint32_t *d_rand_offsets;
+    cudaMalloc((void **)&d_rand_offsets, N_particles * sizeof (uint32_t));
+
+    curandGenerator_t gen;
+    curandCreateGenerator(&gen, CURAND_RNG_PSEUDO_XORWOW);
+    auto seed = std::chrono::system_clock::now().time_since_epoch().count();
+    curandSetPseudoRandomGeneratorSeed(gen, seed);
+    curandGenerate(gen, d_rand_offsets, N_particles);
+
+    evolve_kernel<<<canvas_count, tiles_count>>>(config, canvas, particles, offsets, d_rand_offsets, func);
+
 }
 
 // Divide particle evolution between threads by #pragma omp parallel for.
