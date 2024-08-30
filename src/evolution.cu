@@ -3,8 +3,7 @@
 //
 #include "evolution.cuh"
 #include <omp.h>
-#include <time.h>
-#include <stdlib.h>
+#include <random>
 
 __device__ __host__ void draw(Canvas* canvas, CanvasAdapter * adapter, EvolutionOptions options,
                               ComplexFunction_t func, FnVariables* variables,
@@ -53,15 +52,20 @@ __global__ void evolve_gpu(Configuration * config, Canvas* canvas, complex_t* pa
 
 // Divide particle evolution between threads by #pragma omp parallel for.
 // Each thread writes particles on its own canvas
-void evolve_omp(Canvas* canvas, CanvasAdapter* adapter, EvolutionOptions options, complex_t* particles, uint64_t N_particles,
-                complex_t (*func)(complex_t, FnVariables*), FnVariables* variables){
+void evolve_omp(Configuration* config, Canvas* canvas, complex_t* particles, uint64_t N_particles,
+                ComplexFunction_t func){
 
+    auto seed = std::chrono::system_clock::now().time_since_epoch().count();
     #pragma omp parallel
     {
         auto tid = omp_get_thread_num();
+        std::default_random_engine generator(seed + omp_get_thread_num());
+        std::uniform_int_distribution<int> rand_int(0, (int) config->evolution.frame_count);
         #pragma omp for schedule(static)
         for (int64_t i = 0; i < N_particles; i++) {
-            draw(canvas, adapter, options, func, variables, particles[i], tid);
+            uint32_t offset = rand_int(generator);
+            draw(canvas, &config->canvas, config->evolution, func,
+                 &config->vars, particles[i], offset, tid);
         }
     }
 }
