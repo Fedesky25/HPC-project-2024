@@ -66,8 +66,8 @@ int main(int argc, char * argv[]) {
             auto tile_offsets = tiles.sort(min, max, points, N);
             canvas_count = get_canvas_count_serial(tile_offsets, tiles_count);
             auto canvases = create_canvas_device(canvas_count, &config.canvas);
-            evolve_gpu<<<canvas_count, tiles_count>>>(&config, canvases, points, tile_offsets,
-                                                      get_function_global(fn_choice));
+            evolve_gpu(&config, canvases, points, N, tile_offsets,
+                                                      get_function_global(fn_choice), tiles_count, canvas_count);
             cudaFree(tile_offsets);
             cudaFree(points);
             break;
