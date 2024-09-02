@@ -55,13 +55,20 @@ void evolve_gpu(Configuration * config, Canvas* canvas, complex_t* particles, ui
                    const uint32_t* offsets, ComplexFunction_t func, uint32_t tiles_count, uint32_t canvas_count){
 
     uint32_t *d_rand_offsets;
+    float *d_rand_floats;
     cudaMalloc((void **)&d_rand_offsets, N_particles * sizeof (uint32_t));
+    cudaMalloc((void **)&d_rand_floats, N_particles * sizeof (float));
 
     curandGenerator_t gen;
     curandCreateGenerator(&gen, CURAND_RNG_PSEUDO_XORWOW);
     auto seed = std::chrono::system_clock::now().time_since_epoch().count();
     curandSetPseudoRandomGeneratorSeed(gen, seed);
-    curandGenerate(gen, d_rand_offsets, N_particles);
+    curandGenerateUniform(gen, d_rand_floats, N_particles);
+
+    for(uint64_t i=0; i<N_particles; i++){
+        d_rand_offsets[i] = (uint32_t)(d_rand_floats[i] * (float) config->evolution.frame_count);
+    }
+    cudaFree(d_rand_floats);
 
     evolve_kernel<<<canvas_count, tiles_count>>>(config, canvas, particles, offsets, d_rand_offsets, func);
 
