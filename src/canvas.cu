@@ -44,6 +44,18 @@ void ARGB::print_base64(FILE *file) const {
     fputc(c, file);
 }
 
+__device__ __host__ int32_t CanvasPixel::time_distance(int32_t time, int32_t frame_count) const {
+    /*
+    if(age == UINT16_MAX) return UINT16_MAX;
+    int32_t diff = time - (int32_t) age;
+    if(res < 0) res += frame_count;
+    return res;
+    */
+    int32_t mask = ((((int32_t) age) + 1) >> 16) - 1; // 0b00000000 if UINT16_MAX, 0xffffffff otherwise
+    int32_t diff = (frame_count + time - (int32_t) age) % frame_count;
+    return (mask & diff) + ((~mask) & UINT16_MAX);
+}
+
 __device__ __host__ bool CanvasPixel::update_age(uint16_t _age) {
     bool ok = true;
     if(age == UINT16_MAX) age = _age;
@@ -78,8 +90,6 @@ __device__ __host__ inline uint8_t reduce_to_255(int32_t x) {
 }
 
 __device__ __host__ uint8_t fixed_ldt_to_component(int32_t l, int32_t d, int32_t t) {
-    // maximum value for q = 92920*(1 + 1/2) = 146880
-    // maximum value for p =
     if(t < 0) t += INT_FOR_1;
     else if(t > INT_FOR_1) t -= INT_FOR_1;
     int32_t result = l - d;
@@ -129,7 +139,7 @@ __device__ __host__ uint32_t CanvasPixel::get_color(int32_t time, int32_t frame_
     if(delta <= multiplicity) return fixed_HSLA_to_RGBA(hue, 54066, 54066, 0);
     else {
         // Background = rgb(21,21,25) = hsl(2/3, 0.087, 0.09) = HSL(65535, 8552, 8847)
-        // TODO
+        // TODO mix background with color
     }
     uint32_t result = *((uint32_t*)color);
     return result;

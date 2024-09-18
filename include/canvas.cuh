@@ -25,6 +25,18 @@ struct CanvasPixel {
     /** @return whether a particle passed through the pixel  */
     explicit inline operator bool() const { return age != UINT16_MAX; }
 
+    __device__ __host__ friend inline bool operator<(const CanvasPixel& a, const CanvasPixel& b) { return a.age > b.age; }
+
+    __device__ __host__ inline bool alive(uint16_t time) const { return time > age; }
+
+    /**
+     * Computes the (positive) time difference between this pixel's age and the current time
+     * @param time current time
+     * @param frame_count total number of frames
+     * @return
+     */
+    __device__ __host__ int32_t time_distance(int32_t time, int32_t frame_count) const;
+
     /** Resets the pixel as if a particle never passed through it */
     __device__ __host__ inline void reset() {
         age = UINT16_MAX;
