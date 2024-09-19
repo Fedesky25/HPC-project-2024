@@ -52,12 +52,17 @@ __global__ void evolve_kernel(Configuration * config, Canvas* canvas, complex_t*
     draw(canvas, &config->canvas, &config->evolution, func, &config->vars, z, offset, canvas_idx);
 }
 
-void evolve_gpu(Configuration * config, Canvas* canvas, complex_t* particles, uint64_t N_particles,
-                   const uint32_t* offsets, ComplexFunction_t func, uint32_t tiles_count, uint32_t canvas_count){
+__global__ void scale_time_offsets(const float * in, uint32_t * out, uint32_t N, uint32_t frame_count) {
+    uint32_t increment = blockDim.x * gridDim.x;
+    for(uint32_t i = threadIdx.x; i < N; i += increment) out[i] = static_cast<uint32_t>(in[i] * (float) frame_count);
+}
 
-    uint32_t *d_rand_offsets;
+void evolve_gpu(Configuration * config, Canvas* canvas, uint32_t canvas_count, complex_t* particles,
+                uint64_t N_particles, const uint32_t* offsets, FunctionChoice fn_choice, uint32_t tiles_count){
+
+    uint32_t *d_time_offsets;
     float *d_rand_floats;
-    cudaMalloc((void **)&d_rand_offsets, N_particles * sizeof (uint32_t));
+    cudaMalloc((void **)&d_time_offsets, N_particles * sizeof (uint32_t));
     cudaMalloc((void **)&d_rand_floats, N_particles * sizeof (float));
 
     curandGenerator_t gen;
@@ -65,10 +70,7 @@ void evolve_gpu(Configuration * config, Canvas* canvas, complex_t* particles, ui
     auto seed = std::chrono::system_clock::now().time_since_epoch().count();
     curandSetPseudoRandomGeneratorSeed(gen, seed);
     curandGenerateUniform(gen, d_rand_floats, N_particles);
-
-    for(uint64_t i=0; i<N_particles; i++){
-        d_rand_offsets[i] = (uint32_t)(d_rand_floats[i] * (float) config->evolution.frame_count);
-    }
+    scale_time_offsets<<<36,1024>>>(d_rand_floats, d_time_offsets, N_particles, config->evolution.frame_count);
     cudaFree(d_rand_floats);
 
     evolve_kernel<<<canvas_count, tiles_count>>>(config, canvas, particles, offsets, d_rand_offsets, func);
