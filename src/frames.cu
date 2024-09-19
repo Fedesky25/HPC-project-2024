@@ -63,7 +63,7 @@ __global__ void compute_frame_no_divergence(
         __syncthreads();
     }
     auto px = &canvas_array[selected_canvas][pixel_index];
-    frame[pixel_index] = px->get_color(time, frame_count, background);
+    frame[pixel_index] = px->get_color(selected_time_delta, frame_count, background);
 }
 
 void compute_frame_gpu(
