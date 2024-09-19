@@ -24,7 +24,7 @@ struct ARGB {
 
 struct CanvasPixel {
     /** @return whether a particle passed through the pixel  */
-    explicit inline operator bool() const { return age != UINT16_MAX; }
+    __device__ __host__ explicit inline operator bool() const { return age != UINT16_MAX; }
 
     __device__ __host__ friend inline bool operator<(const CanvasPixel& a, const CanvasPixel& b) { return a.age > b.age; }
 

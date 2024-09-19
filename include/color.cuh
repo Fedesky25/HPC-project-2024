@@ -41,14 +41,14 @@ struct FixedFraction {
      * @param a numerator, must be less than denominator
      * @param b denominator
      */
-    inline FixedFraction(int32_t a, int32_t b) : value((a<<14) / b) {}
+    SAFE_HOST_DEVICE inline FixedFraction(int32_t a, int32_t b) : value((a<<14) / b) {}
 
     /**
      * Multiplies this fraction with a number
      * @param x other number
      * @return
      */
-    inline int32_t multiply(int32_t x) const { return (x * value) >> 14; }
+    SAFE_HOST_DEVICE inline int32_t multiply(int32_t x) const { return (x * value) >> 14; }
 
     SAFE_HOST_DEVICE inline int32_t mix(int32_t start, int32_t end) const {
         return start + (((end - start)*value) >> 14);
