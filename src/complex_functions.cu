@@ -3,8 +3,9 @@
 //
 #include "complex_functions.cuh"
 
-#define PHI 1.618033988749895
+#define PHI        1.6180339887498950
 #define INV_SQRT_5 0.4472135954999579
+#define SQRT_2PI   2.5066282746310002
 
 __device__ __host__ complex_t complex_log(complex_t z, long k){
     complex_t phase;
@@ -155,17 +156,37 @@ __device__ __host__ complex_t fibonacci(complex_t z, FnVariables* variables){
     return (cuda::std::pow(PHI, z) - (cos(PI*z) * cuda::std::pow(PHI, -z))) * INV_SQRT_5;
 }
 
-__device__ __host__ complex_t gamma(complex_t z, FnVariables* variables){
-    // TODO define dx and tolerance
-    double dx, tol;
-    double x = 0;
-    complex_t gamma = 0, prev;
-    do {
-        prev = gamma;
-        x += dx;
-        gamma += (cuda::std::pow(x, z - (complex_t)1) * cuda::std::exp(-x));
-    } while(cuda::std::norm(gamma-prev) > tol);
-    return gamma;
+double gamma_p_host[] = {
+        1975.3739023578852322, -4397.3823927922428918, 3462.6328459862717019, -1156.9851431631167820,
+        154.53815050252775060, -6.2536716123689161798, 0.034642762454736807441, -7.4776171974442977377e-7,
+        6.3041253821852264261e-8, -2.7405717035683877489e-8, 4.0486948817567609101e-9 };
+
+__device__ double gamma_p_device[] = {
+        1975.3739023578852322, -4397.3823927922428918, 3462.6328459862717019, -1156.9851431631167820,
+        154.53815050252775060, -6.2536716123689161798, 0.034642762454736807441,-7.4776171974442977377e-7,
+        6.3041253821852264261e-8, -2.7405717035683877489e-8, 4.0486948817567609101e-9 };
+
+/** @see https://en.wikipedia.org/wiki/Lanczos_approximation */
+__device__ __host__ complex_t gamma_positive_half_plane(complex_t z) {
+    z -= 1.0;
+    complex_t A = 0.9999999999999999298;
+    for(unsigned i=0; i<11; i++) {
+        #ifdef __CUDA_ARCH__
+        A += gamma_p_device[i] / (z + (double) i);
+        #else
+        A += gamma_p_host[i] / (z + (double) i);
+        #endif
+    }
+    complex_t t = z + 8.5;
+    return SQRT_2PI * cuda::std::pow(t, z+0.5) * cuda::std::exp(-t) * A;
+}
+
+__device__ __host__ complex_t gamma(complex_t z, FnVariables*) {
+    complex_t y;
+    if(z.real() >= 0.5) y = gamma_positive_half_plane(z);
+    else y = PI / (cuda::std::sin(z*PI) * gamma_positive_half_plane(1.0 - z));
+    if(cuda::std::abs(y.imag()) < DBL_EPSILON) y.imag(0.0);
+    return y;
 }
 
 template<unsigned N>
