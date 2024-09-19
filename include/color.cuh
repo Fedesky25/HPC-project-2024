@@ -14,19 +14,25 @@
 #define ICE_1 97920
 #define IC_16b 65280
 
+#ifdef __CUDACC__
+    #define SAFE_HOST_DEVICE __host__ __device__
+#else
+    #define SAFE_HOST_DEVICE
+#endif
+
 /**
  * Integer Color Encode
  * @param x number in range [0,1]
  * @return integer representation of x
  */
-constexpr inline int32_t icenc(float x) { return static_cast<int32_t>(ICE_1 * x); }
+SAFE_HOST_DEVICE constexpr inline int32_t icenc(float x) { return static_cast<int32_t>(ICE_1 * x); }
 
 /**
  * Integer Color Encode
  * @param x number in range (0,+infinity)
  * @return integer representation of 1/x
  */
-constexpr inline int32_t icenc_inv(float x) { return static_cast<int32_t>(ICE_1 / x); }
+SAFE_HOST_DEVICE constexpr inline int32_t icenc_inv(float x) { return static_cast<int32_t>(ICE_1 / x); }
 
 struct FixedFraction {
     int32_t value;
@@ -44,7 +50,7 @@ struct FixedFraction {
      */
     inline int32_t multiply(int32_t x) const { return (x * value) >> 14; }
 
-    inline int32_t mix(int32_t start, int32_t end) const {
+    SAFE_HOST_DEVICE inline int32_t mix(int32_t start, int32_t end) const {
         return start + (((end - start)*value) >> 14);
     }
 };
@@ -57,7 +63,7 @@ struct FixedFraction {
  * @param l lightness
  * @return RGBA value as a uint32_t
  */
-__device__ __host__ uint32_t HSLA_to_RGBA(int32_t h, int32_t s, int32_t l, int32_t alpha);
+SAFE_HOST_DEVICE uint32_t HSLA_to_RGBA(int32_t h, int32_t s, int32_t l, int32_t alpha);
 
 /** Representation of HSLA color using integers */
 struct FixedHSLA {
@@ -82,14 +88,14 @@ struct FixedHSLA {
      * Converts the current HSLA color to RGBA format
      * @return RGBA 4-byte format as a single uint32
      */
-    __device__ __host__ inline uint32_t toRGBA() const { return HSLA_to_RGBA(H, S, L, A); }
+    SAFE_HOST_DEVICE inline uint32_t toRGBA() const { return HSLA_to_RGBA(H, S, L, A); }
 
     /**
      * Mix this color with another one
      * @param other other HSLA color
      * @param x how much the other color is present
      */
-    __device__ __host__ void mixWith(const FixedHSLA & other, FixedFraction frac);
+    SAFE_HOST_DEVICE void mixWith(const FixedHSLA & other, FixedFraction frac);
 };
 
 #endif //HPC_PROJECT_2024_COLOR_CUH
