@@ -53,7 +53,7 @@ __device__ __host__ uint32_t CanvasPixel::get_color(int32_t delta, int32_t frame
     else {
         FixedFraction f(delta, frame_count);
         FixedHSLA color{hue, icenc(0.55f), icenc(0.55f), 0};
-        color.mixWith(&background, f);
+        color.mixWith(*background, f);
         return color.toRGBA();
     }
 }
