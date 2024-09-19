@@ -2,6 +2,7 @@
 #define HPC_PROJECT_2024_CANVAS_CUH
 
 #include "utils.cuh"
+#include "color.cuh"
 
 struct ARGB {
     uint8_t a, r, g, b;
@@ -58,12 +59,14 @@ struct CanvasPixel {
     __device__ __host__ void set_color(double square_speed, double factor);
 
     /**
-     * Computes the color the pixel has at the given time
+     * Computes the color of the pixel given the time distance from current time
      * @todo take total lifetime as argument
-     * @param time time index
+     * @param time_distance previously computed time distance
+     * @param frame_count total number of frames
+     * @param background pointer to background color
      * @return color of the pixel now
      */
-    __device__ __host__ uint32_t get_color(int32_t time, int32_t frame_count) const;
+    __device__ __host__ uint32_t get_color(int32_t time_distance, int32_t frame_count, const FixedHSLA * background) const;
 
 private:
     uint16_t age = UINT16_MAX, multiplicity = 0, hue = 0;

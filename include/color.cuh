@@ -12,6 +12,7 @@
 #include "cstdint"
 
 #define ICE_1 97920
+#define IC_16b 65280
 
 /**
  * Integer Color Encode
