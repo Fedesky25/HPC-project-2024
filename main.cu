@@ -54,6 +54,7 @@ int main(int argc, char * argv[]) {
             points = particles_omp(min, max, N);
             canvas_count = omp_get_max_threads();
             auto canvases = create_canvas_host(canvas_count, &config.canvas);
+            evolve_omp(&config, canvases, points, N, fn_choice);
             break;
         }
         case ExecutionMode::GPU:
@@ -66,8 +67,8 @@ int main(int argc, char * argv[]) {
             auto tile_offsets = tiles.sort(min, max, points, N);
             canvas_count = get_canvas_count_serial(tile_offsets, tiles_count);
             auto canvases = create_canvas_device(canvas_count, &config.canvas);
-            evolve_gpu(&config, canvases, points, N, tile_offsets,
-                                                      get_function_global(fn_choice), tiles_count, canvas_count);
+            evolve_gpu(&config, canvases, canvas_count, points, N,
+                       tile_offsets, tiles_count, fn_choice);
             cudaFree(tile_offsets);
             cudaFree(points);
             break;
