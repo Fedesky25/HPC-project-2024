@@ -72,15 +72,14 @@ void evolve_gpu(Configuration * config, Canvas* canvas, uint32_t canvas_count, c
     curandGenerateUniform(gen, d_rand_floats, N_particles);
     scale_time_offsets<<<36,1024>>>(d_rand_floats, d_time_offsets, N_particles, config->evolution.frame_count);
     cudaFree(d_rand_floats);
-
-    evolve_kernel<<<canvas_count, tiles_count>>>(config, canvas, particles, offsets, d_rand_offsets, func);
-
+    auto func = get_function_global(fn_choice);
+    evolve_kernel<<<canvas_count, tiles_count>>>(config, canvas, particles, offsets, d_time_offsets, func);
 }
 
 // Divide particle evolution between threads by #pragma omp parallel for.
 // Each thread writes particles on its own canvas
 void evolve_omp(Configuration* config, Canvas* canvas, complex_t* particles, uint64_t N_particles,
-                ComplexFunction_t func){
+                FunctionChoice fn_choice){
 
     auto seed = std::chrono::system_clock::now().time_since_epoch().count();
     #pragma omp parallel
@@ -88,6 +87,7 @@ void evolve_omp(Configuration* config, Canvas* canvas, complex_t* particles, uin
         auto tid = omp_get_thread_num();
         std::default_random_engine generator(seed + omp_get_thread_num());
         std::uniform_int_distribution<int> rand_int(0, (int) config->evolution.frame_count);
+        auto func = get_function_host(fn_choice);
         #pragma omp for schedule(static)
         for (int64_t i = 0; i < N_particles; i++) {
             uint32_t offset = rand_int(generator);
