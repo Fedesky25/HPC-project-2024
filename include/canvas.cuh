@@ -38,6 +38,15 @@ struct CanvasPixel {
      */
     __device__ __host__ int32_t time_distance(int32_t time, int32_t frame_count) const;
 
+    /**
+     * Computes the (positive) time difference between this pixel's age and the current time.
+     * It uses divergent branches
+     * @param time current time
+     * @param frame_count total number of frames
+     * @return
+     */
+    __device__ __host__ int32_t time_distance_divergent(int32_t time, int32_t frame_count) const;
+
     /** Resets the pixel as if a particle never passed through it */
     __device__ __host__ inline void reset() {
         age = UINT16_MAX;
