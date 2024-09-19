@@ -41,7 +41,7 @@ __device__ __host__ void draw(Canvas* canvas, CanvasAdapter * adapter, Evolution
 }
 
 __global__ void evolve_kernel(Configuration * config, Canvas* canvas, complex_t* particles,
-                           const uint32_t * offsets, uint32_t* rand_offsets, ComplexFunction_t func
+                           const uint32_t * offsets, const uint32_t * rand_offsets, ComplexFunction_t func
                        ){
     auto tile_idx = threadIdx.x;
     auto count = offsets[tile_idx+1] - offsets[tile_idx];
