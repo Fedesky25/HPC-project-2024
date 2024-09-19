@@ -76,10 +76,7 @@ Canvas * create_canvas_host(uint32_t count, CanvasAdapter * adapter) {
 
 __global__ void init_canvas_array(Canvas * array, uint32_t len) {
     auto canvas = array[blockIdx.x];
-    auto count =  1 + ((len - 1) >> 10);
-    canvas += count * threadIdx.x;
-    count -= (threadIdx.x == 1023) * (len & 1023);
-    for(uint32_t i=0; i<count; i++) canvas[i].reset();
+    for(unsigned i=threadIdx.x; i<len; i+=blockDim.x) canvas[i].reset();
 }
 
 Canvas * create_canvas_device(uint32_t count, CanvasAdapter * adapter) {
