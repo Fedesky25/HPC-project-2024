@@ -4,6 +4,7 @@
 #include "evolution.cuh"
 #include <omp.h>
 #include <random>
+#include "curand.h"
 
 __device__ __host__ void draw(Canvas* canvas, CanvasAdapter * adapter, EvolutionOptions options,
                               ComplexFunction_t func, FnVariables* variables,
