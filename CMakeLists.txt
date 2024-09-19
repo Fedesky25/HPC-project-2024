@@ -27,6 +27,7 @@ add_executable(HPC_project_2024
         include/evolution.cuh src/evolution.cu
         include/complex_functions.cuh src/complex_functions.cu
         include/frames.cuh src/frames.cu
+        include/color.cuh src/color.cu
 )
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
