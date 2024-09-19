@@ -330,7 +330,7 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
             { "fps",         required_argument, nullptr, 'f' },
             { "duration",    required_argument, nullptr, 'D' },
 //            { "lifetime",    required_argument, nullptr, 'l' },
-//            { "background",  required_argument, nullptr, 'B' },
+            { "background",  required_argument, nullptr, 'B' },
             { "int",         required_argument, nullptr, 'n' },
             { "real",        required_argument, nullptr, 'r' },
             { "complex1",    required_argument, nullptr, '1' },
@@ -338,7 +338,7 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
             { "complex3",    required_argument, nullptr, '3' },
             { nullptr, 0, nullptr, 0 }
     };
-    static char short_options[] = "p:o:R:s:c:d:m:v:t:f:D:n:r:1:2:3:";
+    static char short_options[] = "p:o:R:s:c:d:m:v:t:f:D:B:n:r:1:2:3:";
 
     int o, go = 1, index_opt;
     char * rest;
@@ -406,6 +406,18 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
                 duration = strtoul(optarg, &rest, 10);
                 CHECK_REMAINING("duration")
                 break;
+            case 'B':
+            {
+                uint32_t val = strtoul(optarg, &rest, 16);
+                CHECK_REMAINING("background color")
+                uint8_t alpha = 0xff;
+                if(rest - optarg > 6) {
+                    alpha = val & 0xff;
+                    val >>= 8;
+                }
+                config->background.fromRGBA(val >> 16, (val >> 8) & 0xff, val & 0xff, alpha);
+                break;
+            }
             case 'n':
                 config->vars.n = strtol(optarg, &rest, 10);
                 CHECK_REMAINING("integer number (n)");

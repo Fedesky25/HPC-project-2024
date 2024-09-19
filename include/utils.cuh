@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <chrono>
 #include "cuda/std/complex"
+#include "color.cuh"
 
 #define PI 3.1415926535897932384626433
 
@@ -80,6 +81,7 @@ struct Configuration {
     FnVariables vars;
     CanvasAdapter canvas;
     EvolutionOptions evolution;
+    FixedHSLA background{};
     const char * output = "plot.webp";
     unsigned long particle_distance = 10;
     unsigned long margin = 4;
