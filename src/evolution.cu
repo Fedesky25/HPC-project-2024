@@ -41,14 +41,14 @@ __device__ __host__ void draw(Canvas* canvas, CanvasAdapter * adapter, Evolution
 }
 
 __global__ void evolve_kernel(Configuration * config, Canvas* canvas, complex_t* particles,
-                           const uint32_t * offsets, const uint32_t * rand_offsets, ComplexFunction_t func
+                              const uint32_t * tile_offsets, const uint32_t * rand_offsets, ComplexFunction_t func
                        ){
     auto tile_idx = threadIdx.x;
-    auto count = offsets[tile_idx+1] - offsets[tile_idx];
+    auto count = tile_offsets[tile_idx + 1] - tile_offsets[tile_idx];
     auto canvas_idx = blockIdx.x;
     if(canvas_idx >= count) return;
-    auto z = particles[offsets[tile_idx] + canvas_idx];
-    auto offset = rand_offsets[offsets[tile_idx] + canvas_idx];
+    auto z = particles[tile_offsets[tile_idx] + canvas_idx];
+    auto offset = rand_offsets[tile_offsets[tile_idx] + canvas_idx];
     draw(canvas, &config->canvas, &config->evolution, func, &config->vars, z, offset, canvas_idx);
 }
 
@@ -57,8 +57,11 @@ __global__ void scale_time_offsets(const float * in, uint32_t * out, uint32_t N,
     for(uint32_t i = threadIdx.x; i < N; i += increment) out[i] = static_cast<uint32_t>(in[i] * (float) frame_count);
 }
 
-void evolve_gpu(Configuration * config, Canvas* canvas, uint32_t canvas_count, complex_t* particles,
-                uint64_t N_particles, const uint32_t* offsets, FunctionChoice fn_choice, uint32_t tiles_count){
+void evolve_gpu(Configuration * config,
+                Canvas* canvas, uint32_t canvas_count,
+                complex_t* particles, uint64_t N_particles,
+                const uint32_t* tile_offsets, uint32_t tiles_count,
+                FunctionChoice fn_choice){
 
     uint32_t *d_time_offsets;
     float *d_rand_floats;
@@ -73,12 +76,13 @@ void evolve_gpu(Configuration * config, Canvas* canvas, uint32_t canvas_count, c
     scale_time_offsets<<<36,1024>>>(d_rand_floats, d_time_offsets, N_particles, config->evolution.frame_count);
     cudaFree(d_rand_floats);
     auto func = get_function_global(fn_choice);
-    evolve_kernel<<<canvas_count, tiles_count>>>(config, canvas, particles, offsets, d_time_offsets, func);
+    evolve_kernel<<<canvas_count, tiles_count>>>(config, canvas, particles, tile_offsets, d_time_offsets, func);
 }
 
 // Divide particle evolution between threads by #pragma omp parallel for.
 // Each thread writes particles on its own canvas
-void evolve_omp(Configuration* config, Canvas* canvas, complex_t* particles, uint64_t N_particles,
+void evolve_omp(Configuration* config, Canvas* canvas,
+                complex_t* particles, uint64_t N_particles,
                 FunctionChoice fn_choice){
 
     auto seed = std::chrono::system_clock::now().time_since_epoch().count();

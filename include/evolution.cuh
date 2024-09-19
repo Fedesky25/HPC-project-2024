@@ -24,9 +24,8 @@ void evolve_gpu(
         Configuration * config,
         Canvas* canvas, uint32_t canvas_count,
         complex_t* particles, uint64_t N_particles,
-        FunctionChoice fn_choice,
-        const uint32_t * offsets,
-        uint32_t tiles_count);
+        const uint32_t * tile_offsets, uint32_t tiles_count,
+        FunctionChoice fn_choice);
 
 /**
  * Calculates and draws particle evolution on different canvases using OpenMP
