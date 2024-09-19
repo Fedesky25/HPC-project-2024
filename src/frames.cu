@@ -32,15 +32,17 @@ void compute_frame_omp(
 ) {
     #pragma omp parallel for schedule(static)
     for(int32_t i=0; i<size; i++) {
-        unsigned c = 0;
-        while(c < canvas_count && !canvas_array[c][i].alive(time)) c++;
-        if(c == canvas_count) continue;
-        auto px = &(canvas_array[c][i]);
-        for(; c < canvas_count; c++) {
-            if(canvas_array[c][i] < *px)
-                px = &(canvas_array[c][i]);
+        unsigned selected_canvas = 0;
+        int32_t time_delta, selected_time_delta = canvas_array[0][i].time_distance(time, frame_count);
+        for(unsigned c=1; c<canvas_count; c++) {
+            time_delta = canvas_array[c][i].time_distance(time, frame_count);
+            if(time_delta < selected_time_delta) {
+                selected_time_delta = time_delta;
+                selected_canvas = c;
+            }
         }
-        frame[i] = px->get_color(time, frame_count, background);
+        auto px = &canvas_array[selected_canvas][i];
+        frame[i] = px->get_color(selected_time_delta, frame_count, background);
     }
 }
 
