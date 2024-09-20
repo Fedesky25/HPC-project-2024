@@ -1,5 +1,15 @@
 # HPC-project-2024
 
+This is the final project for the 2024 course of "High Performance Computing" of the Master degree "Quantum Engineering" at Politecnico di Torino.
+
+Written in CUDA, the end result should be a CLI tool. Given a complex function (among a relative wide range of possibilities) and, optionally, the values of some options (width, height,fps, center, function parameters, etc.), such tool produces a video of the stream plot of the chosen function.
+
+The general program flow is the following
+1. Initial particle positions are generated using [Lloyd's algorithm](https://en.m.wikipedia.org/wiki/Lloyd's_algorithm)
+2. The evolution of the particles is written on multiple canvases in order to parallelize writing on different OpenMP threads or CUDA thread blocks
+3. For each frame, the same pixel of each canvas are combined into a single pixel which is drawn into the frame buffer
+4. Frames are combined into a Webp container to build a Webp video
+
 
 ## Supported resolutions
 
