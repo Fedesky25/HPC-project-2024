@@ -474,6 +474,7 @@ void print_usage() {
               << "                                      prepended to invert the horizontal and vertical sizes." << std::endl;
     std::cout << "  -d  --distance       10             Average distance (in pixels) between two nearby particles in the starting positions" << std::endl;
     std::cout << "  -m  --margin         4              Number of layers of additional particles outside the video. Too low values lead to empty borders." << std::endl;
+    std::cout << "  -B  --background     242429         RGB or RGBA color of the background using hexadecimal representation" << std::endl;
     std::cout << "  -v  --speed          1.0            Value of speed around which logarithmic color sensitivity is maximum. Red or blue" << std::endl
               << "                                      occur when the speed is respectively one order less or more than the specified value." << std::endl;
     std::cout << "  -t  --time-scale     6e-8           Time scale used to convert 1 real second into the computational time unit. Lower values guarantee" << std::endl
