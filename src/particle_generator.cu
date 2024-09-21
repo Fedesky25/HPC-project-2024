@@ -258,13 +258,12 @@ complex_t* particles_mixed(complex_t z1, complex_t z2, uint32_t N){
 }
 
 __global__ void scale_complex(double real, double imag, complex_t offset, complex_t * data, uint64_t N) {
-    auto index = threadIdx.x + (uint64_t)blockIdx.x * (uint64_t)blockDim.x;
-    if(index >= N) return;
-    auto z = data[index];
-    z.real(z.real() * real);
-    z.imag(z.imag() * imag);
-    z += offset;
-    data[index] = z;
+    auto increment = (uint64_t) blockDim.x * gridDim.x;
+    for(uint64_t i=threadIdx.x; i<N; i+=increment) {
+        data[i].real(data[i].real() * real);
+        data[i].imag(data[i].imag() * imag);
+        data[i] += offset;
+    }
 }
 
 /**
@@ -315,9 +314,9 @@ complex_t* particles_gpu(complex_t z1, complex_t z2, uint32_t N){
     auto deltaImag = z2.imag()-z1.imag();
 
     curandGenerateUniformDouble(gen, (double*) d_sites, N*2);
-    scale_complex<<<M, 1024>>>(deltaReal, deltaImag, z1, d_sites, N);
+    scale_complex<<<36, 1024>>>(deltaReal, deltaImag, z1, d_sites, N);
     curandGenerateUniformDouble(gen, (double*) d_density, n_density*2);
-    scale_complex<<<D, 1024>>>(deltaReal, deltaImag, z1, d_density, n_density);
+    scale_complex<<<36, 1024>>>(deltaReal, deltaImag, z1, d_density, n_density);
     tock_ms(0) std::cout << " generated in " << t_elapsed << "ms" << std::endl;
 
     float times[3];
