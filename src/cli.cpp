@@ -327,7 +327,7 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
             { "margin",      required_argument, nullptr, 'm' },
             { "speed",       required_argument, nullptr, 'v' },
             { "time-scale",  required_argument, nullptr, 't' },
-            { "fps",         required_argument, nullptr, 'f' },
+            { "framerate",   required_argument, nullptr, 'f' },
             { "duration",    required_argument, nullptr, 'D' },
 //            { "lifetime",    required_argument, nullptr, 'l' },
             { "background",  required_argument, nullptr, 'B' },
@@ -468,7 +468,7 @@ void print_usage() {
     std::cout << "  -p  --parallel       gpu            Which parallelization to adopt in computations. It must be one of: none, openmp, gpu" << std::endl;
     std::cout << "  -o  --output         plot.webp      Path of the output webp file" << std::endl;
     std::cout << "  -D  --duration       15             Duration in seconds of the webp animation" << std::endl;
-    std::cout << "  -f  --fps            60             Number of frames per seconds i.e. the refresh rate" << std::endl;
+    std::cout << "  -f  --framerate      60             Number of frames per seconds i.e. the refresh rate" << std::endl;
     std::cout << "  -R  --resolution     1920x1080      Pixel sizes of the video: it can be either a supported screen resolution name (such as FHD, WXGA+)" << std::endl
               << "                                      or a custom size specified in the format <width>x<height>. Optionally, the character '^' may be" << std::endl
               << "                                      prepended to invert the horizontal and vertical sizes." << std::endl;
