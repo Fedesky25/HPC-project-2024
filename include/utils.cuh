@@ -78,7 +78,7 @@ struct Configuration {
     FnVariables vars;
     CanvasAdapter canvas;
     EvolutionOptions evolution;
-    FixedHSLA background{};
+    FixedHSLA background{ IC_16b, icenc(0.06), icenc(0.15), ICE_1 };
     const char * output = "plot.webp";
     unsigned long particle_distance = 10;
     unsigned long margin = 4;
