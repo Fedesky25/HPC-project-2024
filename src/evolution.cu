@@ -94,7 +94,7 @@ void evolve_omp(Configuration* config, Canvas* canvas,
                 FunctionChoice fn_choice){
 
     auto seed = std::chrono::system_clock::now().time_since_epoch().count();
-    timers(0) tick(0)
+    timers(1) tick(0)
     #pragma omp parallel
     {
         auto tid = omp_get_thread_num();
