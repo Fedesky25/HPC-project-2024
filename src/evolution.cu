@@ -98,14 +98,13 @@ void evolve_omp(Configuration* config, Canvas* canvas,
     #pragma omp parallel
     {
         auto tid = omp_get_thread_num();
-        std::default_random_engine generator(seed + omp_get_thread_num());
-        std::uniform_int_distribution<int> rand_int(0, (int) config->evolution.frame_count);
+        std::default_random_engine generator(seed + tid);
+        std::uniform_int_distribution<uint32_t> rand_int(0, config->evolution.frame_count - 1);
         auto func = get_function_host(fn_choice);
         #pragma omp for schedule(static)
         for (int64_t i = 0; i < N_particles; i++) {
-            uint32_t offset = rand_int(generator);
             draw(canvas, &config->canvas, &config->evolution, func,
-                 &config->vars, particles[i], offset, tid);
+                 &config->vars, particles[i], rand_int(generator), tid);
         }
     }
     tock_s(0)
