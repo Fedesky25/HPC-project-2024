@@ -61,13 +61,14 @@ void evolve_gpu(Configuration * config,
                 Canvas* canvas, uint32_t canvas_count,
                 complex_t* particles, uint64_t N_particles,
                 const uint32_t* tile_offsets, uint32_t tiles_count,
-                FunctionChoice fn_choice){
-
+                FunctionChoice fn_choice
+){
+    timers(1)
+    tick(0)
     uint32_t *d_time_offsets;
     float *d_rand_floats;
     cudaMalloc((void **)&d_time_offsets, N_particles * sizeof (uint32_t));
     cudaMalloc((void **)&d_rand_floats, N_particles * sizeof (float));
-
     curandGenerator_t gen;
     curandCreateGenerator(&gen, CURAND_RNG_PSEUDO_XORWOW);
     auto seed = std::chrono::system_clock::now().time_since_epoch().count();
@@ -75,8 +76,15 @@ void evolve_gpu(Configuration * config,
     curandGenerateUniform(gen, d_rand_floats, N_particles);
     scale_time_offsets<<<36,1024>>>(d_rand_floats, d_time_offsets, N_particles, config->evolution.frame_count);
     cudaFree(d_rand_floats);
+    tock_ms(0)
+    std::cout << "Random time offsets generated in " << t_elapsed << "ms" << std::endl;
+
+    tick(0);
     auto func = get_function_global(fn_choice);
     evolve_kernel<<<canvas_count, tiles_count>>>(config, canvas, particles, tile_offsets, d_time_offsets, func);
+    cudaDeviceSynchronize();
+    tock_s(0);
+    std::cout << "Particle evolution computed in " << t_elapsed << 's' << std::endl;
 }
 
 // Divide particle evolution between threads by #pragma omp parallel for.
@@ -86,6 +94,7 @@ void evolve_omp(Configuration* config, Canvas* canvas,
                 FunctionChoice fn_choice){
 
     auto seed = std::chrono::system_clock::now().time_since_epoch().count();
+    timers(0) tick(0)
     #pragma omp parallel
     {
         auto tid = omp_get_thread_num();
@@ -99,4 +108,6 @@ void evolve_omp(Configuration* config, Canvas* canvas,
                  &config->vars, particles[i], offset, tid);
         }
     }
+    tock_s(0)
+    std::cout << "Particle evolution computed in " << t_elapsed << 's' << std::endl;
 }
