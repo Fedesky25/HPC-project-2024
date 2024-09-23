@@ -114,8 +114,8 @@ struct Configuration {
 template<class T>
 T* devicify(T* obj) {
     T* d_obj;
-    cudaMalloc(&d_obj, obj, sizeof(T));
-    cudaMemcpy(d_obj, obj, sizeof(T));
+    cudaMalloc(&d_obj, sizeof(T));
+    cudaMemcpy(d_obj, obj, sizeof(T), cudaMemcpyHostToDevice);
     return d_obj;
 }
 
