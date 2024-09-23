@@ -317,6 +317,7 @@ complex_t* particles_gpu(complex_t z1, complex_t z2, uint32_t N){
     scale_complex<<<36, 1024>>>(deltaReal, deltaImag, z1, d_sites, N);
     curandGenerateUniformDouble(gen, (double*) d_density, n_density*2);
     scale_complex<<<36, 1024>>>(deltaReal, deltaImag, z1, d_density, n_density);
+    cudaDeviceSynchronize();
     tock_ms(0) std::cout << " generated in " << t_elapsed << "ms" << std::endl;
 
     float times[3];
@@ -325,10 +326,12 @@ complex_t* particles_gpu(complex_t z1, complex_t z2, uint32_t N){
     for(int16_t i=0; i<20; i++){  // Iterating to convergence
         tick(1) tick(2)
         compute_nearest<<<D, 1024>>>(d_density, n_density, d_sites, N, d_nearest);
+        cudaDeviceSynchronize();
         tock_ms(2) times[0] = t_elapsed; tick(2)
         thrust::sort_by_key(thrust::device, d_nearest, d_nearest + n_density, d_density);
         tock_ms(2) times[1] = t_elapsed; tick(2)
         update_sites<<<M, 1024>>>(d_density, n_density, d_sites, N, d_nearest);
+        cudaDeviceSynchronize();
         tock_ms(2) times[2] = t_elapsed; tock_ms(1)
         float m = 100.0f / t_elapsed;
         std::cout << "                   " << std::setw(2) << i+1
