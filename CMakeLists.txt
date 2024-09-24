@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.25)
+cmake_minimum_required(VERSION 3.14)
 project(HPC_project_2024 LANGUAGES CXX CUDA C)
 
 set(CMAKE_CUDA_STANDARD 17)
@@ -10,7 +10,9 @@ find_package(CUDAToolkit)
 
 # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler -openmp")
+
+# https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#options-for-steering-gpu-code-generation
+set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -arch=native -Xcompiler -openmp")
 
 include_directories(include)
 include_directories("${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}")
@@ -43,6 +45,8 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 endif()
 
 set_target_properties(HPC_project_2024 PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
-set_target_properties(HPC_project_2024 PROPERTIES CUDA_ARCHITECTURES all-major)
+
+# available only after 3.23
+# set_target_properties(HPC_project_2024 PROPERTIES CUDA_ARCHITECTURES all-major)
 
 #target_compile_options(HPC_project_2024 PRIVATE $<$<COMPILE_LANGUAGE:CUDA>: -Xcompiler=-fopenmp>)
