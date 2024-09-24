@@ -259,7 +259,7 @@ complex_t* particles_mixed(complex_t z1, complex_t z2, uint32_t N){
 
 __global__ void scale_complex(double real, double imag, complex_t offset, complex_t * data, uint64_t N) {
     auto increment = (uint64_t) blockDim.x * gridDim.x;
-    for(uint64_t i=threadIdx.x; i<N; i+=increment) {
+    for(uint64_t i=threadIdx.x+blockIdx.x*blockDim.x; i<N; i+=increment) {
         data[i].real(data[i].real() * real);
         data[i].imag(data[i].imag() * imag);
         data[i] += offset;
