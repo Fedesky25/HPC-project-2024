@@ -15,7 +15,7 @@ std::ostream &operator<<(std::ostream &os, CanvasAdapter &cv) {
 }
 
 std::ostream &operator<<(std::ostream &os, EvolutionOptions &eo) {
-    return os << eo.frame_count << "f, " << eo.ms_per_frame << "ms/f, dt=" << eo.delta_time << ", @v=" << eo.speed_factor;
+    return os << eo.frame_count << "f, " << eo.frame_rate << "f/s, dt=" << eo.delta_time << ", @v=" << eo.speed_factor;
 }
 
 void Configuration::bounds(complex_t *min, complex_t *max) const {
