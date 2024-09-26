@@ -1,20 +1,22 @@
-#!/bin/bash -x
+#!/bin/bash +x
 #SBATCH --job-name="Function Streamplotter"
-#SBATCH --time=00:10:00
+#SBATCH --time=00:15:00
 #SBATCH --nodes=1
-#SBATCH --mem=10GB
+#SBATCH --mem=5GB
 #SBATCH --gres=gpu:1
 #SBATCH --partition=cuda
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=s328789@studenti.polito.it
 
 echo $(date +"%D %T")
-echo -e "\n\n\n\n"
+echo ""
 
+echo "Loading modules..."
 module load nvidia/cudasdk/11.8
 module load cmake/3.14.3
 module load ffmpeg/4.3.4
 
+echo "Handle directories..."
 mkdir -p build
 if [ -d "./source" ]; then rm -r ./source; fi
 
