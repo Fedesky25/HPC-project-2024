@@ -41,20 +41,16 @@ __device__ __host__ void draw(Canvas* canvas, CanvasAdapter * adapter, Evolution
 }
 
 __global__ void evolve_kernel(Configuration * config, Canvas* canvas, complex_t* particles,
-                              const uint32_t * tile_offsets, const uint32_t * rand_offsets, ComplexFunction_t func
+                              const uint32_t * tile_offsets, const float * rand_offsets, ComplexFunction_t func
                        ){
     auto tile_idx = threadIdx.x;
     auto count = tile_offsets[tile_idx + 1] - tile_offsets[tile_idx];
     auto canvas_idx = blockIdx.x;
     if(canvas_idx >= count) return;
-    auto z = particles[tile_offsets[tile_idx] + canvas_idx];
-    auto offset = rand_offsets[tile_offsets[tile_idx] + canvas_idx];
+    auto particle_idx = tile_offsets[tile_idx] + canvas_idx;
+    auto z = particles[particle_idx];
+    auto offset = static_cast<uint32_t>(rand_offsets[particle_idx] * (float) config->evolution.frame_count);
     draw(canvas, &config->canvas, &config->evolution, func, &config->vars, z, offset, canvas_idx);
-}
-
-__global__ void scale_time_offsets(const float * in, uint32_t * out, uint32_t N, uint32_t frame_count) {
-    uint32_t increment = blockDim.x * gridDim.x;
-    for(uint32_t i = threadIdx.x; i < N; i += increment) out[i] = static_cast<uint32_t>(in[i] * (float) frame_count);
 }
 
 void evolve_gpu(Configuration * config,
@@ -65,24 +61,20 @@ void evolve_gpu(Configuration * config,
 ){
     timers(1)
     tick(0)
-    uint32_t *d_time_offsets;
     float *d_rand_floats;
-    cudaMalloc((void **)&d_time_offsets, N_particles * sizeof (uint32_t));
     cudaMalloc((void **)&d_rand_floats, N_particles * sizeof (float));
     curandGenerator_t gen;
     curandCreateGenerator(&gen, CURAND_RNG_PSEUDO_XORWOW);
     auto seed = std::chrono::system_clock::now().time_since_epoch().count();
     curandSetPseudoRandomGeneratorSeed(gen, seed);
     curandGenerateUniform(gen, d_rand_floats, N_particles);
-    scale_time_offsets<<<36,1024>>>(d_rand_floats, d_time_offsets, N_particles, config->evolution.frame_count);
-    cudaFree(d_rand_floats);
     tock_ms(0)
     std::cout << "Random time offsets generated in " << t_elapsed << "ms" << std::endl;
 
     tick(0);
     auto func = get_function_global(fn_choice);
     auto d_config = devicify(config);
-    evolve_kernel<<<canvas_count, tiles_count>>>(d_config, canvas, particles, tile_offsets, d_time_offsets, func);
+    evolve_kernel<<<canvas_count, tiles_count>>>(d_config, canvas, particles, tile_offsets, d_rand_floats, func);
     cudaFree(d_config);
 //    cudaDeviceSynchronize();
     tock_s(0);
