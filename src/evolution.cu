@@ -73,7 +73,7 @@ void evolve_gpu(Configuration * config,
     auto d_config = devicify(config);
     evolve_kernel<<<canvas_count, tiles_count>>>(d_config, canvas, particles, tile_offsets, d_rand_floats, func);
     cudaFree(d_config);
-//    cudaDeviceSynchronize();
+    cudaDeviceSynchronize();
     tock_s(0);
     std::cout << "Particle evolution computed in " << t_elapsed << 's' << std::endl;
 }
