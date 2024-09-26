@@ -466,7 +466,7 @@ void print_usage() {
     std::cout << "OPTIONS" << std::endl;
     std::cout << "  Name                 Default        Description" << std::endl;
     std::cout << "  -p  --parallel       gpu            Which parallelization to adopt in computations. It must be one of: none, openmp, gpu" << std::endl;
-    std::cout << "  -o  --output         plot.webp      Path of the output webp file" << std::endl;
+    std::cout << "  -o  --output         plot.raw       Path of the output raw file" << std::endl;
     std::cout << "  -D  --duration       15             Duration in seconds of the webp animation" << std::endl;
     std::cout << "  -f  --framerate      60             Number of frames per seconds i.e. the refresh rate" << std::endl;
     std::cout << "  -R  --resolution     1920x1080      Pixel sizes of the video: it can be either a supported screen resolution name (such as FHD, WXGA+)" << std::endl

@@ -79,7 +79,7 @@ struct Configuration {
     CanvasAdapter canvas;
     EvolutionOptions evolution;
     FixedHSLA background{ IC_16b, icenc(0.06), icenc(0.15), ICE_1 };
-    const char * output = "plot.webp";
+    const char * output = "plot.raw";
     unsigned long particle_distance = 10;
     unsigned long margin = 4;
     ExecutionMode mode = ExecutionMode::GPU;
