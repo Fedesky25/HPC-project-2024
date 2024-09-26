@@ -56,7 +56,7 @@ __global__ void compute_tile(
 
 __global__ void compute_offset_per_tile(uint32_t N, unsigned int * tile_map, uint32_t * offsets) {
     auto tile = threadIdx.x + blockIdx.x * blockDim.x;
-    offsets[tile] = lower_bound(threadIdx.x, tile_map, N);
+    offsets[tile] = lower_bound(tile, tile_map, N);
 }
 
 uint32_t * Tiles::sort(complex_t &min, complex_t &max, complex_t *particles, uint32_t N) const {
