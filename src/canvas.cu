@@ -92,8 +92,8 @@ Canvas * create_canvas_device(uint32_t count, CanvasAdapter * adapter) {
     free(h_array);
     init_canvas_array<<<count, 1024>>>(d_array, len);
     tock_ms(0)
-    std::cout << "Initialized " << (((canvas_bytes-1) >> 20)+1) << "MB for " << count
-              << " canvases in " << t_elapsed << "ms" << std::endl;
+    std::cout << "Initialized " << count << " canvases (" << (((canvas_bytes*count-1) >> 20)+1)
+              << "MB) in " << t_elapsed << "ms" << std::endl;
     return d_array;
 }
 
