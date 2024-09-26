@@ -7,6 +7,7 @@
 #SBATCH --partition=cuda
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=s328789@studenti.polito.it
+#SBATCH --output=logs/%j.out
 
 echo $(date +"%D %T")
 echo ""
