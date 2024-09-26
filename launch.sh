@@ -11,16 +11,16 @@
 echo $(date +"%D %T")
 echo ""
 
+# exit current directory
+cd ../
+mkdir -p build
+
 echo "Loading modules..."
 module load nvidia/cudasdk/11.8
 module load cmake/3.14.3
 module load ffmpeg/4.3.4
 
-echo "Handle directories..."
-mkdir -p build
-if [ -d "./source" ]; then rm -r ./source; fi
-
-git clone https://github.com/Fedesky25/HPC-project-2024.git source
+echo "Compiling..."
 cmake -DCMAKE_BUILD_TYPE=Release ./source
 cmake --build ./build --target HPC_project_2024 -j 10
 
