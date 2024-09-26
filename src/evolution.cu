@@ -29,10 +29,7 @@ __device__ __host__ void draw(Canvas* canvas, CanvasAdapter * adapter, Evolution
             auto pixel_idx = adapter->where(z);
 
             if (pixel_idx != -1) {
-                if(canvas[canvas_idx][pixel_idx]){
-                    return;
-                }
-                canvas[canvas_idx][pixel_idx].update_age((offset + j) % steps);
+                if(!canvas[canvas_idx][pixel_idx].update_age((offset + j) % steps)) return;
                 canvas[canvas_idx][pixel_idx].set_color(cuda::std::norm(v), options->speed_factor);
             }
             z += dz;
