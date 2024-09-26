@@ -6,7 +6,14 @@ set(CMAKE_CXX_STANDARD 17)
 
 #find_package(CUDA REQUIRED)
 find_package(OpenMP REQUIRED)
-find_package(CUDAToolkit)
+
+if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.17)
+    # https://cmake.org/cmake/help/latest/module/FindCUDAToolkit.html#module:FindCUDAToolkit
+    find_package(CUDAToolkit)
+else ()
+    # deprecated after 3.17 but required to use cuda libraries in older version
+    find_package(CUDA)
+endif ()
 
 # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
