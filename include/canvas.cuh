@@ -68,14 +68,28 @@ struct CanvasPixel {
     __device__ __host__ void set_color(double square_speed, double factor);
 
     /**
-     * Computes the color of the pixel given the time distance from current time
+     * Computes the color of the pixel given the time distance from current time.
+     * @attention It assumes the pixel is alive
      * @todo take total lifetime as argument
      * @param time_distance previously computed time distance
      * @param frame_count total number of frames
      * @param background pointer to background color
      * @return color of the pixel now
      */
-    __device__ __host__ uint32_t get_color(int32_t time_distance, int32_t frame_count, const FixedHSLA * background) const;
+    __device__ __host__ uint32_t get_color_from_delta(int32_t time_distance, int32_t frame_count, const FixedHSLA * background) const;
+
+    /**
+     * Computes the color of the pixel.
+     * @attention It assumes the pixel is alive
+     * @todo take total lifetime as argument
+     * @param frame_count total number of frames
+     * @param background pointer to background color
+     * @return color of the pixel now
+     */
+    __device__ __host__ inline uint32_t get_color(int32_t time, int32_t frame_count, const FixedHSLA * background) const {
+        int32_t delta = (frame_count + time - (int32_t) age) % frame_count;
+        return get_color_from_delta(delta, frame_count, background);
+    }
 
 private:
     uint16_t age = UINT16_MAX, multiplicity = 0, hue = 0;
