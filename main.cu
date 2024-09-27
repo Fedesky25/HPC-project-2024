@@ -145,7 +145,7 @@ int main(int argc, char * argv[]) {
     std::cout << "All computations completed in " << time_all << 's' << std::endl;
     std::cout << "Run the command:  ffmpeg -f rawvideo -pixel_format rgba -video_size "
               << config.canvas.width << 'x' << config.canvas.height << " -framerate "
-              << config.evolution.frame_rate << ' ' << config.output << std::endl;
+              << config.evolution.frame_rate << " -i " << config.output << " <output>" << std::endl;
 
     return 0;
 }
