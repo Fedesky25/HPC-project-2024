@@ -6,9 +6,9 @@
 #include <random>
 #include "curand.h"
 
-__device__ __host__ void draw(Canvas* canvas, CanvasAdapter * adapter, EvolutionOptions * options,
+__device__ __host__ void draw(Canvas canvas, CanvasAdapter * adapter, EvolutionOptions * options,
                               ComplexFunction_t func, FnVariables* variables,
-                              complex_t z, uint32_t offset, unsigned int canvas_idx){
+                              complex_t z, uint32_t offset){
     complex_t v, dz;
     double D, elapsed;
     auto dt = options->delta_time;
@@ -29,8 +29,8 @@ __device__ __host__ void draw(Canvas* canvas, CanvasAdapter * adapter, Evolution
             auto pixel_idx = adapter->where(z);
 
             if (pixel_idx != -1) {
-                if(!canvas[canvas_idx][pixel_idx].update_age((offset + j) % steps)) return;
-                canvas[canvas_idx][pixel_idx].set_color(cuda::std::norm(v), options->speed_factor);
+                if(!canvas[pixel_idx].update_age((offset + j) % steps)) return;
+                canvas[pixel_idx].set_color(cuda::std::norm(v), options->speed_factor);
             }
             z += dz;
         } while (elapsed < dt);
@@ -47,7 +47,7 @@ __global__ void evolve_kernel(Configuration * config, Canvas* canvas, complex_t*
     auto particle_idx = tile_offsets[tile_idx] + canvas_idx;
     auto z = particles[particle_idx];
     auto offset = static_cast<uint32_t>(rand_offsets[particle_idx] * (float) config->evolution.frame_count);
-    draw(canvas, &config->canvas, &config->evolution, func, &config->vars, z, offset, canvas_idx);
+    draw(canvas[canvas_idx], &config->canvas, &config->evolution, func, &config->vars, z, offset);
 }
 
 void evolve_gpu(Configuration * config,
@@ -94,8 +94,8 @@ void evolve_omp(Configuration* config, Canvas* canvas,
         auto func = get_function_host(fn_choice);
         #pragma omp for schedule(static)
         for (int64_t i = 0; i < N_particles; i++) {
-            draw(canvas, &config->canvas, &config->evolution, func,
-                 &config->vars, particles[i], rand_int(generator), tid);
+            draw(canvas[tid], &config->canvas, &config->evolution, func,
+                 &config->vars, particles[i], rand_int(generator));
         }
     }
     tock_s(0)
