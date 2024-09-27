@@ -342,7 +342,7 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
 
     int o, go = 1, index_opt;
     char * rest;
-    double time_scale = 6e-8;
+    double time_scale = 0.12;
     unsigned long fps = 60, duration = 15;
     ScaleScaling action = ScaleScaling::NONE;
 
@@ -478,7 +478,7 @@ void print_usage() {
     std::cout << "  -B  --background     242429         RGB or RGBA color of the background using hexadecimal representation" << std::endl;
     std::cout << "  -v  --speed          1.0            Value of speed around which logarithmic color sensitivity is maximum. Red or blue" << std::endl
               << "                                      occur when the speed is respectively one order less or more than the specified value." << std::endl;
-    std::cout << "  -t  --time-scale     6e-8           Time scale used to convert 1 real second into the computational time unit. Lower values guarantee" << std::endl
+    std::cout << "  -t  --time-scale     0.12           Time scale used to convert 1 real second into the computational time unit. Lower values guarantee" << std::endl
               << "                                      a more precise computation of the particle evolution at the cost of less motion." << std::endl;
     std::cout << "  -s  --pixel-scale    100px/u        Scale used to convert distance between complex numbers to pixels. The required unit must be one of:" << std::endl
               << "                                      u/px, u/w, u/h, px/u, w/u, h/u; where 'px' is pixel, 'w' is the width of the video (in pixel), 'h'" << std::endl
