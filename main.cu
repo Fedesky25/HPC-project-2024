@@ -46,12 +46,7 @@ int main(int argc, char * argv[]) {
     uint64_t N = config.particle_number();
 
     complex_t * points;
-    uint32_t canvas_count;
     auto frame_size = config.canvas.height * config.canvas.width;
-    auto frame_mem = frame_size * sizeof(uint32_t);
-    auto signed_fc = (int32_t) config.evolution.frame_count;
-
-    std::ofstream raw_output(config.output);
 
     switch (config.mode) {
         case ExecutionMode::Serial:
@@ -66,7 +61,7 @@ int main(int argc, char * argv[]) {
         case ExecutionMode::OpenMP:
         {
             points = particles_omp(min, max, N);
-            canvas_count = omp_get_max_threads();
+            auto canvas_count = omp_get_max_threads();
             auto canvases = create_canvas_host(canvas_count, &config.canvas);
             evolve_omp(&config, canvases, points, N, fn_choice);
             break;
@@ -79,7 +74,7 @@ int main(int argc, char * argv[]) {
                       << (float) N / (float) tiles_count << " particles each" << std::endl;
             points = particles_gpu(min, max, N);
             auto tile_offsets = tiles.sort(min, max, points, N);
-            canvas_count = get_canvas_count_serial(tile_offsets, tiles_count);
+            auto canvas_count = get_canvas_count_serial(tile_offsets, tiles_count);
             auto canvases = create_canvas_device(canvas_count, &config.canvas);
             evolve_gpu(&config, canvases, canvas_count, points, N,
                        tile_offsets, tiles_count, fn_choice);
@@ -94,7 +89,6 @@ int main(int argc, char * argv[]) {
 
     auto end_computation = std::chrono::steady_clock::now();
     float time_all = (std::chrono::duration<float,std::ratio<1>>(end_computation-start_computation)).count();
-    raw_output.close();
     std::cout << "All computations completed in " << time_all << 's' << std::endl;
     std::cout << "Run the command:  ffmpeg -f rawvideo -pixel_format rgba -video_size "
               << config.canvas.width << 'x' << config.canvas.height << " -framerate "
