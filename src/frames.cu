@@ -16,7 +16,7 @@ void compute_frame_serial(
 
 void compute_frame_omp(
         int32_t time, int32_t frame_count,
-        Canvas * canvas_array, unsigned canvas_count,
+        const Canvas * canvas_array, unsigned canvas_count,
         uint32_t * frame, uint32_t size,
         const FixedHSLA * background
 ) {
@@ -39,7 +39,7 @@ void compute_frame_omp(
 
 __global__ void compute_frame_no_divergence(
         int32_t time, int32_t frame_count,
-        Canvas * canvas_array, unsigned canvas_count,
+        const Canvas * canvas_array, unsigned canvas_count,
         uint32_t * frame, unsigned offset,
         const FixedHSLA * background
 ) {
@@ -60,7 +60,7 @@ __global__ void compute_frame_no_divergence(
 
 void compute_frame_gpu(
         int32_t time, int32_t frame_count,
-        Canvas * canvas_array, unsigned canvas_count,
+        const Canvas * canvas_array, unsigned canvas_count,
         uint32_t * frame, uint32_t size,
         const FixedHSLA * background
 ) {
