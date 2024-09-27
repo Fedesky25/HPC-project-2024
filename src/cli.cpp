@@ -361,6 +361,7 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
                     std::cerr << "Unrecognized parallelization option" << std::endl;
                     return true;
                 }
+                break;
             case 'o':
                 config->output = optarg;
                 break;
