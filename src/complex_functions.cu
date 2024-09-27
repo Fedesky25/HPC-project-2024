@@ -17,7 +17,7 @@ __device__ __host__ complex_t complex_log(complex_t z, long k){
 // ------------------------------------------------------------------------------------- polynomial
 
 __device__ __host__ complex_t polynomial1(complex_t z, FnVariables* variables){
-    return variables->z[0] * z + variables->z[2];
+    return variables->z[0] * z + variables->z[1];
 }
 
 __device__ __host__ complex_t polynomial2(complex_t z, FnVariables* variables){
