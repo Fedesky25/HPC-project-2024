@@ -1,5 +1,4 @@
 #include <iostream>
-#include <iomanip>
 #include "utils.cuh"
 #include "cli.hpp"
 #include "getopt.h"
@@ -9,7 +8,7 @@
 #include "complex_functions.cuh"
 #include "canvas.cuh"
 #include "evolution.cuh"
-#include "frames.cuh"
+#include "video.cuh"
 #include "omp.h"
 
 
@@ -60,13 +59,8 @@ int main(int argc, char * argv[]) {
             points = particles_serial(min, max, N);
             auto canvas = new CanvasPixel [frame_size];
             evolve_serial(&config, canvas, points, N, fn_choice);
-            auto frame = new uint32_t [frame_size];
-            for(int32_t t=0; t<signed_fc; t++) {
-                compute_frame_serial(t, signed_fc, canvas, frame, frame_size, &config.background);
-                raw_output.write(reinterpret_cast<const char *>(frame_size), frame_mem);
-            }
+            write_video_serial(config.output, canvas, frame_size, config.evolution.frame_count, &config.background);
             delete[] canvas;
-            delete[] frame;
             break;
         }
         case ExecutionMode::OpenMP:
@@ -91,63 +85,9 @@ int main(int argc, char * argv[]) {
                        tile_offsets, tiles_count, fn_choice);
             cudaFree(tile_offsets);
             cudaFree(points);
-
-            uint32_t *h_frame, *d_frame[2];
-            h_frame = (uint32_t*) malloc(frame_mem);
-            cudaMalloc(d_frame, frame_mem);
-            cudaMalloc(d_frame+1, frame_mem);
-            std::cout << "Frame buffers: CPU=" << (((frame_mem-1)>>20)+1) << "MB, GPU="
-                      << (((frame_mem*2-1)>>20)+1) << "MB" << std::endl << std::fixed;
-            std::cout << "Frame computation: iter. | c (us) | w (ms)" << std::endl;
-            std::cout.width(6);
-
-            float time_write, time_compute;
-            auto begin = std::chrono::steady_clock::now();
-            compute_frame_gpu(
-                    0, signed_fc,
-                    canvases, canvas_count,
-                    d_frame[0], frame_size,
-                    &config.background);
-            cudaDeviceSynchronize();
-            auto _end = std::chrono::steady_clock::now();
-            time_compute = (std::chrono::duration<float,std::micro>(_end-begin)).count();
-            std::cout << "                   " << std::setw(5) << 0
-                      << " | " << std::setw(6) << time_compute
-                      << " | " << std::endl;
-
-
-            for(int32_t i=1; i<signed_fc; i++) {
-                #pragma omp parallel sections num_threads(2)
-                {
-                    #pragma omp section
-                    {
-                        auto start = std::chrono::steady_clock::now();
-                        cudaMemcpy(h_frame, d_frame[(i&1)^1], frame_mem, cudaMemcpyDeviceToHost);
-                        raw_output.write(reinterpret_cast<const char *>(h_frame), frame_mem);
-                        auto end = std::chrono::steady_clock::now();
-                        time_write = (std::chrono::duration<float, std::milli>(end - start)).count();
-                    }
-                    #pragma omp section
-                    {
-                        auto start = std::chrono::steady_clock::now();
-                        compute_frame_gpu(i, signed_fc, canvases, canvas_count, d_frame[i&1], frame_size, &config.background);
-                        cudaDeviceSynchronize();
-                        auto end = std::chrono::steady_clock::now();
-                        time_compute = (std::chrono::duration<float,std::micro>(end-start)).count();
-                    }
-                }
-                std::cout << "                   " << std::setw(5) << i
-                          << " | " << std::setw(6) << time_compute
-                          << " | " << std::setw(6) << time_write << std::endl;
-            }
-
-            begin = std::chrono::steady_clock::now();
-            cudaMemcpy(h_frame, d_frame[(signed_fc-1)&1], frame_mem, cudaMemcpyDeviceToHost);
-            raw_output.write(reinterpret_cast<const char *>(h_frame), frame_mem);
-            _end = std::chrono::steady_clock::now();
-            time_write = (std::chrono::duration<float,std::milli>(_end-begin)).count();
-            std::cout << "                   " << std::setw(5) << signed_fc
-                      << " |        | " << std::setw(6) << time_write << std::endl;
+            write_video_gpu(
+                    config.output, canvases, canvas_count, frame_size,
+                    config.evolution.frame_count, &config.background);
             break;
         }
     }
