@@ -147,5 +147,23 @@ int main(int argc, char * argv[]) {
               << config.canvas.width << 'x' << config.canvas.height << " -framerate "
               << config.evolution.frame_rate << " -i " << config.output << " <output>" << std::endl;
 
+
+    #if 0
+    std::ofstream test("test.raw");
+    auto frame_buffer = (uint32_t*) malloc(frame_mem);
+    auto rgba_bg = config.background.toRGBA();
+    for(uint32_t i=0; i<frame_size; i++) frame_buffer[i] = rgba_bg;
+    for(unsigned i=0; i<10; i++) test.write(reinterpret_cast<const char *>(frame_buffer), frame_mem);
+
+    uint32_t color, offset;
+    for(unsigned c=0; c<10; c++) {
+        offset = config.canvas.width*25*(c+1) - 25;
+        color = HSLA_to_RGBA(icenc((float)c*0.1f), icenc(0.5), icenc(0.5), icenc(1));
+        for(uint32_t i=50; i<config.canvas.width; i++) frame_buffer[offset+i] = color;
+        for(unsigned i=0; i<10; i++) test.write(reinterpret_cast<const char *>(frame_buffer), frame_mem);
+    }
+    test.close();
+    #endif
+
     return 0;
 }
