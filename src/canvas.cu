@@ -49,10 +49,10 @@ __device__ __host__ void CanvasPixel::set_color(double square_speed, double fact
 }
 
 __device__ __host__ uint32_t CanvasPixel::get_color(int32_t delta, int32_t frame_count, const FixedHSLA * background) const {
-    if(delta <= multiplicity) return HSLA_to_RGBA(hue, icenc(0.55f), icenc(0.55f), 0);
+    if(delta <= multiplicity) return HSLA_to_RGBA(hue, icenc(0.55f), icenc(0.55f), ICE_1);
     else {
         FixedFraction f(delta, frame_count);
-        FixedHSLA color{hue, icenc(0.55f), icenc(0.55f), 0};
+        FixedHSLA color{hue, icenc(0.55f), icenc(0.55f), ICE_1};
         color.mixWith(*background, f);
         return color.toRGBA();
     }
