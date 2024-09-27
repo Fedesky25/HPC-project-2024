@@ -14,6 +14,7 @@ void write_video_serial(
         uint32_t frame_size, int32_t frame_count,
         const FixedHSLA * background
 ) {
+    auto bg_rgba = background->toRGBA();
     auto frame = new uint32_t [frame_size];
     std::ofstream out(filename);
     float tc, tw;
@@ -22,7 +23,9 @@ void write_video_serial(
     tick(0)
     for(int32_t t=0; t<frame_count; t++) {
         tick(1)
-        compute_frame_serial(t, frame_count, canvas, frame, frame_size, background);
+        for(uint32_t i=0; i<frame_size; i++) {
+            frame[i] = canvas[i] ? canvas[i].get_color(t, frame_count, background) : bg_rgba;
+        }
         tock_ms(1)
         tc = t_elapsed;
         tick(1)

@@ -4,15 +4,6 @@
 
 #include "frames.cuh"
 
-void compute_frame_serial(
-        int32_t time, int32_t frame_count, Canvas canvas,
-        uint32_t * frame, uint32_t size, const FixedHSLA * background
-) {
-    for(uint32_t i=0; i<size; i++) {
-        frame[i] = canvas[i].get_color(time, frame_count, background);
-    }
-}
-
 
 void compute_frame_omp(
         int32_t time, int32_t frame_count,

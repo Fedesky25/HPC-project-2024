@@ -8,16 +8,6 @@
 #include "canvas.cuh"
 #include <cstdint>
 
-/**
- * Computes the frame at a specific time using one CPU thread
- * @param time time instant in range [0, frame_count)
- * @param frame_count total number of frames in range [0, UINT16_MAX)
- * @param canvas (host) canvas
- * @param frame output frame (host) buffer
- * @param size total number of pixels
- */
-void compute_frame_serial(int32_t time, int32_t frame_count, Canvas canvas,
-                       uint32_t * frame, uint32_t size, const FixedHSLA * background);
 
 /**
  * Computes the frame at a specific time using OpenMP
