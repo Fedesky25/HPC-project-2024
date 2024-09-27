@@ -143,7 +143,7 @@ int main(int argc, char * argv[]) {
     auto end_computation = std::chrono::steady_clock::now();
     float time_all = (std::chrono::duration<float,std::ratio<1>>(end_computation-start_computation)).count();
     std::cout << "All computations completed in " << time_all << 's' << std::endl;
-    std::cout << "Run the command:  ffmpeg -f rawvideo -pixel_format rgb32 -video_size "
+    std::cout << "Run the command:  ffmpeg -f rawvideo -pixel_format rgba -video_size "
               << config.canvas.width << 'x' << config.canvas.height << " -framerate "
               << config.evolution.frame_rate << ' ' << config.output << std::endl;
 

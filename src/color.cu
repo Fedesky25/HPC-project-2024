@@ -44,10 +44,10 @@ __device__ __host__ uint8_t fixed_ldt_to_component(int32_t l, int32_t d, int32_t
 
 
 __device__ __host__ uint32_t HSLA_to_RGBA(int32_t h, int32_t s, int32_t l, int32_t alpha) {
-    uint8_t bgra[4];
-    bgra[3] = reduce_to_255(alpha);
+    uint8_t rgba[4];
+    rgba[3] = reduce_to_255(alpha);
     if(s == 0) {
-        bgra[0] = bgra[1] = bgra[2] = reduce_to_255(l);
+        rgba[0] = rgba[1] = rgba[2] = reduce_to_255(l);
     }
     else {
         // S*(L<0.5? L : 1-L)  =>  s * (l<48960 ? l : 97920 - l) / 97920
@@ -55,11 +55,11 @@ __device__ __host__ uint32_t HSLA_to_RGBA(int32_t h, int32_t s, int32_t l, int32
         // e.g. s=97920, l=48960  =>  4_794_163_200 > 2_147_483_648 = 2^31 - 1
         // therefore pre-divide both side by 2 and finally divide by 97920/4 = 24480
         auto delta = (s >> 1) * ((l < icenc(0.5) ? l : ICE_1-l) >> 1) / icenc(0.25);
-        bgra[0] = fixed_ldt_to_component(l, delta, h - icenc_inv(3.0));    // blue
-        bgra[1] = fixed_ldt_to_component(l, delta, h);                      // green
-        bgra[2] = fixed_ldt_to_component(l, delta, h + icenc_inv(3.0));    // red
+        rgba[0] = fixed_ldt_to_component(l, delta, h + icenc_inv(3.0));    // red
+        rgba[1] = fixed_ldt_to_component(l, delta, h);                      // green
+        rgba[2] = fixed_ldt_to_component(l, delta, h - icenc_inv(3.0));    // blue
     }
-    uint32_t result = *((uint32_t*)bgra);
+    uint32_t result = *((uint32_t*)rgba);
     return result;
 }
 
