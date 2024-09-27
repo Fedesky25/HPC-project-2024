@@ -56,8 +56,19 @@ int main(int argc, char * argv[]) {
 
     switch (config.mode) {
         case ExecutionMode::Serial:
+        {
             points = particles_serial(min, max, N);
+            auto canvas = new CanvasPixel [frame_size];
+            evolve_serial(&config, canvas, points, N, fn_choice);
+            auto frame = new uint32_t [frame_size];
+            for(int32_t t=0; t<signed_fc; t++) {
+                compute_frame_serial(t, signed_fc, canvas, frame, frame_size, &config.background);
+                raw_output.write(reinterpret_cast<const char *>(frame_size), frame_mem);
+            }
+            delete[] canvas;
+            delete[] frame;
             break;
+        }
         case ExecutionMode::OpenMP:
         {
             points = particles_omp(min, max, N);
