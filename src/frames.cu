@@ -5,21 +5,11 @@
 #include "frames.cuh"
 
 void compute_frame_serial(
-        int32_t time, int32_t frame_count,
-        Canvas * canvas_array, unsigned canvas_count,
-        uint32_t * frame, uint32_t size,
-        const FixedHSLA * background
+        int32_t time, int32_t frame_count, Canvas canvas,
+        uint32_t * frame, uint32_t size, const FixedHSLA * background
 ) {
     for(uint32_t i=0; i<size; i++) {
-        unsigned c = 0;
-        while(c < canvas_count && !canvas_array[c][i].alive(time)) c++;
-        if(c == canvas_count) continue;
-        auto px = &(canvas_array[c][i]);
-        for(; c < canvas_count; c++) {
-            if(canvas_array[c][i] < *px)
-                px = &(canvas_array[c][i]);
-        }
-        frame[i] = px->get_color(time, frame_count, background);
+        frame[i] = canvas[i].get_color(time, frame_count, background);
     }
 }
 
