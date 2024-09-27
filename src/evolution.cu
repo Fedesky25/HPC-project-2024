@@ -101,3 +101,20 @@ void evolve_omp(Configuration* config, Canvas* canvas,
     tock_s(0)
     std::cout << "Particle evolution computed in " << t_elapsed << 's' << std::endl;
 }
+
+void evolve_serial(Configuration* config, Canvas canvas,
+                complex_t* particles, uint64_t N_particles,
+                FunctionChoice fn_choice){
+
+    auto seed = std::chrono::system_clock::now().time_since_epoch().count();
+    timers(1) tick(0)
+    std::default_random_engine generator(seed);
+    std::uniform_int_distribution<uint32_t> rand_int(0, config->evolution.frame_count - 1);
+    auto func = get_function_host(fn_choice);
+    for (int64_t i = 0; i < N_particles; i++) {
+        draw(canvas, &config->canvas, &config->evolution, func,
+             &config->vars, particles[i], rand_int(generator));
+    }
+    tock_s(0)
+    std::cout << "Particle evolution computed in " << t_elapsed << 's' << std::endl;
+}

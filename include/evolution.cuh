@@ -40,5 +40,18 @@ void evolve_omp(
         complex_t* particles, uint64_t N_particles,
         FunctionChoice fn_choice);
 
+/**
+ * Calculates and draws particle evolution on different canvases using OpenMP
+ * @param config host pointer to configuration
+ * @param canvas host canvas
+ * @param particles host array of particles
+ * @param N_particles number of particles
+ * @param fn_choice choice of function
+ */
+void evolve_serial(
+        Configuration* config, Canvas canvas,
+        complex_t* particles, uint64_t N_particles,
+        FunctionChoice fn_choice);
+
 
 #endif //HPC_PROJECT_2024_EVOLUTION_CUH
