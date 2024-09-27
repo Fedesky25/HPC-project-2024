@@ -42,7 +42,7 @@ void write_video_serial(
 void write_video_omp(
         const char * filename,
         const Canvas * canvases, uint32_t canvas_count,
-        uint32_t frame_size, uint32_t frame_count,
+        uint32_t frame_size, int32_t frame_count,
         const FixedHSLA * background
 ) {
 
@@ -53,7 +53,7 @@ void write_video_omp(
 void write_video_gpu(
         const char * filename,
         const Canvas * canvases, uint32_t canvas_count,
-        uint32_t frame_size, uint32_t frame_count,
+        uint32_t frame_size, int32_t frame_count,
         const FixedHSLA * background
 ) {
     std::ofstream raw_output(filename);

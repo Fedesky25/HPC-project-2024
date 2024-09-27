@@ -14,7 +14,7 @@ __device__ __host__ void draw(Canvas canvas, CanvasAdapter * adapter, EvolutionO
     auto dt = options->delta_time;
     auto steps = options->frame_count;
     // Evolving particle looping on lifetime (steps)
-    for(uint32_t j=0; j<steps; j++) {
+    for(int32_t j=0; j<steps; j++) {
         elapsed = 0.0;
         do {
             v = func(z, variables);

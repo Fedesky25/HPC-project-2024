@@ -65,7 +65,7 @@ struct FnVariables {
 
 struct EvolutionOptions {
     double speed_factor = 1.0, delta_time = 1e-9;
-    uint32_t frame_count = 900; // 15s
+    int32_t frame_count = 900; // 15s
     uint32_t frame_rate = 60;
     // default time-scale = 6e-8
 
