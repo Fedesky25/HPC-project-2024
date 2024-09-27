@@ -52,6 +52,8 @@ int main(int argc, char * argv[]) {
     auto frame_mem = frame_size * sizeof(uint32_t);
     auto signed_fc = (int32_t) config.evolution.frame_count;
 
+    std::ofstream raw_output(config.output);
+
     switch (config.mode) {
         case ExecutionMode::Serial:
             points = particles_serial(min, max, N);
@@ -79,7 +81,6 @@ int main(int argc, char * argv[]) {
             cudaFree(tile_offsets);
             cudaFree(points);
 
-            std::ofstream raw_output(config.output);
             uint32_t *h_frame, *d_frame[2];
             h_frame = (uint32_t*) malloc(frame_mem);
             cudaMalloc(d_frame, frame_mem);
@@ -142,6 +143,7 @@ int main(int argc, char * argv[]) {
 
     auto end_computation = std::chrono::steady_clock::now();
     float time_all = (std::chrono::duration<float,std::ratio<1>>(end_computation-start_computation)).count();
+    raw_output.close();
     std::cout << "All computations completed in " << time_all << 's' << std::endl;
     std::cout << "Run the command:  ffmpeg -f rawvideo -pixel_format rgba -video_size "
               << config.canvas.width << 'x' << config.canvas.height << " -framerate "
