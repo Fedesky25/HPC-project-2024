@@ -93,9 +93,9 @@ int main(int argc, char * argv[]) {
     auto end_computation = std::chrono::steady_clock::now();
     float time_all = (std::chrono::duration<float,std::ratio<1>>(end_computation-start_computation)).count();
     std::cout << "All computations completed in " << time_all << 's' << std::endl;
-    std::cout << "Run the command:  ffmpeg -f rawvideo -pixel_format rgb";
-    if(config.background.A != 1.0f) std::cout << 'a';
-    std::cout << " -video_size " << config.canvas.width << 'x' << config.canvas.height
+    std::cout << "Run the command:  ffmpeg -f rawvideo -pixel_format rgb"
+              << ((config.background.A == 1.0f) ? "24" : "a")
+              << " -video_size " << config.canvas.width << 'x' << config.canvas.height
               << " -framerate " << config.evolution.frame_rate
               << " -i " << config.output << " <output>" << std::endl;
 
