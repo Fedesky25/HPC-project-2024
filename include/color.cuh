@@ -98,4 +98,23 @@ struct FixedHSLA {
     SAFE_HOST_DEVICE void mixWith(const FixedHSLA & other, FixedFraction frac);
 };
 
+const constexpr float div_255 = 1.0f/255.0f;
+
+struct RGBA {
+    float R, G, B, A;
+
+    /**
+     * Sets the RGB values given the integer-encoded hue.
+     * It assumes standard values of saturation (0.55) and lightness (0.55)
+     * @param hue
+     */
+    SAFE_HOST_DEVICE void from_hue(uint16_t hue);
+
+    template<bool opaque>
+    SAFE_HOST_DEVICE void over(const RGBA * backdrop);
+
+    template<bool opaque>
+    SAFE_HOST_DEVICE void write(unsigned char * buffer) const;
+};
+
 #endif //HPC_PROJECT_2024_COLOR_CUH

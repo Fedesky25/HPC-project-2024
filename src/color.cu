@@ -3,6 +3,7 @@
 //
 
 #include "color.cuh"
+#include <cuda/std/cmath>
 
 #define MANUAL_DIV_3 0
 #define Over255 3.92156862745098033773416545955114997923374176025390625e-3f
@@ -102,3 +103,59 @@ void FixedHSLA::fromRGBA(uint8_t red, uint8_t green, uint8_t blue, uint8_t alpha
         H = static_cast<int32_t>(ICE_1 * h / 6.0f);
     }
 }
+
+
+#define SATURATION 0.55f
+#define LIGHTNESS 0.55f
+
+const constexpr auto delta_hue = SATURATION * (1.0f - LIGHTNESS);
+
+__device__ __host__ unsigned char component_from_t(float t) {
+    float result = LIGHTNESS - delta_hue;
+    if(t < 1.0f/6.0f) result += (delta_hue*t)/icenc_inv(12.0);
+    else if(t < 0.5f) result += 2*delta_hue;
+    else if(t < 2.0f/3.0f) result += delta_hue*(icenc(2.0/3.0) - t)/icenc_inv(12.0);
+    return static_cast<unsigned char>(cuda::std::round(255.0f * result));
+}
+
+__device__ __host__ void RGBA::from_hue(uint16_t hue) {
+    float H = (float) hue / static_cast<float>(ICE_1);
+    G = component_from_t(H);
+    float t = H + 1.0f/3.0f;
+    if(t > 1.0f) t -= 1.0f;
+    R = component_from_t(t);
+    t = H - 1.0f/3.0f;
+    if(t < 0.0f) t += 1.0f;
+    B = component_from_t(t);
+}
+
+template<bool opaque>
+__device__ __host__ void RGBA::over(const RGBA * backdrop) {
+    float cA = 1.0f - A;
+    if constexpr (!opaque) cA *= backdrop->A;
+    R = R*A + backdrop->R*cA;
+    G = G*A + backdrop->G*cA;
+    B = B*A + backdrop->B*cA;
+    if constexpr (opaque) A = 1.0f;
+    else {
+        A += cA;
+        float f = 1.0f/A;
+        R *= f;
+        G *= f;
+        B *= f;
+    }
+}
+
+template __device__ __host__ void RGBA::over<false>(const RGBA *backdrop);
+template __device__ __host__ void RGBA::over<true>(const RGBA *backdrop);
+
+template<bool opaque>
+__device__ __host__ void RGBA::write(unsigned char * buffer) const {
+    buffer[0] = static_cast<unsigned char>(cuda::std::round(255*R));
+    buffer[1] = static_cast<unsigned char>(cuda::std::round(255*G));
+    buffer[2] = static_cast<unsigned char>(cuda::std::round(255*B));
+    if constexpr (!opaque) buffer[3] = static_cast<unsigned char>(cuda::std::round(255*A));
+}
+
+template __device__ __host__ void RGBA::write<false>(unsigned char *buffer) const;
+template __device__ __host__ void RGBA::write<true>(unsigned char *buffer) const;
