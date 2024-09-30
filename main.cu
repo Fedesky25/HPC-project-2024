@@ -64,9 +64,9 @@ int main(int argc, char * argv[]) {
             auto canvas_count = omp_get_max_threads();
             auto canvases = create_canvas_host(canvas_count, &config.canvas);
             evolve_omp(&config, canvases, points, N, fn_choice);
-            write_video_omp(
-                    config.output, canvases, canvas_count, frame_size,
-                    config.evolution.frame_count, &config.background);
+//            write_video_omp(
+//                    config.output, canvases, canvas_count, frame_size,
+//                    config.evolution.frame_count, &config.background);
             break;
         }
         case ExecutionMode::GPU:
@@ -83,9 +83,9 @@ int main(int argc, char * argv[]) {
                        tile_offsets, tiles_count, fn_choice);
             cudaFree(tile_offsets);
             cudaFree(points);
-            write_video_gpu(
-                    config.output, canvases, canvas_count, frame_size,
-                    config.evolution.frame_count, &config.background);
+//            write_video_gpu(
+//                    config.output, canvases, canvas_count, frame_size,
+//                    config.evolution.frame_count, &config.background);
             break;
         }
     }
@@ -93,9 +93,11 @@ int main(int argc, char * argv[]) {
     auto end_computation = std::chrono::steady_clock::now();
     float time_all = (std::chrono::duration<float,std::ratio<1>>(end_computation-start_computation)).count();
     std::cout << "All computations completed in " << time_all << 's' << std::endl;
-    std::cout << "Run the command:  ffmpeg -f rawvideo -pixel_format rgba -video_size "
-              << config.canvas.width << 'x' << config.canvas.height << " -framerate "
-              << config.evolution.frame_rate << " -i " << config.output << " <output>" << std::endl;
+    std::cout << "Run the command:  ffmpeg -f rawvideo -pixel_format rgb";
+    if(config.background.A != 1.0f) std::cout << 'a';
+    std::cout << " -video_size " << config.canvas.width << 'x' << config.canvas.height
+              << " -framerate " << config.evolution.frame_rate
+              << " -i " << config.output << " <output>" << std::endl;
 
 
     #if 0

@@ -411,12 +411,14 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
             {
                 uint32_t val = strtoul(optarg, &rest, 16);
                 CHECK_REMAINING("background color")
-                uint8_t alpha = 0xff;
+                config->background.A = 1.0f;
                 if(rest - optarg > 6) {
-                    alpha = val & 0xff;
+                    config->background.A = (float)(val & 0xff) * div_255;
                     val >>= 8;
                 }
-                config->background.fromRGBA(val >> 16, (val >> 8) & 0xff, val & 0xff, alpha);
+                config->background.R = (float)(val>>16) * div_255;
+                config->background.G = (float)((val>>8)&0xff) * div_255;
+                config->background.B = (float)(val&0xff) * div_255;
                 break;
             }
             case 'n':
