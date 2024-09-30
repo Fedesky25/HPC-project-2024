@@ -14,6 +14,8 @@
 #include <iostream>
 #include <iomanip>
 
+#define LLOYD_ITERATIONS 12
+
 #define SETUP_CPU \
     auto sites = (complex_t*) malloc(N * sizeof(complex_t));           \
     auto n_density = 128*(int64_t)N;                                   \
@@ -50,7 +52,7 @@ complex_t* particles_serial(complex_t z1, complex_t z2, uint32_t N){
     float times[2];
     std::cout << "Lloyd's algorithm:  i | t  (s) | n. c. | s. u." << std::endl << std::fixed;
     tick(0)
-    for(uint16_t i=0; i<20; i++){  // Iterating to convergence
+    for(uint16_t i=0; i<LLOYD_ITERATIONS; i++){  // Iterating to convergence
         tick(1) tick(2)
         for(uint64_t j=0; j<n_density; j++){ // Iterating on density points
             double current, min = INFINITY;
@@ -134,7 +136,7 @@ complex_t* particles_omp(complex_t z1, complex_t z2, uint32_t N){
     float times[2];
     std::cout << "Lloyd's algorithm:  i | t  (s) | n. c. | s. u.    using " << std::endl << std::fixed;
     tick(0)
-    for(int16_t i=0; i<20; i++){  // Iterating to convergence
+    for(int16_t i=0; i<LLOYD_ITERATIONS; i++){  // Iterating to convergence
         tick(1) tick(2)
         #pragma omp parallel for shared(nearest, density, sites) schedule(static)
         for (int64_t j = 0; j < n_density; j++) { // Iterating on density points
@@ -215,7 +217,7 @@ complex_t* particles_mixed(complex_t z1, complex_t z2, uint32_t N){
     std::cout << "Lloyd's algorithm:  i | t (ms) | s. -> | n. c. | n. <- | s. u." << std::endl << std::fixed;
     tick(0)
 
-    for(int16_t i=0; i<20; i++){  // Iterating to convergence
+    for(int16_t i=0; i<LLOYD_ITERATIONS; i++){  // Iterating to convergence
         tick(1) tick(2)
         cudaMemcpy(d_sites, sites, N * sizeof (complex_t), cudaMemcpyHostToDevice);
         tock_ms(2) times[0] = t_elapsed; tick(2)
