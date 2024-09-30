@@ -43,7 +43,6 @@ void write_video_serial_internal(
                 }
                 color.write<opaque>(frame + bytes*i);
             }
-            std::cout << i << ' ';
         }
         tock_ms(1)
         tc = t_elapsed;
