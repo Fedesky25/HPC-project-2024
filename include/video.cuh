@@ -14,12 +14,12 @@
  * @param canvas canvas where particles trajectories were written
  * @param frame_size number of pixel in a frame
  * @param frame_count total number of frames in range [0, UINT16_MAX)
- * @param background 
+ * @param background
  */
 void write_video_serial(
-        const char * filename, Canvas canvas,
-        uint32_t frame_size, int32_t frame_count,
-        const FixedHSLA * background);
+    const char * filename, Canvas canvas,
+    uint32_t frame_size, int32_t frame_count,
+    const RGBA & background);
 
 void write_video_omp(
         const char * filename,

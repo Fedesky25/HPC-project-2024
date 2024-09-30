@@ -91,7 +91,6 @@ struct CanvasPixel {
         return get_color_from_delta(delta, frame_count, background);
     }
 
-private:
     uint16_t age = UINT16_MAX, multiplicity = 0, hue = 0;
 };
 

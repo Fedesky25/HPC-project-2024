@@ -54,7 +54,7 @@ int main(int argc, char * argv[]) {
             points = particles_serial(min, max, N);
             auto canvas = new CanvasPixel [frame_size];
             evolve_serial(&config, canvas, points, N, fn_choice);
-            write_video_serial(config.output, canvas, frame_size, config.evolution.frame_count, &config.background);
+            write_video_serial(config.output, canvas, frame_size, config.evolution.frame_count, config.background);
             delete[] canvas;
             break;
         }
