@@ -16,7 +16,7 @@ void write_video_serial_internal(
         const RGBA & background
 ) {
     constexpr auto bytes = opaque ? 3 : 4;
-    auto mem = bytes * frame_count;
+    auto mem = bytes * frame_size;
     auto frame = new unsigned char [mem];
     std::ofstream out(filename);
     RGBA color;
