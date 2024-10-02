@@ -8,7 +8,6 @@
 #include <iomanip>
 #include <omp.h>
 
-#define HEADER std::cout << "Frame computation: iter. | c (us) | w (ms)" << std::endl;
 
 template<bool opaque>
 void write_video_serial_internal(
@@ -25,7 +24,7 @@ void write_video_serial_internal(
     background.write<opaque>(bg_bytes);
     auto inv_lifetime = 1.0f / (float) frame_count;
     float tc, tw;
-    HEADER
+    std::cout << "Frame computation: iter. | c (us) | w (ms)" << std::endl << std::setprecision(2);
     timers(2)
     tick(0)
     for(int32_t t=0; t<frame_count; t++) {
@@ -52,8 +51,8 @@ void write_video_serial_internal(
         tock_ms(1)
         tw = t_elapsed;
         std::cout << "                   " << std::setw(5) << (t+1)
-                  << " | " << std::setw(6) << std::setprecision(2) << tc
-                  << " | " << std::setw(6) << std::setprecision(2) << tw << std::endl;
+                  << " | " << std::setw(6) << tc
+                  << " | " << std::setw(6) << tw << std::endl;
     }
     tock_s(0)
     std::cout << "  :: total " << t_elapsed << 's' << std::endl;
@@ -92,7 +91,7 @@ void write_video_omp_internal(
 
     omp_set_nested(1);
 
-    std::cout << "Frame computation: iter. | c (ms) | w (ms)" << std::endl;
+    std::cout << "Frame computation: iter. | c (ms) | w (ms)" << std::endl << std::setprecision(2);
     auto start_all = std::chrono::steady_clock::now();
     for(int32_t t=0; t<frame_count; t++) {
         #pragma omp parallel sections
@@ -145,8 +144,8 @@ void write_video_omp_internal(
             }
         }
         std::cout << "                   " << std::setw(5) << (t+1)
-                  << " | " << std::setw(6) << std::setprecision(2) << tc
-                  << " | " << std::setw(6) << std::setprecision(2) << tw << std::endl;
+                  << " | " << std::setw(6) << tc
+                  << " | " << std::setw(6) << tw << std::endl;
     }
     auto end_all = std::chrono::steady_clock::now();
     float total = (std::chrono::duration<float, std::ratio<1>>(end_all-start_all)).count();
