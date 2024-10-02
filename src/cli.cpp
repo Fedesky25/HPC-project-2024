@@ -358,7 +358,7 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
                 else if(strcmp(optarg, "omp") == 0) config->mode = ExecutionMode::OpenMP;
                 else if(strcmp(optarg, "gpu") == 0) config->mode = ExecutionMode::GPU;
                 else {
-                    std::cerr << "Unrecognized parallelization option" << std::endl;
+                    std::cerr << "Parallelization option must be one of: none, omp, gpu" << std::endl;
                     return true;
                 }
                 break;
@@ -468,7 +468,7 @@ void print_usage() {
               << "         [-r real] [-R resolution] [-s pixel_scale] [-t time_scale] [-v speed] [-1 complex] [-2 complex] [-3 complex] function" << std::endl << std::endl;
     std::cout << "OPTIONS" << std::endl;
     std::cout << "  Name                 Default        Description" << std::endl;
-    std::cout << "  -p  --parallel       gpu            Which parallelization to adopt in computations. It must be one of: none, openmp, gpu" << std::endl;
+    std::cout << "  -p  --parallel       gpu            Which parallelization to adopt in computations. It must be one of: none, omp, gpu" << std::endl;
     std::cout << "  -o  --output         plot.raw       Path of the output raw file" << std::endl;
     std::cout << "  -D  --duration       15             Duration in seconds of the webp animation" << std::endl;
     std::cout << "  -f  --framerate      60             Number of frames per seconds i.e. the refresh rate" << std::endl;
