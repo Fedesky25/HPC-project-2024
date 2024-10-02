@@ -38,7 +38,7 @@ void write_video_serial_internal(
                 color.from_hue(canvas[i].hue);
                 if(delta < canvas[i].multiplicity) color.A = 1.0f;
                 else {
-                    color.A = (float) (delta-canvas[i].multiplicity) * inv_lifetime;
+                    color.A = (float) (frame_count+canvas[i].multiplicity-delta) * inv_lifetime;
                     color.over<opaque>(&background);
                 }
                 color.write<opaque>(frame + bytes*i);
