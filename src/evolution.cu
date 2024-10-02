@@ -98,8 +98,10 @@ void evolve_omp(Configuration* config, Canvas* canvas,
                  &config->vars, particles[i], rand_int(generator));
         }
     }
-    tock_s(0)
-    std::cout << "Particle evolution computed in " << t_elapsed << 's' << std::endl;
+    tock_ms(0)
+    std::cout << "Particle evolution computed in ";
+    if(t_elapsed >= 1e3) std::cout << t_elapsed*1e-3 << 's' << std::endl;
+    else std::cout << t_elapsed << "ms" << std::endl;
 }
 
 void evolve_serial(Configuration* config, Canvas canvas,
