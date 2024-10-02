@@ -6,6 +6,7 @@
 #include "frames.cuh"
 #include <fstream>
 #include <iomanip>
+#include <omp.h>
 
 #define HEADER std::cout << "Frame computation: iter. | c (us) | w (ms)" << std::endl;
 
@@ -69,14 +70,101 @@ void write_video_serial(
 }
 
 
+template<bool opaque>
+void write_video_omp_internal(
+        const char * filename,
+        const Canvas * canvases, uint32_t canvas_count,
+        uint32_t frame_size, int32_t frame_count,
+        const RGBA & background
+) {
+    std::ofstream out(filename);
+    constexpr auto bytes = opaque ? 3 : 4;
+    auto mem = bytes * frame_size;
+    unsigned char * frame_buffers[2];
+    frame_buffers[0] = new unsigned char [mem];
+    frame_buffers[1] = new unsigned char [mem];
+    unsigned char bg_bytes[bytes];
+    background.write<opaque>(bg_bytes);
+    auto inv_lifetime = 1.0f / (float) frame_count;
+    float tc, tw=NAN;
+
+    int32_t frame_size_signed = frame_size;
+
+    omp_set_nested(1);
+
+    std::cout << "Frame computation: iter. | c (ms) | w (ms)" << std::endl;
+    auto start_all = std::chrono::steady_clock::now();
+    for(int32_t t=0; t<frame_count; t++) {
+        #pragma omp parallel sections
+        {
+            #pragma omp section
+            {
+                if(t > 0) {
+                    auto start = std::chrono::steady_clock::now();
+                    out.write(reinterpret_cast<const char *>(frame_buffers[(t-1)&1]), mem);
+                    auto end = std::chrono::steady_clock::now();
+                    tw = (std::chrono::duration<float, std::milli>(end-start)).count();
+                }
+            }
+            #pragma omp section
+            {
+                auto start = std::chrono::steady_clock::now();
+                auto frame = frame_buffers[t&1];
+                #pragma omp parallel
+                {
+                    RGBA color;
+                    CanvasPixel * pixel;
+                    int32_t delta_min, delta;
+                    #pragma omp for schedule(static)
+                    for(int32_t i=0; i<frame_size_signed; i++) {
+                        pixel = &canvases[0][i];
+                        delta_min = canvases[0][i].time_distance(t, frame_count);
+                        for(uint32_t c=1; c<canvas_count; c++) {
+                            delta = canvases[c][i].time_distance(t, frame_count);
+                            if(delta < delta_min) {
+                                delta_min = delta;
+                                pixel = &canvases[c][i];
+                            }
+                        }
+                        if(delta >= frame_count + pixel->multiplicity) {
+                            for(int b=0; b<bytes; b++) frame[bytes*i + b] = bg_bytes[b];
+                        }
+                        else {
+                            color.from_hue(pixel->hue);
+                            if(delta < pixel->multiplicity) color.A = 1.0f;
+                            else {
+                                color.A = (float) (frame_count+pixel->multiplicity-delta) * inv_lifetime;
+                                color.over<opaque>(&background);
+                            }
+                            color.write<opaque>(frame + bytes*i);
+                        }
+                    }
+                }
+                auto end = std::chrono::steady_clock::now();
+                tc = (std::chrono::duration<float, std::milli>(end-start)).count();
+            }
+        }
+        std::cout << "                   " << std::setw(5) << (t+1)
+                  << " | " << std::setw(6) << std::setprecision(2) << tc
+                  << " | " << std::setw(6) << std::setprecision(2) << tw << std::endl;
+    }
+    auto end_all = std::chrono::steady_clock::now();
+    float total = (std::chrono::duration<float, std::ratio<1>>(end_all-start_all)).count();
+    std::cout << "  :: total " << total << 's' << std::endl;
+
+    delete [] frame_buffers[0];
+    delete [] frame_buffers[1];
+}
+
 
 void write_video_omp(
         const char * filename,
         const Canvas * canvases, uint32_t canvas_count,
         uint32_t frame_size, int32_t frame_count,
-        const FixedHSLA * background
+        const RGBA & background
 ) {
-
+    if(background.A == 1.0f) write_video_omp_internal<true>(filename, canvases, canvas_count, frame_size, frame_count, background);
+    else write_video_omp_internal<false>(filename, canvases, canvas_count, frame_size, frame_count, background);
 }
 
 

@@ -25,7 +25,7 @@ void write_video_omp(
         const char * filename,
         const Canvas * canvases, uint32_t canvas_count,
         uint32_t frame_size, int32_t frame_count,
-        const FixedHSLA * background);
+        const RGBA & background);
 
 void write_video_gpu(
         const char * filename,
