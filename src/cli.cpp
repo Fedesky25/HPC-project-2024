@@ -344,7 +344,8 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
     int o, go = 1, index_opt;
     char * rest;
     double time_scale = 0.12;
-    unsigned long fps = 60, duration = 10, lifetime = 8;
+    float lifetime = 0.75;
+    unsigned long fps = 60, duration = 10;
     ScaleScaling action = ScaleScaling::NONE;
 
     while(go) {
@@ -413,8 +414,12 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
                 CHECK_REMAINING("duration")
                 break;
             case 'l':
-                lifetime = strtoul(optarg, &rest, 10);
+                lifetime = strtof(optarg, &rest) * 1e-2f;
                 CHECK_REMAINING("lifetime")
+                if(lifetime <= 0 || lifetime > 1) {
+                    std::cerr << "Lifetime must be between 0% and 100%" << std::endl;
+                    return true;
+                }
                 break;
             case 'B':
             {
@@ -459,14 +464,10 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
         case ScaleScaling::NONE:
             break;
     }
-    if(lifetime > duration) {
-        std::cerr << "Particles' lifetime cannot exceed the video duration" << std::endl;
-        return true;
-    }
     config->evolution.delta_time = time_scale / fps;
     config->evolution.frame_count = duration * fps;
     config->evolution.frame_rate = fps;
-    config->evolution.life_time = lifetime * fps;
+    config->evolution.life_time = static_cast<int32_t>(std::ceil(lifetime * (float) config->evolution.frame_count));
     if(config->evolution.frame_count > 64800) {
         std::cerr << "Number of frames cannot exceed 64800 i.e. 4:30min at 240Hz or 18min at 60Hz" << std::endl;
         return true;
@@ -493,7 +494,7 @@ void print_usage() {
     std::cout << "  -d  --distance       10             Average distance (in pixels) between two nearby particles in the starting positions" << std::endl;
     std::cout << "  -m  --margin         4              Number of layers of additional particles outside the video. Too low values lead to empty borders." << std::endl;
     std::cout << "  -L  --lloyd          8              Particles' lifetime in seconds; must be less than the video duration." << std::endl;
-    std::cout << "  -l  --lifetime       7              Number of iterations of Lloyd's algorithm to evenly distribute particles." << std::endl;
+    std::cout << "  -l  --lifetime       75.0           Percentage of video duration for which each particle is alive (visible)." << std::endl;
     std::cout << "  -v  --speed          1.0            Value of speed around which logarithmic color sensitivity is maximum. Red or blue" << std::endl
               << "                                      occur when the speed is respectively one order less or more than the specified value." << std::endl;
     std::cout << "  -t  --time-scale     0.12           Time scale used to convert 1 real second into the computational time unit. Lower values guarantee" << std::endl
