@@ -51,22 +51,22 @@ int main(int argc, char * argv[]) {
     switch (config.mode) {
         case ExecutionMode::Serial:
         {
-            points = particles_serial(min, max, N);
+            points = particles_serial(min, max, N, config.lloyd_iterations);
             auto canvas = new CanvasPixel [frame_size];
             evolve_serial(&config, canvas, points, N, fn_choice);
-            write_video_serial(config.output, canvas, frame_size, config.evolution.frame_count, config.background);
+            write_video_serial(config.output, canvas, frame_size, config.evolution.frame_count, config.evolution.life_time, config.background);
             delete[] canvas;
             break;
         }
         case ExecutionMode::OpenMP:
         {
-            points = particles_omp(min, max, N);
+            points = particles_omp(min, max, N, config.lloyd_iterations);
             auto canvas_count = omp_get_max_threads();
             auto canvases = create_canvas_host(canvas_count, &config.canvas);
             evolve_omp(&config, canvases, points, N, fn_choice);
             write_video_omp(
                     config.output, canvases, canvas_count, frame_size,
-                    config.evolution.frame_count, config.background);
+                    config.evolution.frame_count, config.evolution.life_time, config.background);
             break;
         }
         case ExecutionMode::GPU:
@@ -75,7 +75,7 @@ int main(int argc, char * argv[]) {
             unsigned tiles_count = tiles.total();
             std::cout << "  Tiles: " << tiles.rows << 'x' << tiles.cols << '=' << tiles_count << " with "
                       << (float) N / (float) tiles_count << " particles each" << std::endl;
-            points = particles_gpu(min, max, N);
+            points = particles_gpu(min, max, N, config.lloyd_iterations);
             auto tile_offsets = tiles.sort(min, max, points, N);
             auto canvas_count = get_canvas_count_serial(tile_offsets, tiles_count);
             auto canvases = create_canvas_device(canvas_count, &config.canvas);

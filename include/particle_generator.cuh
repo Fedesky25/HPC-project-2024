@@ -13,9 +13,10 @@
  * @param z1 lower-left vertex
  * @param z2 upper-right vertex
  * @param N number of sites
+ * @param iterations number of Lloyd alg. iterations
  * @return particle sites
  */
-complex_t * particles_serial(complex_t z1, complex_t z2, uint32_t N);
+complex_t * particles_serial(complex_t z1, complex_t z2, uint32_t N, unsigned iterations);
 
 /**
  * OMP VERSION: Generates N complex numbers uniformly distributed
@@ -23,9 +24,10 @@ complex_t * particles_serial(complex_t z1, complex_t z2, uint32_t N);
  * @param z1 lower-left vertex
  * @param z2 upper-right vertex
  * @param N number of sites
+ * @param iterations number of Lloyd alg. iterations
  * @return particle sites
  */
-complex_t* particles_omp(complex_t z1, complex_t z2, uint32_t N);
+complex_t* particles_omp(complex_t z1, complex_t z2, uint32_t N, unsigned iterations);
 
 /**
  * CUDA&OMP VERSION: Generates N complex numbers uniformly distributed
@@ -33,9 +35,10 @@ complex_t* particles_omp(complex_t z1, complex_t z2, uint32_t N);
  * @param z1 lower-left vertex
  * @param z2 upper-right vertex
  * @param N number of sites
+ * @param iterations number of Lloyd alg. iterations
  * @return particle sites
  */
-complex_t* particles_mixed(complex_t z1, complex_t z2, uint32_t N);
+complex_t* particles_mixed(complex_t z1, complex_t z2, uint32_t N, unsigned iterations);
 
 /**
  * CUDA VERSION: Generates N complex numbers uniformly distributed
@@ -43,8 +46,9 @@ complex_t* particles_mixed(complex_t z1, complex_t z2, uint32_t N);
  * @param z1 lower-left vertex
  * @param z2 upper-right vertex
  * @param N number of sites
+ * @param iterations number of Lloyd alg. iterations
  * @return particle sites
  */
-complex_t* particles_gpu(complex_t z1, complex_t z2, uint32_t N);
+complex_t* particles_gpu(complex_t z1, complex_t z2, uint32_t N, unsigned iterations);
 
 #endif //HPC_PROJECT_2024_PARTICLE_GENERATOR_CUH

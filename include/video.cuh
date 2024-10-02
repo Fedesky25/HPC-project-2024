@@ -19,13 +19,13 @@
 void write_video_serial(
     const char * filename, Canvas canvas,
     uint32_t frame_size, int32_t frame_count,
-    const RGBA & background);
+    int32_t lifetime, const RGBA & background);
 
 void write_video_omp(
-        const char * filename,
-        const Canvas * canvases, uint32_t canvas_count,
-        uint32_t frame_size, int32_t frame_count,
-        const RGBA & background);
+    const char * filename,
+    const Canvas * canvases, uint32_t canvas_count,
+    uint32_t frame_size, int32_t frame_count,
+    int32_t lifetime, const RGBA & background);
 
 void write_video_gpu(
         const char * filename,

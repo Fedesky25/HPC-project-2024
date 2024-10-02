@@ -14,7 +14,6 @@
 #include <iostream>
 #include <iomanip>
 
-#define LLOYD_ITERATIONS 12
 
 #define SETUP_CPU \
     auto sites = (complex_t*) malloc(N * sizeof(complex_t));           \
@@ -43,7 +42,7 @@ void rand_complex(complex_t z1, complex_t z2, complex_t * rdm, uint64_t M) {
 }
 
 
-complex_t* particles_serial(complex_t z1, complex_t z2, uint32_t N){
+complex_t* particles_serial(complex_t z1, complex_t z2, uint32_t N, unsigned iterations){
     SETUP_CPU PRINT_INITIAL timers(3) tick(0)
     rand_complex(z1, z2, sites, N);
     rand_complex(z1, z2, density, n_density);
@@ -52,7 +51,7 @@ complex_t* particles_serial(complex_t z1, complex_t z2, uint32_t N){
     float times[2];
     std::cout << "Lloyd's algorithm:  i | t  (s) | n. c. | s. u." << std::endl << std::fixed;
     tick(0)
-    for(uint16_t i=0; i<LLOYD_ITERATIONS; i++){  // Iterating to convergence
+    for(unsigned i=0; i<iterations; i++){  // Iterating to convergence
         tick(1) tick(2)
         for(uint64_t j=0; j<n_density; j++){ // Iterating on density points
             double current, min = INFINITY;
@@ -128,15 +127,15 @@ void rand_complex_omp(
 }
 
 
-complex_t* particles_omp(complex_t z1, complex_t z2, uint32_t N){
+complex_t* particles_omp(complex_t z1, complex_t z2, uint32_t N, unsigned iterations){
     SETUP_CPU PRINT_INITIAL timers(3) tick(0)
     rand_complex_omp(z1, z2, sites, N, density, n_density);
     tock_ms(0) std::cout << " generated in " << t_elapsed << "ms" << std::endl;
 
     float times[2];
-    std::cout << "Lloyd's algorithm:  i | t  (s) | n. c. | s. u.    using " << std::endl << std::fixed;
+    std::cout << "Lloyd's algorithm:  i | t  (s) | n. c. | s. u." << std::endl << std::fixed;
     tick(0)
-    for(int16_t i=0; i<LLOYD_ITERATIONS; i++){  // Iterating to convergence
+    for(unsigned i=0; i<iterations; i++){  // Iterating to convergence
         tick(1) tick(2)
         #pragma omp parallel for shared(nearest, density, sites) schedule(static)
         for (int64_t j = 0; j < n_density; j++) { // Iterating on density points
@@ -198,7 +197,7 @@ __global__ void compute_nearest(
     nearest[index] = n;
 }
 
-complex_t* particles_mixed(complex_t z1, complex_t z2, uint32_t N){
+complex_t* particles_mixed(complex_t z1, complex_t z2, uint32_t N, unsigned iterations){
     SETUP_CPU
     complex_t *d_density, *d_sites;
     uint32_t *d_nearest;
@@ -217,7 +216,7 @@ complex_t* particles_mixed(complex_t z1, complex_t z2, uint32_t N){
     std::cout << "Lloyd's algorithm:  i | t (ms) | s. -> | n. c. | n. <- | s. u." << std::endl << std::fixed;
     tick(0)
 
-    for(int16_t i=0; i<LLOYD_ITERATIONS; i++){  // Iterating to convergence
+    for(unsigned i=0; i<iterations; i++){  // Iterating to convergence
         tick(1) tick(2)
         cudaMemcpy(d_sites, sites, N * sizeof (complex_t), cudaMemcpyHostToDevice);
         tock_ms(2) times[0] = t_elapsed; tick(2)
@@ -295,7 +294,7 @@ __global__ void update_sites(
     if(count > 0) sites[site_index] = sum / (double) count;
 }
 
-complex_t* particles_gpu(complex_t z1, complex_t z2, uint32_t N){
+complex_t* particles_gpu(complex_t z1, complex_t z2, uint32_t N, unsigned iterations){
     int64_t n_density = 128*N;
     auto M = ((N-1) >> 10) + 1; // (n_density + 1023) / 1024 = (n_density-1)/ 2^(10)
     auto D = ((n_density-1) >> 10) + 1;
@@ -325,7 +324,7 @@ complex_t* particles_gpu(complex_t z1, complex_t z2, uint32_t N){
     float times[3];
     std::cout << "Lloyd's algorithm:  i | t (ms) | n. c. | sortk | s. u." << std::endl << std::fixed;
     tick(0)
-    for(int16_t i=0; i<20; i++){  // Iterating to convergence
+    for(unsigned i=0; i<iterations; i++){  // Iterating to convergence
         tick(1) tick(2)
         compute_nearest<<<D, 1024>>>(d_density, n_density, d_sites, N, d_nearest);
         cudaDeviceSynchronize();

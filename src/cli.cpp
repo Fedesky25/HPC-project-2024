@@ -325,11 +325,12 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
             { "center",      required_argument, nullptr, 'c' },
             { "distance",    required_argument, nullptr, 'd' },
             { "margin",      required_argument, nullptr, 'm' },
+            { "lloyd",       required_argument, nullptr, 'L' },
             { "speed",       required_argument, nullptr, 'v' },
             { "time-scale",  required_argument, nullptr, 't' },
             { "framerate",   required_argument, nullptr, 'f' },
             { "duration",    required_argument, nullptr, 'D' },
-//            { "lifetime",    required_argument, nullptr, 'l' },
+            { "lifetime",    required_argument, nullptr, 'l' },
             { "background",  required_argument, nullptr, 'B' },
             { "int",         required_argument, nullptr, 'n' },
             { "real",        required_argument, nullptr, 'r' },
@@ -338,12 +339,12 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
             { "complex3",    required_argument, nullptr, '3' },
             { nullptr, 0, nullptr, 0 }
     };
-    static char short_options[] = "p:o:R:s:c:d:m:v:t:f:D:B:n:r:1:2:3:";
+    static char short_options[] = "p:o:R:s:c:d:m:L:v:t:f:D:l:B:n:r:1:2:3:";
 
     int o, go = 1, index_opt;
     char * rest;
     double time_scale = 0.12;
-    unsigned long fps = 60, duration = 15;
+    unsigned long fps = 60, duration = 10, lifetime = 8;
     ScaleScaling action = ScaleScaling::NONE;
 
     while(go) {
@@ -380,6 +381,10 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
                 config->particle_distance = strtoul(optarg, &rest, 10);
                 CHECK_DISTANCE
                 break;
+            case 'L':
+                config->lloyd_iterations = strtoul(optarg, &rest, 10);
+                CHECK_REMAINING("number of iterations of Lloyd's algorithm")
+                break;
             case 'R':
                 parse_resolution(optarg, &(config->canvas));
                 if(!config->canvas.width) return true;
@@ -406,6 +411,10 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
             case 'D':
                 duration = strtoul(optarg, &rest, 10);
                 CHECK_REMAINING("duration")
+                break;
+            case 'l':
+                lifetime = strtoul(optarg, &rest, 10);
+                CHECK_REMAINING("lifetime")
                 break;
             case 'B':
             {
@@ -450,9 +459,14 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
         case ScaleScaling::NONE:
             break;
     }
+    if(lifetime > duration) {
+        std::cerr << "Particles' lifetime cannot exceed the video duration" << std::endl;
+        return true;
+    }
     config->evolution.delta_time = time_scale / fps;
     config->evolution.frame_count = duration * fps;
     config->evolution.frame_rate = fps;
+    config->evolution.life_time = lifetime * fps;
     if(config->evolution.frame_count > 64800) {
         std::cerr << "Number of frames cannot exceed 64800 i.e. 4:30min at 240Hz or 18min at 60Hz" << std::endl;
         return true;
@@ -470,14 +484,16 @@ void print_usage() {
     std::cout << "  Name                 Default        Description" << std::endl;
     std::cout << "  -p  --parallel       gpu            Which parallelization to adopt in computations. It must be one of: none, omp, gpu" << std::endl;
     std::cout << "  -o  --output         plot.raw       Path of the output raw file" << std::endl;
-    std::cout << "  -D  --duration       15             Duration in seconds of the webp animation" << std::endl;
+    std::cout << "  -D  --duration       10             Duration in seconds of the webp animation" << std::endl;
     std::cout << "  -f  --framerate      60             Number of frames per seconds i.e. the refresh rate" << std::endl;
     std::cout << "  -R  --resolution     1920x1080      Pixel sizes of the video: it can be either a supported screen resolution name (such as FHD, WXGA+)" << std::endl
               << "                                      or a custom size specified in the format <width>x<height>. Optionally, the character '^' may be" << std::endl
               << "                                      prepended to invert the horizontal and vertical sizes." << std::endl;
+    std::cout << "  -B  --background     242429         RGB or RGBA color of the background using hexadecimal representation" << std::endl;
     std::cout << "  -d  --distance       10             Average distance (in pixels) between two nearby particles in the starting positions" << std::endl;
     std::cout << "  -m  --margin         4              Number of layers of additional particles outside the video. Too low values lead to empty borders." << std::endl;
-    std::cout << "  -B  --background     242429         RGB or RGBA color of the background using hexadecimal representation" << std::endl;
+    std::cout << "  -L  --lloyd          8              Particles' lifetime in seconds; must be less than the video duration." << std::endl;
+    std::cout << "  -l  --lifetime       7              Number of iterations of Lloyd's algorithm to evenly distribute particles." << std::endl;
     std::cout << "  -v  --speed          1.0            Value of speed around which logarithmic color sensitivity is maximum. Red or blue" << std::endl
               << "                                      occur when the speed is respectively one order less or more than the specified value." << std::endl;
     std::cout << "  -t  --time-scale     0.12           Time scale used to convert 1 real second into the computational time unit. Lower values guarantee" << std::endl

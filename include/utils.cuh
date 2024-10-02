@@ -66,6 +66,7 @@ struct FnVariables {
 struct EvolutionOptions {
     double speed_factor = 1.0, delta_time = 2e-3;
     int32_t frame_count = 900; // 15s
+    int32_t life_time = 600;
     uint32_t frame_rate = 60;
     // default time-scale = 0.12
 
@@ -83,6 +84,7 @@ struct Configuration {
     const char * output = "plot.raw";
     unsigned long particle_distance = 10;
     unsigned long margin = 4;
+    unsigned long lloyd_iterations = 8;
     ExecutionMode mode = ExecutionMode::GPU;
 
     /**

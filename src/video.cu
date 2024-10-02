@@ -13,7 +13,7 @@ template<bool opaque>
 void write_video_serial_internal(
         const char * filename, Canvas canvas,
         uint32_t frame_size, int32_t frame_count,
-        const RGBA & background
+        int32_t lifetime, const RGBA & background
 ) {
     constexpr auto bytes = opaque ? 3 : 4;
     auto mem = bytes * frame_size;
@@ -22,7 +22,7 @@ void write_video_serial_internal(
     RGBA color;
     unsigned char bg_bytes[bytes];
     background.write<opaque>(bg_bytes);
-    auto inv_lifetime = 1.0f / (float) frame_count;
+    auto inv_lifetime = 1.0f / (float) lifetime;
     float tc, tw;
     std::cout << "Frame computation: iter. | c (us) | w (ms)" << std::endl << std::setprecision(2);
     timers(2)
@@ -31,14 +31,14 @@ void write_video_serial_internal(
         tick(1)
         for(uint32_t i=0; i<frame_size; i++) {
             auto delta = canvas[i].time_distance(t, frame_count);
-            if(delta >= frame_count + canvas[i].multiplicity) {
+            if(delta >= lifetime + canvas[i].multiplicity) {
                 for(int b=0; b<bytes; b++) frame[bytes*i + b] = bg_bytes[b];
             }
             else {
                 color.from_hue(canvas[i].hue);
                 if(delta < canvas[i].multiplicity) color.A = 1.0f;
                 else {
-                    color.A = (float) (frame_count+canvas[i].multiplicity-delta) * inv_lifetime;
+                    color.A = (float) (lifetime+canvas[i].multiplicity-delta) * inv_lifetime;
                     color.over<opaque>(&background);
                 }
                 color.write<opaque>(frame + bytes*i);
@@ -62,10 +62,10 @@ void write_video_serial_internal(
 void write_video_serial(
         const char * filename, Canvas canvas,
         uint32_t frame_size, int32_t frame_count,
-        const RGBA & background
+        int32_t lifetime, const RGBA & background
 ) {
-    if(background.A == 1.0f) write_video_serial_internal<true>(filename, canvas, frame_size, frame_count, background);
-    else write_video_serial_internal<false>(filename, canvas, frame_size, frame_count, background);
+    if(background.A == 1.0f) write_video_serial_internal<true>(filename, canvas, frame_size, frame_count, lifetime, background);
+    else write_video_serial_internal<false>(filename, canvas, frame_size, frame_count, lifetime, background);
 }
 
 
@@ -74,7 +74,7 @@ void write_video_omp_internal(
         const char * filename,
         const Canvas * canvases, uint32_t canvas_count,
         uint32_t frame_size, int32_t frame_count,
-        const RGBA & background
+        int32_t lifetime, const RGBA & background
 ) {
     std::ofstream out(filename);
     constexpr auto bytes = opaque ? 3 : 4;
@@ -84,7 +84,7 @@ void write_video_omp_internal(
     frame_buffers[1] = new unsigned char [mem];
     unsigned char bg_bytes[bytes];
     background.write<opaque>(bg_bytes);
-    auto inv_lifetime = 1.0f / (float) frame_count;
+    auto inv_lifetime = 1.0f / (float) lifetime;
     float tc, tw=NAN;
 
     int32_t frame_size_signed = frame_size;
@@ -125,14 +125,14 @@ void write_video_omp_internal(
                                 pixel = &canvases[c][i];
                             }
                         }
-                        if(delta >= frame_count + pixel->multiplicity) {
+                        if(delta >= lifetime + pixel->multiplicity) {
                             for(int b=0; b<bytes; b++) frame[bytes*i + b] = bg_bytes[b];
                         }
                         else {
                             color.from_hue(pixel->hue);
                             if(delta < pixel->multiplicity) color.A = 1.0f;
                             else {
-                                color.A = (float) (frame_count+pixel->multiplicity-delta) * inv_lifetime;
+                                color.A = (float) (lifetime+pixel->multiplicity-delta) * inv_lifetime;
                                 color.over<opaque>(&background);
                             }
                             color.write<opaque>(frame + bytes*i);
@@ -160,10 +160,10 @@ void write_video_omp(
         const char * filename,
         const Canvas * canvases, uint32_t canvas_count,
         uint32_t frame_size, int32_t frame_count,
-        const RGBA & background
+        int32_t lifetime, const RGBA & background
 ) {
-    if(background.A == 1.0f) write_video_omp_internal<true>(filename, canvases, canvas_count, frame_size, frame_count, background);
-    else write_video_omp_internal<false>(filename, canvases, canvas_count, frame_size, frame_count, background);
+    if(background.A == 1.0f) write_video_omp_internal<true>(filename, canvases, canvas_count, frame_size, frame_count, lifetime, background);
+    else write_video_omp_internal<false>(filename, canvases, canvas_count, frame_size, frame_count, lifetime, background);
 }
 
 
