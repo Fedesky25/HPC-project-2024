@@ -52,8 +52,8 @@ void write_video_serial_internal(
         tock_ms(1)
         tw = t_elapsed;
         std::cout << "                   " << std::setw(5) << (t+1)
-                  << " | " << std::setw(6) << tc
-                  << " | " << std::setw(6) << tw << std::endl;
+                  << " | " << std::setw(6) << std::setprecision(2) << tc
+                  << " | " << std::setw(6) << std::setprecision(2) << tw << std::endl;
     }
     tock_s(0)
     std::cout << "  :: total " << t_elapsed << 's' << std::endl;
