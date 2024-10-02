@@ -108,18 +108,20 @@ void FixedHSLA::fromRGBA(uint8_t red, uint8_t green, uint8_t blue, uint8_t alpha
 #define SATURATION 0.55f
 #define LIGHTNESS 0.55f
 
-const constexpr auto delta_hue = SATURATION * (1.0f - LIGHTNESS);
+const constexpr auto delta_hue = 2 * SATURATION * (1.0f - LIGHTNESS);
+const constexpr auto color_normalizer = 1.0f / ICE_1;
 
-__device__ __host__ unsigned char component_from_t(float t) {
-    float result = LIGHTNESS - delta_hue;
-    if(t < 1.0f/6.0f) result += (delta_hue*t)/icenc_inv(12.0);
-    else if(t < 0.5f) result += 2*delta_hue;
-    else if(t < 2.0f/3.0f) result += delta_hue*(icenc(2.0/3.0) - t)/icenc_inv(12.0);
-    return static_cast<unsigned char>(cuda::std::round(255.0f * result));
+__device__ __host__ float component_from_t(float t) {
+    // @see https://stackoverflow.com/questions/2353211/hsl-to-rgb-color-conversion
+    float result = LIGHTNESS - 0.5f*delta_hue;
+    if(t < 1.0f/6.0f) result += delta_hue*6*t;
+    else if(t < 0.5f) result += delta_hue;
+    else if(t < 2.0f/3.0f) result += delta_hue*6*(2.0f/3.0f - t);
+    return result;
 }
 
 __device__ __host__ void RGBA::from_hue(uint16_t hue) {
-    float H = (float) hue / static_cast<float>(ICE_1);
+    float H = (float) hue * color_normalizer;
     G = component_from_t(H);
     float t = H + 1.0f/3.0f;
     if(t > 1.0f) t -= 1.0f;
