@@ -113,16 +113,16 @@ void rand_complex_omp(
     {
         std::default_random_engine generator(seed + omp_get_thread_num());
         std::uniform_real_distribution<double> dist_real(min.real(), max.real());
-        std::uniform_real_distribution<double> dist_imag(min.real(), max.real());
+        std::uniform_real_distribution<double> dist_imag(min.imag(), max.imag());
         #pragma omp for schedule(static)
         for(int32_t i=0; i<N_sites; i++){
-            sites[i].real(real(min) + dist_real(generator));
-            sites[i].imag(imag(min) + dist_imag(generator));
+            sites[i].real(dist_real(generator));
+            sites[i].imag(dist_imag(generator));
         }
         #pragma omp for schedule(static)
         for(int64_t i=0; i<N_density; i++){
-            density[i].real(real(min) + dist_real(generator));
-            density[i].imag(imag(min) + dist_imag(generator));
+            density[i].real(dist_real(generator));
+            density[i].imag(dist_imag(generator));
         }
     };
 }
