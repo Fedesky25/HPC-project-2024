@@ -110,9 +110,20 @@ struct RGBA {
      */
     BOTH void from_hue(uint16_t hue);
 
+    /**
+     * Mixes this color and the backdrop using the alpha channel as the mixing percentage.
+     * It rewrites RGBA values of the current color
+     * @tparam opaque
+     * @param backdrop
+     */
     template<bool opaque>
     BOTH void over(const RGBA * backdrop);
 
+    /**
+     * Computes the 8-bit color channels and writes them to the buffer
+     * @tparam opaque
+     * @param buffer
+     */
     template<bool opaque>
     BOTH void write(unsigned char * buffer) const;
 };
