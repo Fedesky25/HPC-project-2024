@@ -51,23 +51,6 @@ set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -arch=native")
 
 # https://stackoverflow.com/questions/9313585/specifying-openmp-cuda-flag-in-a-cmake-project
 find_package(OpenMP REQUIRED)
-
-# cuda standard 17 support introduced in 3.18
-# https://cmake.org/cmake/help/latest/prop_tgt/CUDA_STANDARD.html
-# https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/#std-c-03-c-11-c-14-c-17-c-20-std
-
-set(CMAKE_CXX_STANDARD 17)
-if (CMAKE_VERSION VERSION_LESS 3.18)
-    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --std=c++17")
-else ()
-    set(CMAKE_CUDA_STANDARD 17)
-endif ()
-
-# 'native' option for cuda architectures support introduced in 3.24
-# however, it does not work
-# https://cmake.org/cmake/help/latest/prop_tgt/CUDA_STANDARD.html
-# https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#options-for-steering-gpu-code-generation
-set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -arch=native -Xcompiler -openmp")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 
