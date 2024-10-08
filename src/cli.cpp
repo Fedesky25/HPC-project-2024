@@ -138,7 +138,7 @@ void parse_resolution(const char * str, CanvasAdapter * canvas) {
     }
     if(isdigit(*str)) {
         int consumed;
-        int c = sscanf_s(str, "%ux%u%n", &width, &height, &consumed);
+        int c = sscanf(str, "%ux%u%n", &width, &height, &consumed);
         if(c != 2 || str[consumed] != '\0') {
             std::cerr << "Custom resolution format invalid" << std::endl;
             width = height = 0;
