@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
-project(HPC_project_2024 LANGUAGES CXX CUDA C)
+project(HPC_project_2024 LANGUAGES CXX CUDA)
+
+message("-- CMake version ${CMAKE_VERSION}")
 
 if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.17)
     # https://cmake.org/cmake/help/latest/module/FindCUDAToolkit.html
@@ -15,14 +17,31 @@ endif ()
 
 find_package(OpenMP REQUIRED)
 
-set(CMAKE_CUDA_STANDARD 17)
 set(CMAKE_CXX_STANDARD 17)
 
-# set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+# cuda standard 17 support introduced in 3.18
+# https://cmake.org/cmake/help/latest/prop_tgt/CUDA_STANDARD.html
+# https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/#std-c-03-c-11-c-14-c-17-c-20-std
 
+# 'native' option for cuda architectures support introduced in 3.24
+# https://cmake.org/cmake/help/latest/prop_tgt/CUDA_STANDARD.html
 # https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#options-for-steering-gpu-code-generation
-set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -arch=native -Xcompiler -openmp")
+
+if (CMAKE_VERSION VERSION_LESS 3.18)
+    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --std=c++17 -arch=native")
+else ()
+    set(CMAKE_CUDA_STANDARD 17)
+    if (CMAKE_VERSION VERSION_LESS 3.24)
+        set(CMAKE_CUDA_ARCHITECTURES OFF)
+        set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -arch=native")
+    else ()
+        set(CMAKE_CUDA_ARCHITECTURES native)
+    endif ()
+endif ()
+
+set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler -openmp")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+# set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
 
 include_directories(include)
 include_directories("${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}")
