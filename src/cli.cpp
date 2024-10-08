@@ -1,6 +1,7 @@
 #include "cli.hpp"
 #include <iostream>
 #include <cstring>
+#include <cstdio>
 #include "getopt.h"
 
 #define INVALID_OPTION(NAME) { std::cerr << '"' << NAME << "\" is not a valid option" << std::endl; return true; }
