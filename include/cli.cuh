@@ -1,5 +1,5 @@
-#ifndef HPC_PROJECT_2024_CLI_HPP
-#define HPC_PROJECT_2024_CLI_HPP
+#ifndef HPC_PROJECT_2024_CLI_CUH
+#define HPC_PROJECT_2024_CLI_CUH
 
 #include "utils.cuh"
 
@@ -15,4 +15,4 @@ void print_usage();
  */
 bool parse_args(int argc, char * argv[], Configuration * config);
 
-#endif //HPC_PROJECT_2024_CLI_HPP
+#endif //HPC_PROJECT_2024_CLI_CUH

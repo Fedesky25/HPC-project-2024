@@ -1,4 +1,4 @@
-#include "cli.hpp"
+#include "cli.cuh"
 #include <iostream>
 #include <cstring>
 #include <cstdio>

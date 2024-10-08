@@ -23,23 +23,17 @@ set(CMAKE_CXX_STANDARD 17)
 # https://cmake.org/cmake/help/latest/prop_tgt/CUDA_STANDARD.html
 # https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/#std-c-03-c-11-c-14-c-17-c-20-std
 
+
+if (CMAKE_VERSION VERSION_LESS 3.18)
+    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --std=c++17")
+else ()
+    set(CMAKE_CUDA_STANDARD 17)
+endif ()
+
 # 'native' option for cuda architectures support introduced in 3.24
 # however, it does not work
 # https://cmake.org/cmake/help/latest/prop_tgt/CUDA_STANDARD.html
 # https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#options-for-steering-gpu-code-generation
-
-if (CMAKE_VERSION VERSION_LESS 3.18)
-    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --std=c++17 -arch=native")
-else ()
-    set(CMAKE_CUDA_STANDARD 17)
-#    if (CMAKE_VERSION VERSION_LESS 3.24)
-#        set(CMAKE_CUDA_ARCHITECTURES OFF)
-#        set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -arch=native")
-#    else ()
-#        set(CMAKE_CUDA_ARCHITECTURES native)
-#    endif ()
-endif ()
-
 set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -arch=native -Xcompiler -openmp")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
@@ -51,7 +45,7 @@ include_directories("${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}")
 add_executable(HPC_project_2024
         main.cu
         include/utils.cuh src/utils.cu
-        include/cli.hpp src/cli.cpp
+        include/cli.cuh src/cli.cu
         include/lower_bound.cuh
         include/particle_generator.cuh src/particle_generator.cu
         include/tiles.cuh src/tiles.cu
