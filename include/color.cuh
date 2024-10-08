@@ -15,9 +15,9 @@
 #define IC_16b 65280
 
 #ifdef __CUDACC__
-    #define SAFE_HOST_DEVICE __host__ __device__
+    #define BOTH __host__ __device__
 #else
-    #define SAFE_HOST_DEVICE
+    #define BOTH
 #endif
 
 /**
@@ -25,14 +25,14 @@
  * @param x number in range [0,1]
  * @return integer representation of x
  */
-SAFE_HOST_DEVICE constexpr inline int32_t icenc(float x) { return static_cast<int32_t>(ICE_1 * x); }
+BOTH constexpr inline int32_t icenc(float x) { return static_cast<int32_t>(ICE_1 * x); }
 
 /**
  * Integer Color Encode
  * @param x number in range (0,+infinity)
  * @return integer representation of 1/x
  */
-SAFE_HOST_DEVICE constexpr inline int32_t icenc_inv(float x) { return static_cast<int32_t>(ICE_1 / x); }
+BOTH constexpr inline int32_t icenc_inv(float x) { return static_cast<int32_t>(ICE_1 / x); }
 
 struct FixedFraction {
     int32_t value;
@@ -41,16 +41,16 @@ struct FixedFraction {
      * @param a numerator, must be less than denominator
      * @param b denominator
      */
-    SAFE_HOST_DEVICE inline FixedFraction(int32_t a, int32_t b) : value((a<<14) / b) {}
+    BOTH inline FixedFraction(int32_t a, int32_t b) : value((a << 14) / b) {}
 
     /**
      * Multiplies this fraction with a number
      * @param x other number
      * @return
      */
-    SAFE_HOST_DEVICE inline int32_t multiply(int32_t x) const { return (x * value) >> 14; }
+    BOTH inline int32_t multiply(int32_t x) const { return (x * value) >> 14; }
 
-    SAFE_HOST_DEVICE inline int32_t mix(int32_t start, int32_t end) const {
+    BOTH inline int32_t mix(int32_t start, int32_t end) const {
         return start + (((end - start)*value) >> 14);
     }
 };
@@ -63,7 +63,7 @@ struct FixedFraction {
  * @param l lightness
  * @return RGBA value as a uint32_t
  */
-SAFE_HOST_DEVICE uint32_t HSLA_to_RGBA(int32_t h, int32_t s, int32_t l, int32_t alpha);
+BOTH uint32_t HSLA_to_RGBA(int32_t h, int32_t s, int32_t l, int32_t alpha);
 
 /** Representation of HSLA color using integers */
 struct FixedHSLA {
@@ -88,14 +88,14 @@ struct FixedHSLA {
      * Converts the current HSLA color to RGBA format
      * @return RGBA 4-byte format as a single uint32
      */
-    SAFE_HOST_DEVICE inline uint32_t toRGBA() const { return HSLA_to_RGBA(H, S, L, A); }
+    BOTH inline uint32_t toRGBA() const { return HSLA_to_RGBA(H, S, L, A); }
 
     /**
      * Mix this color with another one
      * @param other other HSLA color
      * @param x how much the other color is present
      */
-    SAFE_HOST_DEVICE void mixWith(const FixedHSLA & other, FixedFraction frac);
+    BOTH void mixWith(const FixedHSLA & other, FixedFraction frac);
 };
 
 const constexpr float div_255 = 1.0f/255.0f;
@@ -108,13 +108,13 @@ struct RGBA {
      * It assumes standard values of saturation (0.55) and lightness (0.55)
      * @param hue
      */
-    SAFE_HOST_DEVICE void from_hue(uint16_t hue);
+    BOTH void from_hue(uint16_t hue);
 
     template<bool opaque>
-    SAFE_HOST_DEVICE void over(const RGBA * backdrop);
+    BOTH void over(const RGBA * backdrop);
 
     template<bool opaque>
-    SAFE_HOST_DEVICE void write(unsigned char * buffer) const;
+    BOTH void write(unsigned char * buffer) const;
 };
 
 #endif //HPC_PROJECT_2024_COLOR_CUH

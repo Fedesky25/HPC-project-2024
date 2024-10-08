@@ -54,7 +54,7 @@ struct CanvasAdapter {
      * @param z input complex number
      * @return -1 if out of bounds, else the index of the pixel
      */
-    SAFE_HOST_DEVICE int32_t where(complex_t z);
+    BOTH int32_t where(complex_t z);
 };
 
 struct FnVariables {
@@ -123,7 +123,7 @@ T* devicify(T* obj) {
 }
 
 template<class T>
-SAFE_HOST_DEVICE inline T rounding_division(T numerator, T denominator) {
+BOTH inline T rounding_division(T numerator, T denominator) {
     static_assert(cuda::std::is_integral<T>::value, "Numbers in rounding division must be integral");
     return (1 + (numerator<<1)/denominator) >> 1;
 }
