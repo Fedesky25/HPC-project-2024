@@ -30,7 +30,7 @@ module load ffmpeg/4.3.4
 
 echo "Compiling..."
 cmake -DCMAKE_BUILD_TYPE=Release -S $source_dir -B ./build
-cmake --build ./build --target HPC_project_2024 -j 10
+cmake --build ./build --target HPC_project_2024 -v
 
 echo -e "\n============================================================== Start executions\n"
 
