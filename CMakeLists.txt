@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(HPC_project_2024 LANGUAGES CXX CUDA C)
+project(HPC_project_2024 LANGUAGES CUDA CXX C)
 
 message("-- CMake version ${CMAKE_VERSION}")
 
