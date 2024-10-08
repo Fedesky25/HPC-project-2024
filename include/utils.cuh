@@ -3,13 +3,13 @@
 
 #include <cstdint>
 #include <chrono>
+#include <iostream>
 #include "cuda/std/complex"
 #include "color.cuh"
 
 #define PI 3.1415926535897932384626433
 
 #ifdef DEBUG
-    #include <iostream>
     #define PRINT(X) std::cout << X;
     #define PRINTLN(X) std::cout << X << std::endl;
 #else
