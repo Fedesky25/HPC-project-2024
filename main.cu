@@ -4,7 +4,6 @@
 #include "getopt.h"
 #include "tiles.cuh"
 #include "particle_generator.cuh"
-#include "fstream"
 #include "complex_functions.cuh"
 #include "canvas.cuh"
 #include "evolution.cuh"
