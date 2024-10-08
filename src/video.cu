@@ -125,14 +125,14 @@ void write_video_omp_internal(
                                 pixel = &canvases[c][i];
                             }
                         }
-                        if(delta >= lifetime + pixel->multiplicity) {
+                        if(delta_min >= lifetime + pixel->multiplicity) {
                             for(int b=0; b<bytes; b++) frame[bytes*i + b] = bg_bytes[b];
                         }
                         else {
                             color.from_hue(pixel->hue);
-                            if(delta < pixel->multiplicity) color.A = 1.0f;
+                            if(delta_min < pixel->multiplicity) color.A = 1.0f;
                             else {
-                                color.A = (float) (lifetime+pixel->multiplicity-delta) * inv_lifetime;
+                                color.A = (float) (lifetime+pixel->multiplicity-delta_min) * inv_lifetime;
                                 color.over<opaque>(&background);
                             }
                             color.write<opaque>(frame + bytes*i);
@@ -147,6 +147,7 @@ void write_video_omp_internal(
                   << " | " << std::setw(6) << tc
                   << " | " << std::setw(6) << tw << std::endl;
     }
+    out.write(reinterpret_cast<const char *>(frame_buffers[(frame_count-1)&1]), mem);
     auto end_all = std::chrono::steady_clock::now();
     float total = (std::chrono::duration<float, std::ratio<1>>(end_all-start_all)).count();
     std::cout << "  :: total " << total << 's' << std::endl;
