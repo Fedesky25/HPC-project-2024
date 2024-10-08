@@ -20,7 +20,7 @@
  */
 template<class T, class Index>
 __device__ Index lower_bound(T value, T * data, Index length) {
-//    static_assert(std::is_integral_v<Index>, "Type used as index must be of integral type");
+    static_assert(cuda::std::is_integral<Index>::value, "Type used as index must be of integral type");
     Index step, index, first = 0;
     while (length > 0) {
         index = first;
