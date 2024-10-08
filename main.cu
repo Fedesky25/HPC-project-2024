@@ -1,6 +1,6 @@
 #include <iostream>
 #include "utils.cuh"
-#include "cli.hpp"
+#include "cli.cuh"
 #include "getopt.h"
 #include "tiles.cuh"
 #include "particle_generator.cuh"
