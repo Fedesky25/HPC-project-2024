@@ -87,7 +87,7 @@ void write_video_omp_internal(
     auto inv_lifetime = 1.0f / (float) lifetime;
     float tc, tw=NAN;
 
-    int32_t frame_size_signed = frame_size;
+    auto frame_size_signed = (int32_t) frame_size;
 
     omp_set_nested(1);
 

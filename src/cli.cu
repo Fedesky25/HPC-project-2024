@@ -4,12 +4,7 @@
 #include <cstdio>
 #include "getopt.h"
 
-#define INVALID_OPTION(NAME) { std::cerr << '"' << NAME << "\" is not a valid option" << std::endl; return true; }
 #define INVALID_RESOLUTION_NAME std::cerr << "Invalid screen resolution name" << std::endl;
-#define CHECK_MISSING(NAME) if(i+1 == argc) {               \
-    std::cerr << "Missing value for " << NAME << std::endl; \
-    return true;                                           \
-}
 #define CHECK_REMAINING(NAME) if(*rest != '\0') {                           \
     std::cerr << "Malformed format of the value of " << NAME << std::endl;  \
     return true;                                                           \
@@ -149,7 +144,7 @@ void parse_resolution(const char * str, CanvasAdapter * canvas) {
         }
     }
     else {
-        unsigned len = strlen(str);
+        auto len = strlen(str);
         switch (len) {
             case 1:
             case 2:
@@ -467,7 +462,7 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
             break;
     }
     config->evolution.delta_time = time_scale / fps;
-    config->evolution.frame_count = duration * fps;
+    config->evolution.frame_count = (int32_t) (duration * fps);
     config->evolution.frame_rate = fps;
     config->evolution.life_time = static_cast<int32_t>(std::ceil(lifetime * (float) config->evolution.frame_count));
     if(config->evolution.frame_count > 64800) {
