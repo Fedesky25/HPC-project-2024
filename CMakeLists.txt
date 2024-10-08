@@ -10,6 +10,7 @@ else ()
     # https://cmake.org/cmake/help/latest/module/FindCUDA.html
     find_package(CUDA REQUIRED)
     link_libraries(${CUDA_LIBRARIES} ${CUDA_curand_LIBRARY})
+    message("-- Found CUDA v${CUDA_VERSION} (compiler v${CMAKE_CUDA_COMPILER_VERSION})")
 endif ()
 
 find_package(OpenMP REQUIRED)
