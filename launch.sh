@@ -12,8 +12,15 @@
 echo $(date +"%D %T")
 echo ""
 
-# exit current directory
-cd ../
+source_dir="./source"
+if [[ -e "./CMakeLists.txt" ]]; then
+  source_dir=$(pwd)
+  cd ..
+elif [[ ! -e "./source/CMakeLists.txt" ]]; then
+  echo "Expected source directory with CMakeLists.txt file inside"
+  exit 1
+fi
+
 mkdir -p build
 
 echo "Loading modules..."
@@ -22,7 +29,7 @@ module load cmake/3.14.3
 module load ffmpeg/4.3.4
 
 echo "Compiling..."
-cmake -DCMAKE_BUILD_TYPE=Release ./source
+cmake -DCMAKE_BUILD_TYPE=Release $source_dir
 cmake --build ./build --target HPC_project_2024 -j 10
 
 echo -e "\n============================================================== Start executions\n"
