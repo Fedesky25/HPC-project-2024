@@ -36,12 +36,11 @@ find_package(OpenMP REQUIRED)
 # https://cmake.org/cmake/help/latest/prop_tgt/CUDA_STANDARD.html
 # https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/#std-c-03-c-11-c-14-c-17-c-20-std
 
+set(CMAKE_CXX_STANDARD 17)
 if (CMAKE_VERSION VERSION_LESS 3.18)
-    target_compile_features(HPC_project_2024 PUBLIC cxx_std_17)
-#    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --std=c++17")
+    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --std=c++17")
 else ()
     set(CMAKE_CUDA_STANDARD 17)
-    set(CMAKE_CXX_STANDARD 17)
 endif ()
 
 # 'native' option for cuda architectures support introduced in 3.24
