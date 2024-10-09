@@ -44,13 +44,13 @@ void Tiles::cover(unsigned int width, unsigned int height) {
 }
 
 __global__ void compute_tile(
-        uint32_t N, complex_t * particles, uint_fast16_t * tile_map,
+        uint32_t N, complex_t * particles, unsigned * tile_map,
         complex_t min, double hscale, double vscale, uint_fast16_t cols
 ) {
     auto i = threadIdx.x + blockIdx.x * blockDim.x;
     if(i >= N) return;
-    auto c = static_cast<uint_fast16_t>(hscale * (particles[i].real() - min.real()));
-    auto r = static_cast<uint_fast16_t>(vscale * (particles[i].imag() - min.imag()));
+    auto c = static_cast<unsigned>(hscale * (particles[i].real() - min.real()));
+    auto r = static_cast<unsigned>(vscale * (particles[i].imag() - min.imag()));
     tile_map[i] = c + r*cols;
 }
 
