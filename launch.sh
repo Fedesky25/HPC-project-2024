@@ -28,6 +28,9 @@ module load nvidia/cudasdk/11.8
 module load cmake/3.14.3
 module load ffmpeg/4.3.4
 
+# Tesla K40: Kepler micro-architecture, compute capability 3.5  ->  sm_35
+export GPU_ARCHITECTURE=sm_35
+
 echo "Compiling..."
 cmake -DCMAKE_BUILD_TYPE=Release -S $source_dir -B ./build
 cmake --build ./build --target HPC_project_2024 -v
