@@ -6,6 +6,7 @@
 #define PHI        1.6180339887498950
 #define INV_SQRT_5 0.4472135954999579
 #define SQRT_2PI   2.5066282746310002
+#define EPSILON    2.2204460492503131e-016
 
 __device__ __host__ complex_t complex_log(complex_t z, long k){
     complex_t phase;
@@ -185,7 +186,7 @@ __device__ __host__ complex_t gamma(complex_t z, FnVariables*) {
     complex_t y;
     if(z.real() >= 0.5) y = gamma_positive_half_plane(z);
     else y = PI / (cuda::std::sin(z*PI) * gamma_positive_half_plane(1.0 - z));
-    if(cuda::std::abs(y.imag()) < DBL_EPSILON) y.imag(0.0);
+    if(cuda::std::abs(y.imag()) < EPSILON) y.imag(0.0);
     return y;
 }
 
