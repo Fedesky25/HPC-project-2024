@@ -4,12 +4,8 @@
 #include "utils.cuh"
 
 struct Tiles {
-    complex_t * points = nullptr;
-    uint_fast16_t * counts = nullptr;
-    uint32_t max_count = 0;
     uint_fast16_t rows = 0, cols = 0;
 
-    ~Tiles();
     inline Tiles() = default;
     Tiles(Configuration * config);
 

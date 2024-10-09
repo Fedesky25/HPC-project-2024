@@ -2,10 +2,6 @@
 #include "thrust/sort.h"
 #include "lower_bound.cuh"
 
-Tiles::~Tiles() {
-    delete[] points;
-    delete[] counts;
-}
 
 Tiles::Tiles(Configuration * config) {
     unsigned width, height;
@@ -37,10 +33,6 @@ void Tiles::cover(unsigned int width, unsigned int height) {
         rows = cols;
         cols = rev;
     }
-    delete[] counts;
-    auto N = total();
-    counts = new uint_fast16_t [N];
-    for(uint_fast16_t i=0; i<N; i++) counts[i] = 0;
 }
 
 __global__ void compute_tile(
