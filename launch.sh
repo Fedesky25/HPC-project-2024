@@ -33,7 +33,7 @@ export GPU_ARCHITECTURE=sm_35
 
 echo "Compiling..."
 cmake -DCMAKE_BUILD_TYPE=Release -S $source_dir -B ./build
-cmake --build ./build --target HPC_project_2024 -v
+cmake --build ./build --target HPC_project_2024 -j 10
 
 echo -e "\n============================================================== Start executions\n"
 
