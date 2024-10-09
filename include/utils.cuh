@@ -38,6 +38,13 @@ constexpr uint64_t str_to_num(const char str[N+1]) {
 
 using complex_t = cuda::std::complex<double>;
 
+#if CUDART_VERSION < 12000
+// For some reason thsi is not defined in libcu++ 11.8
+inline std::ostream& operator<<(std::ostream& stream, const complex_t& z) {
+    return stream << '(' << z.real() << ',' << z.imag() << ')';
+}
+#endif
+
 
 struct CanvasAdapter {
     /** Center complex point in the canvas */
