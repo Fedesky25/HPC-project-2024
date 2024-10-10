@@ -70,6 +70,15 @@ int main(int argc, char * argv[]) {
         }
         case ExecutionMode::GPU:
         {
+
+            int gpu_count;
+            cudaGetDeviceCount(&gpu_count);
+            if(gpu_count < 1) {
+                std::cerr << "No CUDA capable devices were detected: change parallelization type" << std::endl;
+                return 1;
+            }
+            else if(gpu_count > 1) cudaSetDevice(0);
+
             Tiles tiles(&config);
             unsigned tiles_count = tiles.total();
             std::cout << "  Tiles: " << tiles.rows << 'x' << tiles.cols << '=' << tiles_count << " with "
