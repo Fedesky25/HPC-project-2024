@@ -1,6 +1,6 @@
 #include "tiles.cuh"
-#include "thrust/sort.h"
 #include "lower_bound.cuh"
+#include "sorter.cuh"
 
 
 Tiles::Tiles(Configuration * config) {
@@ -54,19 +54,22 @@ __global__ void compute_offset_per_tile(uint32_t N, unsigned int * tile_map, uin
 uint32_t * Tiles::sort(complex_t &min, complex_t &max, complex_t *particles, uint32_t N) const {
     timers(2) tick(0)
     float times[4];
-    unsigned int * tile_map;
     uint32_t * offsets;
     auto hscale = cols / (max.real() - min.real());
     auto vscale = rows / (max.imag() - min.imag());
     auto tile_count = total();
     auto M = 1 + (N - 1)/tile_count;
     tick(1)
-    cudaMalloc(&tile_map, N * sizeof(unsigned int));
+    KVSorter<unsigned, complex_t> tile_map(N, particles);
     cudaMalloc(&offsets, (1+tile_count) * sizeof(uint32_t));
+    cudaDeviceSynchronize();
     tock_us(1) times[0] = t_elapsed; tick(1)
-    compute_tile<<<M, tile_count>>>(N, particles, tile_map, min, hscale, vscale, cols);
+    compute_tile<<<M, tile_count>>>(N, particles, tile_map.keys(), min, hscale, vscale, cols);
+    cudaDeviceSynchronize();
     tock_us(1) times[1] = t_elapsed; tick(1)
-    thrust::sort_by_key(thrust::device, tile_map, tile_map + N, particles);
+    // thrust::sort_by_key(thrust::device, tile_map, tile_map + N, particles);
+    tile_map.sort();
+    cudaDeviceSynchronize();
     tock_us(1) times[2] = t_elapsed; tick(1)
     auto block_dim = rows, grid_dim = cols;
     if(block_dim > grid_dim) {
@@ -74,10 +77,9 @@ uint32_t * Tiles::sort(complex_t &min, complex_t &max, complex_t *particles, uin
         block_dim = cols;
         grid_dim = rows;
     }
-    compute_offset_per_tile<<<grid_dim, block_dim>>>(N, tile_map, offsets);
+    compute_offset_per_tile<<<grid_dim, block_dim>>>(N, tile_map.keys(), offsets);
     cudaMemcpy(offsets + tile_count, &N, sizeof(uint32_t), cudaMemcpyHostToDevice);
     tock_us(1) times[3] = t_elapsed;
-    cudaFree(tile_map);
     tock_us(0)
     float m = 100.0f / t_elapsed;
     std::cout.precision(1);

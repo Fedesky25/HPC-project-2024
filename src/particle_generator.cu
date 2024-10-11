@@ -7,9 +7,9 @@
 #include <chrono>
 #include <curand.h>
 #include <random>
-#include <thrust/sort.h>
 #include <omp.h>
 #include "lower_bound.cuh"
+#include "sorter.cuh"
 
 #include <iostream>
 #include <iomanip>
@@ -299,11 +299,9 @@ complex_t* particles_gpu(complex_t z1, complex_t z2, uint32_t N, unsigned iterat
     auto M = ((N-1) >> 10) + 1; // (n_density + 1023) / 1024 = (n_density-1)/ 2^(10)
     auto D = ((n_density-1) >> 10) + 1;
 
-    complex_t *d_density, *d_sites;
-    uint32_t *d_nearest;
-    cudaMalloc((void **)&d_density, n_density * sizeof (complex_t));
+    complex_t *d_sites;
     cudaMalloc((void **)&d_sites, N * sizeof (complex_t));
-    cudaMalloc((void **)&d_nearest, n_density * sizeof (uint32_t));
+    KVSorter<uint32_t, complex_t> density_points(n_density);
 
     PRINT_INITIAL timers(3) tick(0)
     curandGenerator_t gen;
@@ -316,22 +314,27 @@ complex_t* particles_gpu(complex_t z1, complex_t z2, uint32_t N, unsigned iterat
 
     curandGenerateUniformDouble(gen, (double*) d_sites, N*2);
     scale_complex<<<128, 1024>>>(deltaReal, deltaImag, z1, d_sites, N);
-    curandGenerateUniformDouble(gen, (double*) d_density, n_density*2);
-    scale_complex<<<128, 1024>>>(deltaReal, deltaImag, z1, d_density, n_density);
+    curandGenerateUniformDouble(gen, (double*) density_points.values(), n_density*2);
+    scale_complex<<<128, 1024>>>(deltaReal, deltaImag, z1, density_points.values(), n_density);
     cudaDeviceSynchronize();
     tock_ms(0) std::cout << " generated in " << t_elapsed << "ms" << std::endl;
 
     float times[3];
     std::cout << "Lloyd's algorithm:  i | t (ms) | n. c. | sortk | s. u." << std::endl << std::fixed;
     tick(0)
+    cudaSetDevice(0);
+
     for(unsigned i=0; i<iterations; i++){  // Iterating to convergence
         tick(1) tick(2)
-        compute_nearest<<<D, 1024>>>(d_density, n_density, d_sites, N, d_nearest);
+        compute_nearest<<<D, 1024>>>(density_points.values(), n_density, d_sites, N, density_points.keys());
         cudaDeviceSynchronize();
         tock_ms(2) times[0] = t_elapsed; tick(2)
-        thrust::sort_by_key(thrust::device, d_nearest, d_nearest + n_density, d_density);
+        // thrust::sort_by_key(thrust::device, d_nearest, d_nearest + n_density, d_density);
+        // cub::DeviceRadixSort::SortPairs()
+        density_points.sort();
+        cudaDeviceSynchronize();
         tock_ms(2) times[1] = t_elapsed; tick(2)
-        update_sites<<<M, 1024>>>(d_density, n_density, d_sites, N, d_nearest);
+        update_sites<<<M, 1024>>>(density_points.values(), n_density, d_sites, N, density_points.keys());
         cudaDeviceSynchronize();
         tock_ms(2) times[2] = t_elapsed; tock_ms(1)
         float m = 100.0f / t_elapsed;
@@ -342,8 +345,5 @@ complex_t* particles_gpu(complex_t z1, complex_t z2, uint32_t N, unsigned iterat
                   << " | " << std::setw(5) << std::setprecision(2) << times[2]*m << std::endl;
     }
     tock_s(0) std::cout << "  :: total " << std::setprecision(3) << t_elapsed << 's' << std::endl;
-
-    cudaFree(d_density);
-    cudaFree(d_nearest);
     return d_sites;
 }

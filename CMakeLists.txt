@@ -46,6 +46,7 @@ add_executable(HPC_project_2024
         include/frames.cuh src/frames.cu
         include/color.cuh src/color.cu
         include/video.cuh src/video.cu
+        include/sorter.cuh
 )
 
 include_directories(include)
