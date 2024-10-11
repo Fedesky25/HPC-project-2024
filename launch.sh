@@ -3,7 +3,7 @@
 #SBATCH --time=00:15:00
 #SBATCH --nodes=1
 #SBATCH --mem=5GB
-#SBATCH --gres=gpu:1
+#SBATCH --gpus=1
 #SBATCH --partition=cuda
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=s328789@studenti.polito.it
