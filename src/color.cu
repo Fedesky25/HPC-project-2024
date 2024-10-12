@@ -8,11 +8,16 @@
 #define MANUAL_DIV_3 0
 #define Over255 3.92156862745098033773416545955114997923374176025390625e-3f
 
-#if __cplusplus >= 201700L
+#if __cplusplus >= 201700L || (defined(_MSVC_LANG) && _MSVC_LANG >= 201700L)
     #define SAFE_IF_CONSTEXPR constexpr
 #else
     // we hope compiler removes unused branch
     #define SAFE_IF_CONSTEXPR
+    #if defined(__GNUC__) || defined(__MINGW32__) || defined(__MINGW64__)
+        #warning C++ version is 14 or less
+    #elif defined(_MSC_VER) || defined(__clang__)
+        #pragma message("C++ version is 14 or less (" __c)
+    #endif
 #endif
 
 /**
