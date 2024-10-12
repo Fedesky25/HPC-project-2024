@@ -24,7 +24,7 @@ fi
 mkdir -p build
 
 echo "Loading modules..."
-module load nvidia/cudasdk/10.1
+module load nvidia/cudasdk/11.8
 module load cmake/3.14.3
 
 # Tesla K40: Kepler micro-architecture, compute capability 3.5  ->  sm_35
