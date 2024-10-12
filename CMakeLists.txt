@@ -12,20 +12,25 @@ else ()
     # https://cmake.org/cmake/help/latest/module/FindCUDA.html
     find_package(CUDA REQUIRED)
     link_libraries(${CUDA_LIBRARIES} ${CUDA_curand_LIBRARY})
-    message("-- Found CUDA v${CUDA_VERSION} (compiler v${CMAKE_CUDA_COMPILER_VERSION})")
+    set(CUDAToolkit_VERSION ${CUDA_VERSION})
 endif ()
+message("-- CUDA toolkit/compiler ${CMAKE_CUDA_COMPILER_VERSION}")
 
 
-# cuda standard 17 support introduced in 3.18
+# cuda standard 17 support introduced in cmake 3.18 & cuda 11
 # https://cmake.org/cmake/help/latest/prop_tgt/CUDA_STANDARD.html
 # https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/#std-c-03-c-11-c-14-c-17-c-20-std
 
 set(CMAKE_CXX_STANDARD 17)
-if (CMAKE_VERSION VERSION_LESS 3.18)
-    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --std=c++17")
-else ()
-    set(CMAKE_CUDA_STANDARD 17)
+if (CMAKE_CUDA_COMPILER_VERSION VERSION_LESS 11)
+    set(CMAKE_CXX_STANDARD 14)
 endif ()
+if (CMAKE_VERSION VERSION_LESS 3.18)
+    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --std=c++${CMAKE_CXX_STANDARD}")
+else ()
+    set(CMAKE_CUDA_STANDARD ${CMAKE_CXX_STANDARD})
+endif ()
+message("-- CXX/CUDA standard set to ${CMAKE_CXX_STANDARD}")
 
 # https://stackoverflow.com/questions/9313585/specifying-openmp-cuda-flag-in-a-cmake-project
 find_package(OpenMP REQUIRED)

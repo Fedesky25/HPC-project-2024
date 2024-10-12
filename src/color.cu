@@ -8,6 +8,13 @@
 #define MANUAL_DIV_3 0
 #define Over255 3.92156862745098033773416545955114997923374176025390625e-3f
 
+#if __cplusplus >= 201700L
+    #define SAFE_IF_CONSTEXPR constexpr
+#else
+    // we hope compiler removes unused branch
+    #define SAFE_IF_CONSTEXPR
+#endif
+
 /**
  * Perform the rounded division by 3*128
  * @param x integer value between 0 and 97920
@@ -134,11 +141,11 @@ __device__ __host__ void RGBA::from_hue(uint16_t hue) {
 template<bool opaque>
 __device__ __host__ void RGBA::over(const RGBA * backdrop) {
     float cA = 1.0f - A;
-    if constexpr (!opaque) cA *= backdrop->A;
+    if SAFE_IF_CONSTEXPR (!opaque) cA *= backdrop->A;
     R = R*A + backdrop->R*cA;
     G = G*A + backdrop->G*cA;
     B = B*A + backdrop->B*cA;
-    if constexpr (opaque) A = 1.0f;
+    if SAFE_IF_CONSTEXPR (opaque) A = 1.0f;
     else {
         A += cA;
         float f = 1.0f/A;
@@ -156,7 +163,7 @@ __device__ __host__ void RGBA::write(unsigned char * buffer) const {
     buffer[0] = static_cast<unsigned char>(cuda::std::round(255*R));
     buffer[1] = static_cast<unsigned char>(cuda::std::round(255*G));
     buffer[2] = static_cast<unsigned char>(cuda::std::round(255*B));
-    if constexpr (!opaque) buffer[3] = static_cast<unsigned char>(cuda::std::round(255*A));
+    if SAFE_IF_CONSTEXPR (!opaque) buffer[3] = static_cast<unsigned char>(cuda::std::round(255*A));
 }
 
 template __device__ __host__ void RGBA::write<false>(unsigned char *buffer) const;
