@@ -4,7 +4,6 @@
 #SBATCH --mem=5GB
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=10
 #SBATCH --partition=global
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=s328789@studenti.polito.it
@@ -31,6 +30,10 @@ module load cmake/3.14.3
 # Tesla K40: Kepler micro-architecture, compute capability 3.5  ->  sm_35
 export GPU_ARCHITECTURE=sm_35
 
-echo "Compiling..."
+echo "Compiling with $SLURM_CPUS_PER_TASK threads..."
 cmake -DCMAKE_BUILD_TYPE=Release -S $source_dir -B ./build
-cmake --build ./build --target HPC_project_2024 -j 10
+if [[ $SLURM_CPUS_PER_TASK -gt 1 ]]; then
+  cmake --build ./build --target HPC_project_2024 -j $SLURM_CPUS_PER_TASK
+else
+  cmake --build ./build --target HPC_project_2024
+fi
