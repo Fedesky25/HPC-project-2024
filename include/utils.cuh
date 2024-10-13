@@ -44,7 +44,7 @@ constexpr uint64_t str_to_num(const char str[N+1]) {
     #include "thrust/complex.h"
     using complex_t = thrust::complex<double>;
     #define C_NORM thrust::norm
-    inline double C_ABS(const complex_t & z) {
+    BOTH inline double C_ABS(const complex_t & z) {
         using namespace std;
         return hypot(z.real(), z.imag());
     }
