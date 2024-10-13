@@ -51,28 +51,28 @@ constexpr uint64_t str_to_num(const char str[N+1]) {
         BOTH inline complex_t(double v) : _re(v), _im(0) {}
         BOTH inline complex_t(double re, double im) : _re(re), _im(im) {}
 
-        BOTH inline complex& operator=(const complex_t & z) {
+        BOTH inline complex_t& operator=(const complex_t & z) {
             _re = z._re;
-            _im = x._im;
+            _im = z._im;
             return this;
         }
-        BOTH inline complex& operator+=(const complex_t & z) {
+        BOTH inline complex_t& operator+=(const complex_t & z) {
             _re += z._re;
             _im += z._im;
             return this;
         }
-        BOTH inline complex& operator-=(const complex_t & z) {
+        BOTH inline complex_t& operator-=(const complex_t & z) {
             _re -= z._re;
             _im -= z._im;
             return this;
         }
-        BOTH inline complex& operator*=(const complex_t & z) {
+        BOTH inline complex_t& operator*=(const complex_t & z) {
             double t = _re;
             _re = t*z._re - _im*z._im;
             _im = t*z._im + _im*z._re;
             return this;
         }
-        BOTH inline complex& operator/=(const complex_t & z) {
+        BOTH inline complex_t& operator/=(const complex_t & z) {
             double n = 1/(z._re*z._re + z._im*z._im);
             double t = _re;
             _re = (_re*z._re + _im*z._im) * n;
