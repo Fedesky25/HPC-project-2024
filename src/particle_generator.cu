@@ -10,16 +10,11 @@
 #include "lower_bound.cuh"
 #include "sorter.cuh"
 
-#if CUDART_VERSION >= 12000
+#if CUDART_VERSION >= 11020
 #include <cuda/std/cmath>
+namespace calc = cuda::std;
 #else
-namespace cuda {
-    namespace std {
-        BOTH inline double norm(const complex_t & z) {
-            return z.real()*z.real() + z.imag()*z.imag();
-        }
-    }
-}
+namespace calc = thrust;
 #endif
 
 
@@ -68,7 +63,7 @@ complex_t* particles_serial(complex_t z1, complex_t z2, uint32_t N, unsigned ite
         for(uint64_t j=0; j<n_density; j++){ // Iterating on density points
             double current, min = INFINITY;
             for(uint64_t k=0; k<N; k++){  // Iterating on sites to save the nearest site to each density point
-                current = cuda::std::norm(density[j]-sites[k]);
+                current = calc::norm(density[j]-sites[k]);
                 if(current < min){
                    nearest[j] = k;
                    min = current;
@@ -153,7 +148,7 @@ complex_t* particles_omp(complex_t z1, complex_t z2, uint32_t N, unsigned iterat
         for (int64_t j = 0; j < n_density; j++) { // Iterating on density points
             double current, min = INFINITY;
             for (int64_t k = 0; k < N; k++) {  // Iterating on sites to save the nearest site to each density point
-                current = cuda::std::norm(density[j] - sites[k]);
+                current = calc::norm(density[j] - sites[k]);
                 if (current < min) {
                     nearest[j] = k;
                     min = current;
@@ -200,7 +195,7 @@ __global__ void compute_nearest(
     complex_t z = density_points[index];
     uint32_t n;
     for (uint32_t k = 0; k < N_sites; k++) {  // Iterating on sites to save the nearest site to each density point
-        current = cuda::std::norm(z - sites[k]);
+        current = calc::norm(z - sites[k]);
         if (current < min) {
             n = k;
             min = current;
