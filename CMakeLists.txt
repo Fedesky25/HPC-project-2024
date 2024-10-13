@@ -7,14 +7,15 @@ if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.17)
     # https://cmake.org/cmake/help/latest/module/FindCUDAToolkit.html
     find_package(CUDAToolkit)
     link_libraries(CUDA::curand)
+    message("-- CUDA toolkit ${CUDAToolkit_VERSION}")
 else ()
     # deprecated after 3.17 but required to use cuda libraries in older version
     # https://cmake.org/cmake/help/latest/module/FindCUDA.html
     find_package(CUDA REQUIRED)
     link_libraries(${CUDA_LIBRARIES} ${CUDA_curand_LIBRARY})
-    set(CUDAToolkit_VERSION ${CUDA_VERSION})
+    message("-- CUDA toolkit ${CUDA_VERSION}")
 endif ()
-message("-- CUDA toolkit/compiler ${CMAKE_CUDA_COMPILER_VERSION}")
+message("-- CUDA compiler ${CMAKE_CUDA_COMPILER_VERSION}")
 
 
 # cuda standard 17 support introduced in cmake 3.18 & cuda 11
