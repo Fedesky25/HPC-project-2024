@@ -38,9 +38,13 @@ constexpr uint64_t str_to_num(const char str[N+1]) {
 #if CUDART_VERSION >= 11020
     #include <cuda/std/complex>
     using complex_t = cuda::std::complex<double>;
+    #define C_NORM cuda::std::norm
+    #define C_ABS cuda::std::abs
 #else
     #include "thrust/complex.h"
     using complex_t = thrust::complex<double>;
+    #define C_NORM thrust::norm
+    inline double C_ABS(const complex_t & z) { return thrust::hypot(z.real(), z.imag()); }
 #endif
 
 #if CUDART_VERSION < 12000
