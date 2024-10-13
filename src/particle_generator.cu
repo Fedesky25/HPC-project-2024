@@ -3,13 +3,25 @@
 //
 
 #include "particle_generator.cuh"
-#include <cuda/std/cmath>
 #include <chrono>
 #include <curand.h>
 #include <random>
 #include <omp.h>
 #include "lower_bound.cuh"
 #include "sorter.cuh"
+
+#if CUDART_VERSION >= 12000
+#include <cuda/std/cmath>
+#else
+namespace cuda {
+    namespace std {
+        inline double norm(const complex_t & z) {
+            return z.real()*z.real() + z.imag()*z.imag();
+        }
+    }
+}
+#endif
+
 
 #include <iostream>
 #include <iomanip>
