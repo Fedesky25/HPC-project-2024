@@ -12,53 +12,13 @@
 #include <cuda/std/cmath>
 namespace calc = cuda::std;
 #else
-namespace thrust {
-    BOTH inline double abs(const complex_t & z) {
-        return hypot(z.real(), z.imag());
-    }
-}
 namespace calc = thrust;
 #endif
 
-//#if CUDART_VERSION < 11020
-//#include <cmath>
-// using namespace std;
-/*
-namespace cuda {
-    namespace std {
-        inline double abs(const complex_t & z) { return hypot(z.real(), z.imag()); }
-        inline double arg(const complex_t & z) { return atan2(z.imag(), z.real()); }
-        inline complex_t sin(const complex_t & z) {
-            // sin(a + ib) = sin(a)cos(ib) + cos(a)sin(ib) = sin(a)cosh(b) + i*cos(a)sinh(b)
-            return { sin(z.real())*cosh(z.imag()), cos(z.real())*sinh(z.imag()) }; }
-        inline complex_t cos(const complex_t & z) {
-            // cos(a + ib) = cos(a)cos(ib) - sin(a)sin(ib) = cos(a)cosh(b) - i*sin(a)sinh(b)
-            return {cos(z.real())*cosh(z.imag()), -sin(z.real())*sinh(z.imag())}; }
-        inline complex_t tan(const complex_t & z) {
-            return sin(z)/cos(z); }
-        inline complex_t cosh(const complex_t & z){
-            return {};
-        }
-    }
-}
-*/
 
-// pow
-// exp
-// tan
-// sinh
-// cosh
-// tanh
-// conj
-// pow(const complex_t & z, long n)
 
-//#endif
-
-__device__ __host__ complex_t complex_log(complex_t z, long k){
-    complex_t phase;
-    phase.real(0);
-    phase.imag(calc::arg(z) + 2*PI*k);
-    return (log(calc::abs(z)) + phase);
+__device__ __host__ inline complex_t complex_log(complex_t z, long k){
+    return { 0.5*log(C_NORM(z)), calc::arg(z) + 2*PI*k };
 }
 
 // ------------------------------------------------------------------------------------- polynomial
