@@ -3,7 +3,6 @@
 //
 
 #include "color.cuh"
-#include <cuda/std/cmath>
 
 #define MANUAL_DIV_3 0
 #define Over255 3.92156862745098033773416545955114997923374176025390625e-3f
@@ -165,10 +164,16 @@ template __device__ __host__ void RGBA::over<true>(const RGBA *backdrop);
 
 template<bool opaque>
 __device__ __host__ void RGBA::write(unsigned char * buffer) const {
-    buffer[0] = static_cast<unsigned char>(cuda::std::round(255*R));
-    buffer[1] = static_cast<unsigned char>(cuda::std::round(255*G));
-    buffer[2] = static_cast<unsigned char>(cuda::std::round(255*B));
-    if SAFE_IF_CONSTEXPR (!opaque) buffer[3] = static_cast<unsigned char>(cuda::std::round(255*A));
+    // cuda::std::round belongs to cuda/std/cmath which is not available in cuda sdk 10.1
+    // buffer[0] = static_cast<unsigned char>(cuda::std::round(255*R));
+    // buffer[1] = static_cast<unsigned char>(cuda::std::round(255*G));
+    // buffer[2] = static_cast<unsigned char>(cuda::std::round(255*B));
+    // if SAFE_IF_CONSTEXPR (!opaque) buffer[3] = static_cast<unsigned char>(cuda::std::round(255*A));
+
+    buffer[0] = static_cast<unsigned char>(255.0f*R + 0.5f);
+    buffer[1] = static_cast<unsigned char>(255.0f*G + 0.5f);
+    buffer[2] = static_cast<unsigned char>(255.0f*B + 0.5f);
+    if SAFE_IF_CONSTEXPR (!opaque) buffer[3] = static_cast<unsigned char>(255.0f*A + 0.5f);
 }
 
 template __device__ __host__ void RGBA::write<false>(unsigned char *buffer) const;
