@@ -17,6 +17,7 @@
     #elif defined(_MSC_VER) || defined(__clang__)
         #pragma message("C++ version is 14 or less (" __c)
     #endif
+    #include <algorithm>
 #endif
 
 /**
