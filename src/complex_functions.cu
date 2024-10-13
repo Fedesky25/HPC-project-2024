@@ -13,7 +13,7 @@
 namespace calc = cuda::std;
 #else
 namespace thrust {
-    inline double abs(const complex_t & z) {
+    BOTH inline double abs(const complex_t & z) {
         return hypot(z.real(), z.imag());
     }
 }
