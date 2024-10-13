@@ -8,11 +8,52 @@
 #define SQRT_2PI   2.5066282746310002
 #define EPSILON    2.2204460492503131e-016
 
+#if CUDART_VERSION >= 11020
+#include <cuda/std/cmath>
+namespace calc = cuda::std;
+#else
+namespace calc = thrust;
+#endif
+
+//#if CUDART_VERSION < 11020
+//#include <cmath>
+// using namespace std;
+/*
+namespace cuda {
+    namespace std {
+        inline double abs(const complex_t & z) { return hypot(z.real(), z.imag()); }
+        inline double arg(const complex_t & z) { return atan2(z.imag(), z.real()); }
+        inline complex_t sin(const complex_t & z) {
+            // sin(a + ib) = sin(a)cos(ib) + cos(a)sin(ib) = sin(a)cosh(b) + i*cos(a)sinh(b)
+            return { sin(z.real())*cosh(z.imag()), cos(z.real())*sinh(z.imag()) }; }
+        inline complex_t cos(const complex_t & z) {
+            // cos(a + ib) = cos(a)cos(ib) - sin(a)sin(ib) = cos(a)cosh(b) - i*sin(a)sinh(b)
+            return {cos(z.real())*cosh(z.imag()), -sin(z.real())*sinh(z.imag())}; }
+        inline complex_t tan(const complex_t & z) {
+            return sin(z)/cos(z); }
+        inline complex_t cosh(const complex_t & z){
+            return {};
+        }
+    }
+}
+*/
+
+// pow
+// exp
+// tan
+// sinh
+// cosh
+// tanh
+// conj
+// pow(const complex_t & z, long n)
+
+//#endif
+
 __device__ __host__ complex_t complex_log(complex_t z, long k){
     complex_t phase;
     phase.real(0);
-    phase.imag(cuda::std::arg(z) + 2*PI*k);
-    return (log(cuda::std::abs(z)) + phase);
+    phase.imag(calc::arg(z) + 2*PI*k);
+    return (log(calc::abs(z)) + phase);
 }
 
 // ------------------------------------------------------------------------------------- polynomial
@@ -36,45 +77,45 @@ __device__ __host__ complex_t polynomial_fact(complex_t z, FnVariables* variable
 // ------------------------------------------------------------------------------------- power
 
 __device__ __host__ complex_t int_power(complex_t z, FnVariables* variables){
-    return cuda::std::pow(z, variables->n);
+    return calc::pow(z, variables->n);
 }
 
 __device__ __host__ complex_t real_power(complex_t z, FnVariables* variables){
-    return cuda::std::exp(complex_log(z, variables->n) * variables->x);
+    return calc::exp(complex_log(z, variables->n) * variables->x);
 }
 
 __device__ __host__ complex_t complex_power(complex_t z, FnVariables* variables){
-    return cuda::std::exp(complex_log(z, variables->n) * variables->z[0]);
+    return calc::exp(complex_log(z, variables->n) * variables->z[0]);
 }
 
 // ------------------------------------------------------------------------------------- exponential
 
 __device__ __host__ complex_t exp_simple(complex_t z, FnVariables*){
-    return cuda::std::exp(z);
+    return calc::exp(z);
 }
 
 __device__ __host__ complex_t exp_parametric(complex_t z, FnVariables* variables){
-    return cuda::std::exp(z * variables->z[0] + variables->z[1]);
+    return calc::exp(z * variables->z[0] + variables->z[1]);
 }
 
 __device__ __host__ complex_t exp_pow_int(complex_t z, FnVariables* variables){
-    return cuda::std::exp(int_power(z, variables));
+    return calc::exp(int_power(z, variables));
 }
 
 __device__ __host__ complex_t exp_pow_real(complex_t z, FnVariables* variables){
-    return cuda::std::exp(real_power(z, variables));
+    return calc::exp(real_power(z, variables));
 }
 
 __device__ __host__ complex_t zxp(complex_t z, FnVariables* variables){
-    return cuda::std::exp(complex_log(variables->z[0], variables->n) * z);
+    return calc::exp(complex_log(variables->z[0], variables->n) * z);
 }
 
 __device__ __host__ complex_t pow_int_exp(complex_t z, FnVariables* variables){
-    return int_power(z, variables) * cuda::std::exp(z);
+    return int_power(z, variables) * calc::exp(z);
 }
 
 __device__ __host__ complex_t pow_real_exp(complex_t z, FnVariables* variables){
-    return real_power(z, variables) * cuda::std::exp(z);
+    return real_power(z, variables) * calc::exp(z);
 }
 
 // ------------------------------------------------------------------------------------- logarithm
@@ -94,67 +135,67 @@ __device__ __host__ complex_t log_mul(complex_t z, FnVariables* vars){
 // ------------------------------------------------------------------------------------- trigonometric
 
 __device__ __host__ inline complex_t sin_simple(complex_t z, FnVariables *) {
-    return cuda::std::sin(z);
+    return calc::sin(z);
 }
 
 __device__ __host__ inline complex_t cos_simple(complex_t z, FnVariables *) {
-    return cuda::std::cos(z);
+    return calc::cos(z);
 }
 
 __device__ __host__ inline complex_t tan_simple(complex_t z, FnVariables *) {
-    return cuda::std::tan(z);
+    return calc::tan(z);
 }
 
 __device__ __host__ complex_t sin_parametric(complex_t z, FnVariables * vars) {
-    return vars->z[0] * cuda::std::sin(vars->z[1] + z * vars->z[2]);
+    return vars->z[0] * calc::sin(vars->z[1] + z * vars->z[2]);
 }
 
 __device__ __host__ complex_t cos_parametric(complex_t z, FnVariables * vars) {
-    return vars->z[0] * cuda::std::cos(vars->z[1] + z * vars->z[2]);
+    return vars->z[0] * calc::cos(vars->z[1] + z * vars->z[2]);
 }
 
 __device__ __host__ complex_t tan_parametric(complex_t z, FnVariables * vars) {
-    return vars->z[0] * cuda::std::tan(vars->z[1] + z * vars->z[2]);
+    return vars->z[0] * calc::tan(vars->z[1] + z * vars->z[2]);
 }
 
 // ------------------------------------------------------------------------------------- hyperbolic
 
 __device__ __host__ inline complex_t sinh_simple(complex_t z, FnVariables *) {
-    return cuda::std::sinh(z);
+    return calc::sinh(z);
 }
 
 __device__ __host__ inline complex_t cosh_simple(complex_t z, FnVariables *) {
-    return cuda::std::cosh(z);
+    return calc::cosh(z);
 }
 
 __device__ __host__ inline complex_t tanh_simple(complex_t z, FnVariables *) {
-    return cuda::std::tanh(z);
+    return calc::tanh(z);
 }
 
 __device__ __host__ complex_t sinh_parametric(complex_t z, FnVariables * vars) {
-    return vars->z[0] * cuda::std::sinh(vars->z[1] + z * vars->z[2]);
+    return vars->z[0] * calc::sinh(vars->z[1] + z * vars->z[2]);
 }
 
 __device__ __host__ complex_t cosh_parametric(complex_t z, FnVariables * vars) {
-    return vars->z[0] * cuda::std::cosh(vars->z[1] + z * vars->z[2]);
+    return vars->z[0] * calc::cosh(vars->z[1] + z * vars->z[2]);
 }
 
 __device__ __host__ complex_t tanh_parametric(complex_t z, FnVariables * vars) {
-    return vars->z[0] * cuda::std::tanh(vars->z[1] + z * vars->z[2]);
+    return vars->z[0] * calc::tanh(vars->z[1] + z * vars->z[2]);
 }
 
 // ------------------------------------------------------------------------------------- special
 
 __device__ __host__ complex_t conjugate_z(complex_t z, FnVariables* variables){
-    return variables->z[0] * cuda::std::conj(z);
+    return variables->z[0] * calc::conj(z);
 }
 
 __device__ __host__ complex_t fraction(complex_t z, FnVariables* variables){
-    return (z*z - variables->z[0]) * cuda::std::pow(z - variables->z[1], 2) / (z*z + variables->z[2]);
+    return (z*z - variables->z[0]) * calc::pow(z - variables->z[1], 2) / (z*z + variables->z[2]);
 }
 
 __device__ __host__ complex_t fibonacci(complex_t z, FnVariables* variables){
-    return (cuda::std::pow(PHI, z) - (cos(PI*z) * cuda::std::pow(PHI, -z))) * INV_SQRT_5;
+    return (calc::pow(PHI, z) - (cos(PI*z) * calc::pow(PHI, -z))) * INV_SQRT_5;
 }
 
 double gamma_p_host[] = {
@@ -179,14 +220,14 @@ __device__ __host__ complex_t gamma_positive_half_plane(complex_t z) {
         #endif
     }
     complex_t t = z + 8.5;
-    return SQRT_2PI * cuda::std::pow(t, z+0.5) * cuda::std::exp(-t) * A;
+    return SQRT_2PI * calc::pow(t, z+0.5) * calc::exp(-t) * A;
 }
 
 __device__ __host__ complex_t gamma(complex_t z, FnVariables*) {
     complex_t y;
     if(z.real() >= 0.5) y = gamma_positive_half_plane(z);
-    else y = PI / (cuda::std::sin(z*PI) * gamma_positive_half_plane(1.0 - z));
-    if(cuda::std::abs(y.imag()) < EPSILON) y.imag(0.0);
+    else y = PI / (calc::sin(z*PI) * gamma_positive_half_plane(1.0 - z));
+    if(calc::abs(y.imag()) < EPSILON) y.imag(0.0);
     return y;
 }
 
