@@ -15,7 +15,7 @@
 #else
 namespace cuda {
     namespace std {
-        inline double norm(const complex_t & z) {
+        BOTH inline double norm(const complex_t & z) {
             return z.real()*z.real() + z.imag()*z.imag();
         }
     }
