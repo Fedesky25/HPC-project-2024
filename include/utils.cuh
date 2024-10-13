@@ -4,7 +4,6 @@
 #include <cstdint>
 #include <chrono>
 #include <iostream>
-#include "cuda/std/complex"
 #include "color.cuh"
 
 #define PI 3.1415926535897932384626433
@@ -36,7 +35,23 @@ constexpr uint64_t str_to_num(const char str[N+1]) {
     return res;
 }
 
-using complex_t = cuda::std::complex<double>;
+#if CUDART_VERSION >= 11000
+    #include <cuda/std/complex>
+    using complex_t = cuda::std::complex<double>;
+#else
+    class complex_t {
+    private:
+        double _re, _im;
+    public:
+        inline double real() const { return _re; }
+        inline double imag() const { return _im; }
+        inline void real(double v) { _re = v; }
+        inline void imag(double v) { _im = v; }
+        inline complex_t() : _re(0), _im(0) {}
+        inline explicit complex_t(double v) : _re(v), _im(0) {}
+        inline complex_t(double re, double im) : _re(re), _im(im) {}
+    };
+#endif
 
 #if CUDART_VERSION < 12000
 // For some reason thsi is not defined in libcu++ 11.8
