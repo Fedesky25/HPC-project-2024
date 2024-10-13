@@ -192,7 +192,7 @@ __device__ __host__ complex_t gamma(complex_t z, FnVariables*) {
     complex_t y;
     if(z.real() >= 0.5) y = gamma_positive_half_plane(z);
     else y = PI / (calc::sin(z*PI) * gamma_positive_half_plane(1.0 - z));
-    if(calc::abs(y.imag()) < EPSILON) y.imag(0.0);
+    if(C_ABS(y.imag()) < EPSILON) y.imag(0.0);
     return y;
 }
 
