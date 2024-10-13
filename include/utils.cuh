@@ -35,7 +35,7 @@ constexpr uint64_t str_to_num(const char str[N+1]) {
     return res;
 }
 
-#if CUDART_VERSION >= 11000
+#if CUDART_VERSION >= 11020
     #include <cuda/std/complex>
     using complex_t = cuda::std::complex<double>;
 #else
@@ -43,13 +43,58 @@ constexpr uint64_t str_to_num(const char str[N+1]) {
     private:
         double _re, _im;
     public:
-        inline double real() const { return _re; }
-        inline double imag() const { return _im; }
-        inline void real(double v) { _re = v; }
-        inline void imag(double v) { _im = v; }
-        inline complex_t() : _re(0), _im(0) {}
-        inline explicit complex_t(double v) : _re(v), _im(0) {}
-        inline complex_t(double re, double im) : _re(re), _im(im) {}
+        BOTH inline double real() const { return _re; }
+        BOTH inline double imag() const { return _im; }
+        BOTH inline void real(double v) { _re = v; }
+        BOTH inline void imag(double v) { _im = v; }
+        BOTH inline complex_t() : _re(0), _im(0) {}
+        BOTH inline complex_t(double v) : _re(v), _im(0) {}
+        BOTH inline complex_t(double re, double im) : _re(re), _im(im) {}
+
+        BOTH inline complex& operator=(const complex_t & z) {
+            _re = z._re;
+            _im = x._im;
+            return this;
+        }
+        BOTH inline complex& operator+=(const complex_t & z) {
+            _re += z._re;
+            _im += z._im;
+            return this;
+        }
+        BOTH inline complex& operator-=(const complex_t & z) {
+            _re -= z._re;
+            _im -= z._im;
+            return this;
+        }
+        BOTH inline complex& operator*=(const complex_t & z) {
+            double t = _re;
+            _re = t*z._re - _im*z._im;
+            _im = t*z._im + _im*z._re;
+            return this;
+        }
+        BOTH inline complex& operator/=(const complex_t & z) {
+            double n = 1/(z._re*z._re + z._im*z._im);
+            double t = _re;
+            _re = (_re*z._re + _im*z._im) * n;
+            _im = (_im*z._re -   t*z._re) * n;
+            return this;
+        }
+        BOTH inline complex_t operator+(const complex_t & z) { return { _re+z._re, _im+z._im }; }
+        BOTH inline complex_t operator-(const complex_t & z) { return { _re-z._re, _im-z._im }; }
+        BOTH inline complex_t operator*(const complex_t & z) {
+            return { _re*z._re - _im*z._im, _re*z._im + _im*z._re };
+        }
+        BOTH inline complex_t operator/(const complex_t & z) {
+            double n = 1/(z._re*z._re + z._im*z._im);
+            return { (_re*z._re + _im*z._im) * n, (_im*z._re - _re*z._im) * n };
+        }
+        BOTH inline complex_t operator*(double r) {
+            return { _re*r, _im*r };
+        }
+        BOTH inline complex_t operator/(double r) {
+            double n = 1/r;
+            return { _re * n, _im * n };
+        }
     };
 #endif
 
