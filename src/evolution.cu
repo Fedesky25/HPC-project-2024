@@ -19,7 +19,7 @@ __device__ __host__ void draw(Canvas canvas, CanvasAdapter * adapter, EvolutionO
         do {
             v = func(z, variables);
             dz = v * dt;
-            D = (adapter->scale * cuda::std::abs(dz));
+            D = (adapter->scale * C_ABS(dz));
             if (D > 1) {
                 dz /= D;
                 elapsed += dt / D;
@@ -30,7 +30,7 @@ __device__ __host__ void draw(Canvas canvas, CanvasAdapter * adapter, EvolutionO
 
             if (pixel_idx != -1) {
                 if(!canvas[pixel_idx].update_age((offset + j) % steps)) return;
-                canvas[pixel_idx].set_color(cuda::std::norm(v), options->speed_factor);
+                canvas[pixel_idx].set_color(C_NORM(v), options->speed_factor);
             }
             z += dz;
         } while (elapsed < dt);
