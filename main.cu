@@ -123,8 +123,8 @@ int main(int argc, char * argv[]) {
     }
     else {
         auto command = new char [100 + 2*output_filepath_len];
-        strcpy_s(command,   37, "ffmpeg -f rawvideo -pixel_format rgb");
-        strcpy_s(command+37, 2, (config.background.A == 1.0f) ? "24" : "a ");
+        strcpy(command, "ffmpeg -f rawvideo -pixel_format rgb");
+        strcpy(command+37, (config.background.A == 1.0f) ? "24" : "a ");
         sprintf(command+39, " -video_size %dx%d -framerate %d -i %s %s",
                 config.canvas.width, config.canvas.height, config.evolution.frame_rate,
                 raw_output, config.output);
