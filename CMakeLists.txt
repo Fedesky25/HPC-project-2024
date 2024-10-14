@@ -12,10 +12,11 @@ else ()
     # deprecated after 3.17 but required to use cuda libraries in older version
     # https://cmake.org/cmake/help/latest/module/FindCUDA.html
     find_package(CUDA REQUIRED)
-    link_libraries(${CUDA_LIBRARIES} ${CUDA_curand_LIBRARY})
     message("-- CUDA toolkit ${CUDA_VERSION}")
+    # link_libraries(${CUDA_LIBRARIES} ${CUDA_curand_LIBRARY})
 endif ()
 message("-- CUDA compiler ${CMAKE_CUDA_COMPILER_VERSION}")
+link_libraries(-lcurand_static -lculibos)
 
 
 # cuda standard 17 support introduced in cmake 3.18 & cuda 11
