@@ -317,6 +317,7 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
     static option long_options[] = {
             { "parallel",    required_argument, nullptr, 'p' },
             { "output",      required_argument, nullptr, 'o' },
+            { "video",       no_argument,       nullptr, 'V' },
             { "resolution",  required_argument, nullptr, 'R' },
             { "pixel-scale", required_argument, nullptr, 's' },
             { "center",      required_argument, nullptr, 'c' },
@@ -336,7 +337,7 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
             { "complex3",    required_argument, nullptr, '3' },
             { nullptr, 0, nullptr, 0 }
     };
-    static char short_options[] = "p:o:R:s:c:d:m:L:v:t:f:D:l:B:n:r:1:2:3:";
+    static char short_options[] = "p:o:VR:s:c:d:m:L:v:t:f:D:l:B:n:r:1:2:3:";
 
     int o, go = 1, index_opt;
     char * rest;
@@ -363,6 +364,9 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
                 break;
             case 'o':
                 config->output = optarg;
+                break;
+            case 'V':
+                config->raw = false;
                 break;
             case 'm':
                 config->margin = strtoul(optarg, &rest, 10);

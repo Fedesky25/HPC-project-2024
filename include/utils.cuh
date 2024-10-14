@@ -105,6 +105,7 @@ struct Configuration {
     unsigned long margin = 4;
     unsigned long lloyd_iterations = 8;
     ExecutionMode mode = ExecutionMode::GPU;
+    bool raw = true;
 
     /**
      * Computes the portion of the Gauss plane where the particles begin

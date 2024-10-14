@@ -31,8 +31,20 @@ int main(int argc, char * argv[]) {
         return 1;
     }
 
+    auto output_filepath_len = strlen(config.output);
+    const char * raw_output = config.output;
+    if(!config.raw) {
+        auto raw_output_m = new char [output_filepath_len + 5];
+        strcpy(raw_output_m, config.output);
+        strcpy(raw_output_m+output_filepath_len, ".raw");
+        raw_output_m[output_filepath_len+4] = '\0';
+        raw_output = raw_output_m;
+    }
+
     std::cout << "Configuration:" << std::endl;
-    std::cout << "  Output file: " << config.output << std::endl;
+    std::cout << "  Output file: " << config.output;
+    if(config.raw) std::cout << " (raw: " << raw_output << ')';
+    std::cout << std::endl;
     std::cout << "  Complex numbers: " << config.vars.z[0] << ' ' << config.vars.z[1] << ' ' << config.vars.z[2] << std::endl;
     std::cout << "  Real and int numbers: " << config.vars.x << ", " << config.vars.n << std::endl;
     std::cout << "  Canvas: " << config.canvas << std::endl;
@@ -53,7 +65,7 @@ int main(int argc, char * argv[]) {
             points = particles_serial(min, max, N, config.lloyd_iterations);
             auto canvas = new CanvasPixel [frame_size];
             evolve_serial(&config, canvas, points, N, fn_choice);
-            write_video_serial(config.output, canvas, frame_size, config.evolution.frame_count, config.evolution.life_time, config.background);
+            write_video_serial(raw_output, canvas, frame_size, config.evolution.frame_count, config.evolution.life_time, config.background);
             delete[] canvas;
             break;
         }
@@ -64,7 +76,7 @@ int main(int argc, char * argv[]) {
             auto canvases = create_canvas_host(canvas_count, &config.canvas);
             evolve_omp(&config, canvases, points, N, fn_choice);
             write_video_omp(
-                    config.output, canvases, canvas_count, frame_size,
+                    raw_output, canvases, canvas_count, frame_size,
                     config.evolution.frame_count, config.evolution.life_time, config.background);
             break;
         }
@@ -101,12 +113,25 @@ int main(int argc, char * argv[]) {
     auto end_computation = std::chrono::steady_clock::now();
     float time_all = (std::chrono::duration<float,std::ratio<1>>(end_computation-start_computation)).count();
     std::cout << "All computations completed in " << time_all << 's' << std::endl;
-    std::cout << "Run the command:  ffmpeg -f rawvideo -pixel_format rgb"
-              << ((config.background.A == 1.0f) ? "24" : "a")
-              << " -video_size " << config.canvas.width << 'x' << config.canvas.height
-              << " -framerate " << config.evolution.frame_rate
-              << " -i " << config.output << " <output>" << std::endl;
 
+    if(config.raw) {
+        std::cout << "Run the command:  ffmpeg -f rawvideo -pixel_format rgb"
+                  << ((config.background.A == 1.0f) ? "24" : "a")
+                  << " -video_size " << config.canvas.width << 'x' << config.canvas.height
+                  << " -framerate " << config.evolution.frame_rate
+                  << " -i " << config.output << " <output>" << std::endl;
+    }
+    else {
+        auto command = new char [100 + 2*output_filepath_len];
+        strcpy_s(command,   37, "ffmpeg -f rawvideo -pixel_format rgb");
+        strcpy_s(command+37, 2, (config.background.A == 1.0f) ? "24" : "a ");
+        sprintf(command+39, " -video_size %dx%d -framerate %d -i %s %s",
+                config.canvas.width, config.canvas.height, config.evolution.frame_rate,
+                raw_output, config.output);
+        std::cout << "Running: " << command << std::endl;
+        std::cout.flush();
+        auto error = system(command);
+    }
 
     #if 0
     std::ofstream test("test.raw");
