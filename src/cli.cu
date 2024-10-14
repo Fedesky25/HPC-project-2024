@@ -317,7 +317,6 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
     static option long_options[] = {
             { "parallel",    required_argument, nullptr, 'p' },
             { "output",      required_argument, nullptr, 'o' },
-            { "video",       no_argument,       nullptr, 'V' },
             { "resolution",  required_argument, nullptr, 'R' },
             { "pixel-scale", required_argument, nullptr, 's' },
             { "center",      required_argument, nullptr, 'c' },
@@ -364,9 +363,6 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
                 break;
             case 'o':
                 config->output = optarg;
-                break;
-            case 'V':
-                config->raw = false;
                 break;
             case 'm':
                 config->margin = strtoul(optarg, &rest, 10);
@@ -486,7 +482,8 @@ void print_usage() {
     std::cout << "OPTIONS" << std::endl;
     std::cout << "  Name                 Default        Description" << std::endl;
     std::cout << "  -p  --parallel       gpu            Which parallelization to adopt in computations. It must be one of: none, omp, gpu" << std::endl;
-    std::cout << "  -o  --output         plot.raw       Path of the output raw file" << std::endl;
+    std::cout << "  -o  --output         plot.raw       Path of the output file. If an extension different from '.raw' is specified, it attempts to run"
+              << "                                      ffmpeg to produce a video with such format. If it fails, the raw version is left available." << std::endl;
     std::cout << "  -D  --duration       10             Duration in seconds of the webp animation" << std::endl;
     std::cout << "  -f  --framerate      60             Number of frames per seconds i.e. the refresh rate" << std::endl;
     std::cout << "  -R  --resolution     1920x1080      Pixel sizes of the video: it can be either a supported screen resolution name (such as FHD, WXGA+)" << std::endl
