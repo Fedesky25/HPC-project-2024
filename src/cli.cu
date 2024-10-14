@@ -476,8 +476,9 @@ void print_usage() {
     std::cout << "CFSPlt v0.1.0" << std::endl;
     std::cout << "  Complex functions streamplot  -  Generator of webp videos representing the streamplot of a selection of complex functions" << std::endl << std::endl;
     std::cout << "SYNOPSIS:" << std::endl;
-    std::cout << "  cfsplt [-c center_point] [-d particle_distance] [-D duration] [-f fps] [-m margin_layers] [-n integer] [-o file] [-p parallelization]" << std::endl
-              << "         [-r real] [-R resolution] [-s pixel_scale] [-t time_scale] [-v speed] [-1 complex] [-2 complex] [-3 complex] function" << std::endl << std::endl;
+    std::cout << "  cfsplt [-c center_point] [-d particle_distance] [-D duration] [-f framerate] [-l lifetime] [-L Lloyd iterations]" << std::endl
+              << "         [-m margin_layers] [-n integer] [-o file] [-p parallelization] [-r real] [-R resolution] [-s pixel_scale]" << std::endl
+              << "         [-t time_scale] [-v speed] [-1 complex] [-2 complex] [-3 complex] function" << std::endl << std::endl;
     std::cout << "OPTIONS" << std::endl;
     std::cout << "  Name                 Default        Description" << std::endl;
     std::cout << "  -p  --parallel       gpu            Which parallelization to adopt in computations. It must be one of: none, omp, gpu" << std::endl;
