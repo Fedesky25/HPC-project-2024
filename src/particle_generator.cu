@@ -39,7 +39,7 @@ void rand_complex(complex_t z1, complex_t z2, complex_t * rdm, uint64_t M) {
     auto delta_imag = z2.imag() - z1.imag();
     for(uint64_t i=0; i<M; i++){
         rdm[i].real(z1.real() + distribution(generator)*delta_real);
-        rdm[i].imag(z1.imag() + distribution(generator)*delta_imag));
+        rdm[i].imag(z1.imag() + distribution(generator)*delta_imag);
     }
 }
 
