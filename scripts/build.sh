@@ -1,10 +1,10 @@
 #!/bin/bash +x
 #SBATCH --job-name="Build CFS"
-#SBATCH --time=10:00
+#SBATCH --time=5:00
 #SBATCH --mem=5GB
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --partition=global
+#SBATCH --partition=cuda
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=s328789@studenti.polito.it
 #SBATCH --output=logs/%j.out
@@ -24,7 +24,7 @@ fi
 mkdir -p build
 
 echo "Loading modules..."
-module load nvidia/cudasdk/11.8
+module load nvidia/cudasdk/10.1
 module load cmake/3.14.3
 
 # Tesla K40: Kepler micro-architecture, compute capability 3.5  ->  sm_35
