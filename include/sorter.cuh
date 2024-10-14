@@ -46,7 +46,7 @@ public:
     }
     inline size_t length() const { return m_length; }
     inline KeyType * keys() const { return KEYS_CURRENT; }
-    inline ValueType * values() const { return KEYS_CURRENT; }
+    inline ValueType * values() const { return VALUES_CURRENT; }
 
     void sort() {
         #if CUDART_VERSION >= 11000
