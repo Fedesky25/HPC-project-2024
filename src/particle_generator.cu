@@ -35,9 +35,11 @@ void rand_complex(complex_t z1, complex_t z2, complex_t * rdm, uint64_t M) {
     auto seed = std::chrono::system_clock::now().time_since_epoch().count();
     std::default_random_engine generator(seed);
     std::uniform_real_distribution<double> distribution(0.0,1.0);
+    auto delta_real = z2.real() - z1.real();
+    auto delta_imag = z2.imag() - z1.imag();
     for(uint64_t i=0; i<M; i++){
-        rdm[i].real(real(z1) + distribution(generator)*(real(z2)-real(z1)));
-        rdm[i].imag(imag(z1) + distribution(generator)*(imag(z2)-imag(z1)));
+        rdm[i].real(z1.real() + distribution(generator)*delta_real);
+        rdm[i].imag(z1.imag() + distribution(generator)*delta_imag));
     }
 }
 
