@@ -32,6 +32,7 @@ void compute_frame_omp(int32_t time, int32_t frame_count,
  * @param frame output frame (device) buffer
  * @param size total number of pixels
  */
+ template<bool opaque>
 void compute_frame_gpu(int32_t time, int32_t frame_count,
                        const Canvas * canvas_array, unsigned canvas_count,
                        uint32_t * frame, uint32_t size, int32_t lifetime,
