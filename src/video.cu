@@ -177,8 +177,8 @@ void write_video_gpu_internal(
 ) {
     std::ofstream raw_output(filename);
     auto frame_mem = frame_size * sizeof(uint32_t);
-    uint32_t *h_frame, *d_frame[2];
-    h_frame = (uint32_t*) malloc(frame_mem);
+    unsigned char *h_frame, *d_frame[2];
+    h_frame = (unsigned char*) malloc(frame_mem);
     cudaMalloc(d_frame, frame_mem);
     cudaMalloc(d_frame+1, frame_mem);
     std::cout << "Frame buffers: CPU=" << (((frame_mem-1)>>20)+1) << "MB, GPU="
