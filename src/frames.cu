@@ -31,7 +31,7 @@ template<bool opaque>
 __global__ void compute_frame_no_divergence(
         int32_t time, int32_t frame_count,
         const Canvas * canvas_array, unsigned canvas_count,
-        uint32_t * frame, int32_t lifetime, unsigned offset,
+        unsigned char * frame, int32_t lifetime, unsigned offset,
         const RGBA * background
 ) {
     constexpr auto bytes = opaque ? 3 : 4;
@@ -57,7 +57,7 @@ __global__ void compute_frame_no_divergence(
         if(selected_time_delta < px->multiplicity) color.A = 1.0f;
         else {
             color.A = (float) (lifetime+px->multiplicity-selected_time_delta) * inv_lifetime;
-            color.over<opaque>(&background);
+            color.over<opaque>(background);
         }
         color.write<opaque>(frame + bytes * pixel_index);
     }
@@ -67,8 +67,8 @@ template<bool opaque>
 void compute_frame_gpu(
         int32_t time, int32_t frame_count,
         const Canvas * canvas_array, unsigned canvas_count,
-        uint32_t * frame, uint32_t size, int32_t lifetime,
-        const RGBA * background
+        unsigned char * frame, uint32_t size,
+        int32_t lifetime, const RGBA * background
 ) {
     uint32_t block_count = size >> 10;
     compute_frame_no_divergence<opaque><<<block_count, 1024>>>(
