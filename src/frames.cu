@@ -79,3 +79,13 @@ void compute_frame_gpu(
     if(size & 31) compute_frame_no_divergence<opaque><<<1, size & 31>>>(
             time, frame_count, canvas_array, canvas_count, frame, lifetime, size & (~31), background);
 }
+
+template void compute_frame_gpu<false>(int32_t time, int32_t frame_count,
+                               const Canvas * canvas_array, unsigned canvas_count,
+                               unsigned char * frame, uint32_t size,
+                               int32_t lifetime, const RGBA * background);
+
+template void compute_frame_gpu<true>(int32_t time, int32_t frame_count,
+        const Canvas * canvas_array, unsigned canvas_count,
+        unsigned char * frame, uint32_t size,
+        int32_t lifetime, const RGBA * background);
