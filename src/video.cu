@@ -172,8 +172,8 @@ void write_video_omp(
 void write_video_gpu(
         const char * filename,
         const Canvas * canvases, uint32_t canvas_count,
-        uint32_t frame_size, int32_t frame_count,
-        const FixedHSLA * background
+        uint32_t frame_size, int32_t frame_count, int32_t lifetime,
+        const RGBA * background
 ) {
     std::ofstream raw_output(filename);
     auto frame_mem = frame_size * sizeof(uint32_t);
@@ -191,7 +191,7 @@ void write_video_gpu(
     compute_frame_gpu(
             0, frame_count,
             canvases, canvas_count,
-            d_frame[0], frame_size,
+            d_frame[0], frame_size, lifetime,
             background);
     cudaDeviceSynchronize();
     auto _end = std::chrono::steady_clock::now();
@@ -215,7 +215,7 @@ void write_video_gpu(
             #pragma omp section
             {
                 auto start = std::chrono::steady_clock::now();
-                compute_frame_gpu(i, frame_count, canvases, canvas_count, d_frame[i&1], frame_size, background);
+                compute_frame_gpu(i, frame_count, canvases, canvas_count, d_frame[i&1], frame_size, lifetime, background);
                 cudaDeviceSynchronize();
                 auto end = std::chrono::steady_clock::now();
                 time_compute = (std::chrono::duration<float,std::micro>(end-start)).count();
