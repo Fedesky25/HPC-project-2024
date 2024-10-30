@@ -24,22 +24,22 @@ void ARGB::print_base64(FILE *file) const {
 }
 
 __device__ __host__ int32_t CanvasPixel::time_distance(int32_t time, int32_t frame_count) const {
-    int32_t mask = ((((int32_t) age) + 1) >> 16) - 1; // 0b00000000 if UINT16_MAX, 0xffffffff otherwise
-    int32_t diff = (frame_count + time - (int32_t) age) % frame_count;
+    int32_t mask = ((((int32_t) birthday) + 1) >> 16) - 1; // 0b00000000 if UINT16_MAX, 0xffffffff otherwise
+    int32_t diff = (frame_count + time - (int32_t) birthday) % frame_count;
     return (mask & diff) + ((~mask) & UINT16_MAX);
 }
 
 __device__ __host__ int32_t CanvasPixel::time_distance_divergent(int32_t time, int32_t frame_count) const {
-    if(age == UINT16_MAX) return UINT16_MAX;
-    int32_t res = time - (int32_t) age;
+    if(birthday == UINT16_MAX) return UINT16_MAX;
+    int32_t res = time - (int32_t) birthday;
     if(res < 0) res += frame_count;
     return res;
 }
 
 __device__ __host__ bool CanvasPixel::update_age(uint16_t _age) {
     bool ok = true;
-    if(age == UINT16_MAX) age = _age;
-    else if(age + multiplicity + 1 == _age) multiplicity++;
+    if(birthday == UINT16_MAX) birthday = _age;
+    else if(birthday + multiplicity + 1 == _age) multiplicity++;
     else ok = false;
     return ok;
 }

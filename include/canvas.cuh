@@ -24,14 +24,14 @@ struct ARGB {
 
 struct CanvasPixel {
     /** @return whether a particle passed through the pixel  */
-    __device__ __host__ explicit inline operator bool() const { return age != UINT16_MAX; }
+    __device__ __host__ explicit inline operator bool() const { return birthday != UINT16_MAX; }
 
-    __device__ __host__ friend inline bool operator<(const CanvasPixel& a, const CanvasPixel& b) { return a.age > b.age; }
+    __device__ __host__ friend inline bool operator<(const CanvasPixel& a, const CanvasPixel& b) { return a.birthday > b.birthday; }
 
-    __device__ __host__ inline bool alive(uint16_t time) const { return time > age; }
+    __device__ __host__ inline bool alive(uint16_t time) const { return time > birthday; }
 
     /**
-     * Computes the (positive) time difference between this pixel's age and the current time
+     * Computes the (positive) time difference between this pixel's birthday and the current time
      * @param time current time
      * @param frame_count total number of frames
      * @return
@@ -39,7 +39,7 @@ struct CanvasPixel {
     __device__ __host__ int32_t time_distance(int32_t time, int32_t frame_count) const;
 
     /**
-     * Computes the (positive) time difference between this pixel's age and the current time.
+     * Computes the (positive) time difference between this pixel's birthday and the current time.
      * It uses divergent branches
      * @param time current time
      * @param frame_count total number of frames
@@ -49,13 +49,13 @@ struct CanvasPixel {
 
     /** Resets the pixel as if a particle never passed through it */
     __device__ __host__ inline void reset() {
-        age = UINT16_MAX;
+        birthday = UINT16_MAX;
         multiplicity = 0;
     }
 
     /**
-     * Updates the age of this pixel. Multiplicity is increased if necessary
-     * @param age value of the age
+     * Updates the birthday of this pixel. Multiplicity is increased if necessary
+     * @param age value of the birthday
      * @returns whether the operation was successful
      */
     __device__ __host__ bool update_age(uint16_t age);
@@ -87,11 +87,11 @@ struct CanvasPixel {
      * @return color of the pixel now
      */
     __device__ __host__ inline uint32_t get_color(int32_t time, int32_t frame_count, const FixedHSLA * background) const {
-        int32_t delta = (frame_count + time - (int32_t) age) % frame_count;
+        int32_t delta = (frame_count + time - (int32_t) birthday) % frame_count;
         return get_color_from_delta(delta, frame_count, background);
     }
 
-    uint16_t age = UINT16_MAX, multiplicity = 0, hue = 0;
+    uint16_t birthday = UINT16_MAX, multiplicity = 0, hue = 0;
 };
 
 using Canvas = CanvasPixel*;
