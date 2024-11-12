@@ -10,29 +10,9 @@ Tiles::Tiles(Configuration * config) {
 }
 
 void Tiles::cover(unsigned int width, unsigned int height) {
-    unsigned rev = 0;
-    if(height > width) {
-        rev = width;
-        width = height;
-        height = rev;
-    }
-    float min = INFINITY;
-    float ratio = (float) width / (float) height;
-    for(unsigned r=1; r <= 32; r++) {
-        auto c = static_cast<unsigned>(std::round(ratio*r));
-        while(r * c > 1024) c--;
-        auto d = std::abs((float) c / (float) r - ratio);
-        if(d <= min) {
-            rows = r;
-            cols = c;
-            min = d;
-        }
-    }
-    if(rev) {
-        rev = rows;
-        rows = cols;
-        cols = rev;
-    }
+    float r = sqrt((float) width / (float) height);
+    cols = static_cast<uint_fast16_t>(32*r);
+    rows = static_cast<uint_fast16_t>(32/r);
 }
 
 __global__ void compute_tile(
