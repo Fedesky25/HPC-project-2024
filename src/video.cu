@@ -9,6 +9,18 @@
 #include <omp.h>
 
 
+#define PRINT_TIMES(TIME) \
+    std::cout << "   " << std::setw(5) << (TIME)                                   \
+              << " | " << std::setw(5) << tc[0] << " | " << std::setw(5) << tw[0] \
+              << " | " << std::setw(5) << tc[1] << " | " << std::setw(5) << tw[1] \
+              << " | " << std::setw(5) << tc[2] << " | " << std::setw(5) << tw[2] \
+              << " | " << std::setw(5) << tc[3] << " | " << std::setw(5) << tw[3] \
+              << " | " << std::setw(5) << tc[4] << " | " << std::setw(5) << tw[4] \
+              << " | " << std::setw(5) << tc[5] << " | " << std::setw(5) << tw[5] \
+              << " | " << std::setw(5) << tc[6] << " | " << std::setw(5) << tw[6] \
+              << " | " << std::setw(5) << tc[7] << " | " << std::setw(5) << tw[7] \
+              << std::endl;
+
 template<bool opaque>
 void write_video_serial_internal(
         const char * filename, Canvas canvas,
@@ -23,8 +35,8 @@ void write_video_serial_internal(
     unsigned char bg_bytes[bytes];
     background.write<opaque>(bg_bytes);
     auto inv_lifetime = 1.0f / (float) lifetime;
-    float tc, tw;
-    std::cout << "Frame computation: iter. | c (us) | w (ms)" << std::endl << std::setprecision(2);
+    float tc[8], tw[8];
+    std::cout << "Frame computation (iteration, (computation [ms], writing [ms]) * 8):" << std::endl << std::setprecision(1);
     timers(2)
     tick(0)
     for(int32_t t=0; t<frame_count; t++) {
@@ -45,16 +57,22 @@ void write_video_serial_internal(
             }
         }
         tock_ms(1)
-        tc = t_elapsed;
+        tc[t&7] = t_elapsed;
         tick(1)
         out.write(reinterpret_cast<const char *>(frame), mem);
         tock_ms(1)
-        tw = t_elapsed;
-        std::cout << "                   " << std::setw(5) << (t+1)
-                  << " | " << std::setw(6) << tc
-                  << " | " << std::setw(6) << tw << std::endl;
+        tw[t&7] = t_elapsed;
+        if((t&7) == 7) PRINT_TIMES(t+1)
     }
     tock_s(0)
+    auto remaining = (frame_count-1)&7;
+    if(remaining) {
+        std::cout << "   " << std::setw(5) << frame_count
+                  << " | " << std::setw(5) << tc[0] << " | " << std::setw(5) << tw[0];
+        for(int32_t j=1; j<remaining; j++)
+            std::cout << " | " << std::setw(5) << tc[j] << " | " << std::setw(5) << tw[j];
+        std::cout << std::endl;
+    }
     std::cout << "  :: total " << t_elapsed << 's' << std::endl;
     delete [] frame;
 }
@@ -85,13 +103,14 @@ void write_video_omp_internal(
     unsigned char bg_bytes[bytes];
     background.write<opaque>(bg_bytes);
     auto inv_lifetime = 1.0f / (float) lifetime;
-    float tc, tw=NAN;
+    float tc[8], tw[8];
+    tw[0] = -1.0;
 
     auto frame_size_signed = (int32_t) frame_size;
 
     omp_set_nested(1);
 
-    std::cout << "Frame computation: iter. | c (ms) | w (ms)" << std::endl << std::setprecision(2);
+    std::cout << "Frame computation (iteration, (computation [ms], writing [ms]) * 8):" << std::endl << std::setprecision(1);
     auto start_all = std::chrono::steady_clock::now();
     for(int32_t t=0; t<frame_count; t++) {
         #pragma omp parallel sections
@@ -102,7 +121,7 @@ void write_video_omp_internal(
                     auto start = std::chrono::steady_clock::now();
                     out.write(reinterpret_cast<const char *>(frame_buffers[(t-1)&1]), mem);
                     auto end = std::chrono::steady_clock::now();
-                    tw = (std::chrono::duration<float, std::milli>(end-start)).count();
+                    tw[t&7] = (std::chrono::duration<float, std::milli>(end-start)).count();
                 }
             }
             #pragma omp section
@@ -140,12 +159,10 @@ void write_video_omp_internal(
                     }
                 }
                 auto end = std::chrono::steady_clock::now();
-                tc = (std::chrono::duration<float, std::milli>(end-start)).count();
+                tc[t&7] = (std::chrono::duration<float, std::milli>(end-start)).count();
             }
         }
-        std::cout << "                   " << std::setw(5) << (t+1)
-                  << " | " << std::setw(6) << tc
-                  << " | " << std::setw(6) << tw << std::endl;
+        if((t&7) == 7) PRINT_TIMES(t+1)
     }
     out.write(reinterpret_cast<const char *>(frame_buffers[(frame_count-1)&1]), mem);
     auto end_all = std::chrono::steady_clock::now();
@@ -183,10 +200,9 @@ void write_video_gpu_internal(
     cudaMalloc(d_frame+1, frame_mem);
     std::cout << "Frame buffers: CPU=" << (((frame_mem-1)>>20)+1) << "MB, GPU="
               << (((frame_mem*2-1)>>20)+1) << "MB" << std::endl << std::fixed;
-    std::cout << "Frame computation: iter. | c (us) | w (ms)" << std::endl;
-    std::cout.width(6);
+    std::cout << "Frame computation (iteration, (computation [us], writing [ms]) * 8):" << std::endl;
 
-    float time_write, time_compute;
+    float tw[8], tc[8];
     auto begin = std::chrono::steady_clock::now();
     compute_frame_gpu<opaque>(
             0, frame_count,
@@ -195,44 +211,36 @@ void write_video_gpu_internal(
             background);
     cudaDeviceSynchronize();
     auto _end = std::chrono::steady_clock::now();
-    time_compute = (std::chrono::duration<float,std::micro>(_end-begin)).count();
-    std::cout << "                   " << std::setw(5) << 0
-              << " | " << std::setw(6) << time_compute
-              << " | " << std::endl;
+    tc[0] = (std::chrono::duration<float,std::micro>(_end-begin)).count();
 
-
-    for(int32_t i=1; i<frame_count; i++) {
+    for(int32_t t=1; t < frame_count; t++) {
         #pragma omp parallel sections num_threads(2)
         {
             #pragma omp section
             {
                 auto start = std::chrono::steady_clock::now();
-                cudaMemcpy(h_frame, d_frame[(i&1)^1], frame_mem, cudaMemcpyDeviceToHost);
+                cudaMemcpy(h_frame, d_frame[(t & 1) ^ 1], frame_mem, cudaMemcpyDeviceToHost);
                 raw_output.write(reinterpret_cast<const char *>(h_frame), frame_mem);
                 auto end = std::chrono::steady_clock::now();
-                time_write = (std::chrono::duration<float, std::milli>(end - start)).count();
+                tw[(t - 1) & 7] = (std::chrono::duration<float, std::milli>(end - start)).count();
             }
             #pragma omp section
             {
                 auto start = std::chrono::steady_clock::now();
-                compute_frame_gpu<opaque>(i, frame_count, canvases, canvas_count, d_frame[i&1], frame_size, lifetime, background);
+                compute_frame_gpu<opaque>(t, frame_count, canvases, canvas_count, d_frame[t & 1], frame_size, lifetime, background);
                 cudaDeviceSynchronize();
                 auto end = std::chrono::steady_clock::now();
-                time_compute = (std::chrono::duration<float,std::micro>(end-start)).count();
+                tc[t & 7] = (std::chrono::duration<float,std::micro>(end - start)).count();
             }
         }
-        std::cout << "                   " << std::setw(5) << i
-                  << " | " << std::setw(6) << time_compute
-                  << " | " << std::setw(6) << time_write << std::endl;
+        if(t & 8) PRINT_TIMES(t)
     }
-
     begin = std::chrono::steady_clock::now();
     cudaMemcpy(h_frame, d_frame[(frame_count-1)&1], frame_mem, cudaMemcpyDeviceToHost);
     raw_output.write(reinterpret_cast<const char *>(h_frame), frame_mem);
     _end = std::chrono::steady_clock::now();
-    time_write = (std::chrono::duration<float,std::milli>(_end-begin)).count();
-    std::cout << "                   " << std::setw(5) << frame_count
-              << " |        | " << std::setw(6) << time_write << std::endl;
+    tw[(frame_count-1)&7] = (std::chrono::duration<float,std::milli>(_end-begin)).count();
+    if(frame_count & 8) PRINT_TIMES(frame_count)
 
     cudaFree(d_frame[0]);
     cudaFree(d_frame[1]);
