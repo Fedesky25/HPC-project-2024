@@ -31,6 +31,6 @@ void write_video_gpu(
         const char * filename,
         const Canvas * canvases, uint32_t canvas_count,
         uint32_t frame_size, int32_t frame_count,
-        const FixedHSLA * background);
+        int32_t lifetime, const RGBA * background);
 
 #endif //HPC_PROJECT_2024_VIDEO_CUH

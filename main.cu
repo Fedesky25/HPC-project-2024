@@ -105,9 +105,9 @@ int main(int argc, char * argv[]) {
                        tile_offsets, tiles_count, fn_choice);
             cudaFree(tile_offsets);
             cudaFree(points);
-//            write_video_gpu(
-//                    config.output, canvases, canvas_count, frame_size,
-//                    config.evolution.frame_count, &config.background);
+            write_video_gpu(
+                    config.output, canvases, canvas_count, frame_size,
+                    config.evolution.frame_count, config.evolution.life_time, &config.background);
             break;
         }
     }
