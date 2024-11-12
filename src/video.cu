@@ -212,6 +212,7 @@ void write_video_gpu_internal(
     cudaDeviceSynchronize();
     auto _end = std::chrono::steady_clock::now();
     tc[0] = (std::chrono::duration<float,std::micro>(_end-begin)).count();
+    auto start_all = begin;
 
     for(int32_t t=1; t < frame_count; t++) {
         #pragma omp parallel sections num_threads(2)
@@ -233,14 +234,17 @@ void write_video_gpu_internal(
                 tc[t & 7] = (std::chrono::duration<float,std::micro>(end - start)).count();
             }
         }
-        if(t & 8) PRINT_TIMES(t)
+        if((t & 7) == 0) PRINT_TIMES(t)
     }
     begin = std::chrono::steady_clock::now();
     cudaMemcpy(h_frame, d_frame[(frame_count-1)&1], frame_mem, cudaMemcpyDeviceToHost);
     raw_output.write(reinterpret_cast<const char *>(h_frame), frame_mem);
     _end = std::chrono::steady_clock::now();
     tw[(frame_count-1)&7] = (std::chrono::duration<float,std::milli>(_end-begin)).count();
-    if(frame_count & 8) PRINT_TIMES(frame_count)
+    if((frame_count & 7) == 0) PRINT_TIMES(frame_count)
+    _end = std::chrono::steady_clock::now();
+    float total = (std::chrono::duration<float, std::ratio<1>>(_end-start_all)).count();
+    std::cout << "  :: total " << total << 's' << std::endl;
 
     cudaFree(d_frame[0]);
     cudaFree(d_frame[1]);
