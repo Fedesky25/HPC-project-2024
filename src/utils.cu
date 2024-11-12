@@ -36,5 +36,8 @@ void Configuration::sizes(unsigned int *width, unsigned int *height) const {
 
 uint32_t Configuration::particle_number() const {
     auto extra = 2*margin*particle_distance;
-    return (canvas.width + extra) * (canvas.height + extra) / (particle_distance*particle_distance);
+    auto w = canvas.width + extra;
+    auto h = canvas.height + extra;
+    if(w > 65000 || h > 65000) return (w/particle_distance) * (h/particle_distance);
+    else return (w * h) / (particle_distance * particle_distance);
 }
