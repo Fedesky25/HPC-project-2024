@@ -7,7 +7,7 @@ struct Tiles {
     uint_fast16_t rows = 0, cols = 0;
 
     inline Tiles() = default;
-    Tiles(Configuration * config);
+    explicit Tiles(Configuration * config);
 
     /** @returns total number of tiles */
     inline auto total() const { return rows * cols; }
