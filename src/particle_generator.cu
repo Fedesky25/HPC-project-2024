@@ -128,12 +128,24 @@ void rand_complex_omp(
     };
 }
 
+#define PRINT_PARTICLES 0
+#if PRINT_PARTICLES
+#include <fstream>
+#endif
 
 complex_t* particles_omp(complex_t z1, complex_t z2, uint32_t N, unsigned iterations){
     SETUP_CPU PRINT_INITIAL timers(3) tick(0)
     rand_complex_omp(z1, z2, sites, N, density, n_density);
     tock_ms(0) std::cout << " generated in " << t_elapsed << "ms" << std::endl;
 
+    #if PRINT_PARTICLES
+    std::ofstream out("particles.txt");
+    out << '{';
+    for(uint32_t i=0; i<N; i++) out << sites[i] << ',';
+    out << '}' << std::endl << '{';
+    for(uint64_t i=0; i<n_density; i++) out << density[i] << ',';
+    out << '}' << std::endl << '{';
+    #endif
     float times[2];
     std::cout << "Lloyd's algorithm:  i | t  (s) | n. c. | s. u." << std::endl << std::fixed;
     tick(0)
@@ -171,6 +183,11 @@ complex_t* particles_omp(complex_t z1, complex_t z2, uint32_t N, unsigned iterat
                   << " | " << std::setw(5) << std::setprecision(2) << times[0]*m
                   << " | " << std::setw(5) << std::setprecision(2) << times[1]*m << std::endl;
     }
+    #if PRINT_PARTICLES
+    for(uint32_t i=0; i<N; i++) out << sites[i] << ',';
+    out << '}';
+    out.close();
+    #endif
     free(density);
     free(nearest);
     free(count);
