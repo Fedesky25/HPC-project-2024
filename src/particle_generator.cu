@@ -197,12 +197,12 @@ complex_t* particles_omp(complex_t z1, complex_t z2, uint32_t N, unsigned iterat
 }
 
 __global__ void compute_nearest(
-        complex_t * density_points, int64_t N_density,
+        complex_t * density_points, // int64_t N_density,
         complex_t * sites, uint32_t N_sites,
         uint32_t * nearest
 ){
     auto index = threadIdx.x + blockIdx.x*blockDim.x;
-    if(index >= N_density) return;
+    // if(index >= N_density) return;
     double current, min = INFINITY;
     complex_t z = density_points[index];
     uint32_t n;
@@ -229,7 +229,8 @@ complex_t* particles_mixed(complex_t z1, complex_t z2, uint32_t N, unsigned iter
     tock_ms(0) std::cout << " generated in " << t_elapsed << "ms" << std::endl;
 
     float times[4];
-    auto M = ((n_density-1) >> 10) + 1; // (n_density + 1023) / 1024 = (n_density-1)/ 2^(10)
+    auto D = n_density & 1023;
+//    auto M = ((n_density-1) >> 10) + 1;
     cudaMemcpy(d_density, density, n_density * sizeof (complex_t), cudaMemcpyHostToDevice);
 
     std::cout << "Lloyd's algorithm:  i | t (ms) | s. -> | n. c. | n. <- | s. u." << std::endl << std::fixed;
@@ -239,7 +240,9 @@ complex_t* particles_mixed(complex_t z1, complex_t z2, uint32_t N, unsigned iter
         tick(1) tick(2)
         cudaMemcpy(d_sites, sites, N * sizeof (complex_t), cudaMemcpyHostToDevice);
         tock_ms(2) times[0] = t_elapsed; tick(2)
-        compute_nearest<<<M, 1024>>>(d_density, n_density, d_sites, N, d_nearest);
+//        compute_nearest<<<M, 1024>>>(d_density, n_density, d_sites, N, d_nearest);
+        compute_nearest<<<(n_density>>10), 1024>>>(d_density+D, d_sites, N, d_nearest+D);
+        if(D) compute_nearest<<<1,D>>>(d_density, d_sites, N, d_nearest);
         tock_ms(2) times[1] = t_elapsed; tick(2)
         cudaMemcpy(nearest, d_nearest, n_density * sizeof (uint32_t), cudaMemcpyDeviceToHost);
         tock_ms(2) times[2] = t_elapsed; tick(2)
@@ -316,7 +319,8 @@ __global__ void update_sites(
 complex_t* particles_gpu(complex_t z1, complex_t z2, uint32_t N, unsigned iterations){
     int64_t n_density = 128*N;
     auto M = ((N-1) >> 10) + 1; // (n_density + 1023) / 1024 = (n_density-1)/ 2^(10)
-    auto D = ((n_density-1) >> 10) + 1;
+//    auto D = ((n_density-1) >> 10) + 1;
+    auto D = n_density & 1023;
 
     complex_t *d_sites;
     cudaMalloc((void **)&d_sites, N * sizeof (complex_t));
@@ -345,7 +349,9 @@ complex_t* particles_gpu(complex_t z1, complex_t z2, uint32_t N, unsigned iterat
 
     for(unsigned i=0; i<iterations; i++){  // Iterating to convergence
         tick(1) tick(2)
-        compute_nearest<<<D, 1024>>>(density_points.values(), n_density, d_sites, N, density_points.keys());
+//        compute_nearest<<<D,1024>>>(density_points.values(), n_density, d_sites, N, density_points.keys());
+        compute_nearest<<< (n_density >> 10), 1024 >>>(density_points.values()+D, d_sites, N, density_points.keys()+D);
+        if(D) compute_nearest<<<1,D>>>(density_points.values(), d_sites, N, density_points.keys());
         cudaDeviceSynchronize();
         tock_ms(2) times[0] = t_elapsed; tick(2)
         // thrust::sort_by_key(thrust::device, d_nearest, d_nearest + n_density, d_density);
