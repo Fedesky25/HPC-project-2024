@@ -50,8 +50,9 @@ complex_t* particles_serial(complex_t z1, complex_t z2, uint32_t N, unsigned ite
     rand_complex(z1, z2, density, n_density);
     tock_ms(0) std::cout << " generated in " << t_elapsed << "ms" << std::endl;
 
-    float times[2];
-    std::cout << "Lloyd's algorithm:  i | t  (s) | n. c. | s. u." << std::endl << std::fixed;
+    float times[2] = {0};
+    if(verbose) std::cout << "Lloyd's algorithm:  i | t  (s) | n. c. | s. u." << std::endl << std::fixed;
+
     tick(0)
     for(unsigned i=0; i<iterations; i++){  // Iterating to convergence
         tick(1) tick(2)
@@ -79,11 +80,14 @@ complex_t* particles_serial(complex_t z1, complex_t z2, uint32_t N, unsigned ite
             else sites[k] /= (double) count[k];
         }
         tock_s(2) times[1] = t_elapsed; tock_s(1)
-        float m = 100.0f / t_elapsed;
-        std::cout << "                   " << std::setw(2) << i+1
-                  << " | " << std::setw(6) << std::setprecision(3) << t_elapsed
-                  << " | " << std::setw(5) << std::setprecision(2) << times[0]*m
-                  << " | " << std::setw(5) << std::setprecision(2) << times[1]*m << std::endl;
+        if(verbose) {
+            float m = 100.0f / t_elapsed;
+            std::cout << "                   " << std::setw(2) << i + 1
+                      << " | " << std::setw(6) << std::setprecision(3) << t_elapsed
+                      << " | " << std::setw(5) << std::setprecision(2) << times[0]*m
+                      << " | " << std::setw(5) << std::setprecision(2) << times[1]*m << std::endl;
+            times[0] = times[1] = 0;
+        }
 //        for(uint64_t k=0; k<N; k++){ // Iterating on sites
 //            double ctr = 0;
 //            sites[k] = 0;
@@ -96,10 +100,17 @@ complex_t* particles_serial(complex_t z1, complex_t z2, uint32_t N, unsigned ite
 //            if(ctr != 0) sites[k] /= ctr;
 //        }
     }
-    tock_s(0) std::cout << "  :: total " << std::setprecision(3) << t_elapsed << 's' << std::endl;
     free(density);
     free(nearest);
     free(count);
+    tock_s(0)
+    if(verbose) std::cout << "  :: total " << std::setprecision(3) << t_elapsed << 's' << std::endl;
+    else {
+        float m = 100.0f / t_elapsed;
+        std::cout << iterations << " iterations of Lloyd's algorithm done in " << t_elapsed
+                  << "s (compute nearest: " << std::setprecision(2) << times[0]*m
+                  << "%, site update: " << std::setprecision(2) << times[1]*m << "%)" << std::endl;
+    }
     return sites;
 }
 
@@ -146,8 +157,8 @@ complex_t* particles_omp(complex_t z1, complex_t z2, uint32_t N, unsigned iterat
     for(uint64_t i=0; i<n_density; i++) out << density[i] << ',';
     out << '}' << std::endl << '{';
     #endif
-    float times[2];
-    std::cout << "Lloyd's algorithm:  i | t  (s) | n. c. | s. u." << std::endl << std::fixed;
+    float times[2] = {0};
+    if(verbose) std::cout << "Lloyd's algorithm:  i | t  (s) | n. c. | s. u." << std::endl << std::fixed;
     tick(0)
     for(unsigned i=0; i<iterations; i++){  // Iterating to convergence
         tick(1) tick(2)
@@ -162,7 +173,7 @@ complex_t* particles_omp(complex_t z1, complex_t z2, uint32_t N, unsigned iterat
                 }
             }
         }
-        tock_s(2) times[0] = t_elapsed; tick(2)
+        tock_s(2) times[0] += t_elapsed; tick(2)
         for(int64_t k=0; k<N; k++) {
             sites[k] = 0;
             count[k] = 0;
@@ -176,12 +187,14 @@ complex_t* particles_omp(complex_t z1, complex_t z2, uint32_t N, unsigned iterat
             if (count[k] == 0) rand_complex(z1, z2, sites + k, 1);
             else sites[k] /= (double) count[k];
         }
-        tock_s(2) times[1] = t_elapsed; tock_s(1)
-        float m = 100.0f / t_elapsed;
-        std::cout << "                   " << std::setw(2) << i+1
-                  << " | " << std::setw(6) << std::setprecision(3) << t_elapsed
-                  << " | " << std::setw(5) << std::setprecision(2) << times[0]*m
-                  << " | " << std::setw(5) << std::setprecision(2) << times[1]*m << std::endl;
+        tock_s(2) times[1] += t_elapsed; tock_s(1)
+        if(verbose) {
+            float m = 100.0f / t_elapsed;
+            std::cout << "                   " << std::setw(2) << i+1
+                      << " | " << std::setw(6) << std::setprecision(3) << t_elapsed
+                      << " | " << std::setw(5) << std::setprecision(2) << times[0]*m
+                      << " | " << std::setw(5) << std::setprecision(2) << times[1]*m << std::endl;
+        }
     }
     #if PRINT_PARTICLES
     for(uint32_t i=0; i<N; i++) out << sites[i] << ',';
@@ -192,7 +205,13 @@ complex_t* particles_omp(complex_t z1, complex_t z2, uint32_t N, unsigned iterat
     free(nearest);
     free(count);
     tock_s(0)
-    std::cout << "  :: total " << std::setprecision(3) << t_elapsed << 's' << std::endl;
+    if(verbose) std::cout << "  :: total " << std::setprecision(3) << t_elapsed << 's' << std::endl;
+    else {
+        float m = 100.0f/t_elapsed;
+        std::cout << iterations << " iterations of Lloyd's algorithm done in " << t_elapsed
+                  << "s (compute nearest: " << std::setprecision(2) << times[0]*m
+                  << "%, update sites: " << std::setprecision(2) << times[1]*m << "%)" << std::endl;
+    }
     return sites;
 }
 
@@ -342,8 +361,8 @@ complex_t* particles_gpu(complex_t z1, complex_t z2, uint32_t N, unsigned iterat
     cudaDeviceSynchronize();
     tock_ms(0) std::cout << " generated in " << t_elapsed << "ms" << std::endl;
 
-    float times[3];
-    std::cout << "Lloyd's algorithm:  i | t (ms) | n. c. | sortk | s. u." << std::endl << std::fixed;
+    float times[3] = {0};
+    if(verbose) std::cout << "Lloyd's algorithm:  i | t (ms) | n. c. | sortk | s. u." << std::endl << std::fixed;
     tick(0)
     cudaSetDevice(0);
 
@@ -353,22 +372,32 @@ complex_t* particles_gpu(complex_t z1, complex_t z2, uint32_t N, unsigned iterat
         compute_nearest<<< (n_density >> 10), 1024 >>>(density_points.values()+D, d_sites, N, density_points.keys()+D);
         if(D) compute_nearest<<<1,D>>>(density_points.values(), d_sites, N, density_points.keys());
         cudaDeviceSynchronize();
-        tock_ms(2) times[0] = t_elapsed; tick(2)
+        tock_ms(2) times[0] += t_elapsed; tick(2)
         // thrust::sort_by_key(thrust::device, d_nearest, d_nearest + n_density, d_density);
         // cub::DeviceRadixSort::SortPairs()
         density_points.sort();
         cudaDeviceSynchronize();
-        tock_ms(2) times[1] = t_elapsed; tick(2)
+        tock_ms(2) times[1] += t_elapsed; tick(2)
         update_sites<<<M, 1024>>>(density_points.values(), n_density, d_sites, N, density_points.keys());
         cudaDeviceSynchronize();
-        tock_ms(2) times[2] = t_elapsed; tock_ms(1)
-        float m = 100.0f / t_elapsed;
-        std::cout << "                   " << std::setw(2) << i+1
-                  << " | " << std::setw(6) << std::setprecision(1) << t_elapsed
-                  << " | " << std::setw(5) << std::setprecision(2) << times[0]*m
-                  << " | " << std::setw(5) << std::setprecision(2) << times[1]*m
-                  << " | " << std::setw(5) << std::setprecision(2) << times[2]*m << std::endl;
+        tock_ms(2) times[2] += t_elapsed; tock_ms(1)
+        if(verbose) {
+            float m = 100.0f / t_elapsed;
+            std::cout << "                   " << std::setw(2) << i + 1
+                      << " | " << std::setw(6) << std::setprecision(1) << t_elapsed
+                      << " | " << std::setw(5) << std::setprecision(2) << times[0] * m
+                      << " | " << std::setw(5) << std::setprecision(2) << times[1] * m
+                      << " | " << std::setw(5) << std::setprecision(2) << times[2] * m << std::endl;
+        }
     }
-    tock_s(0) std::cout << "  :: total " << std::setprecision(3) << t_elapsed << 's' << std::endl;
+    tock_s(0)
+    if(verbose) std::cout << "  :: total " << std::setprecision(3) << t_elapsed << 's' << std::endl;
+    else {
+        float m = 0.1f / t_elapsed;
+        std::cout << iterations << " iterations of Lloyd algorithm done in " << t_elapsed
+                  << "s (compute nearest: " << std::setprecision(2) << times[0]*m << "%, sort: "
+                  << std::setprecision(2) << times[1]*m << "%, site update: "
+                  << std::setprecision(2) << times[2]*m << "%)" << std::endl;
+    }
     return d_sites;
 }
