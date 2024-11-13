@@ -315,6 +315,7 @@ double parse_scale(const char * str, ScaleScaling * action) {
 
 bool parse_args(int argc, char * argv[], Configuration * config) {
     static option long_options[] = {
+            { "verbose",     no_argument,       nullptr, 'v' },
             { "parallel",    required_argument, nullptr, 'p' },
             { "output",      required_argument, nullptr, 'o' },
             { "resolution",  required_argument, nullptr, 'R' },
@@ -323,7 +324,7 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
             { "distance",    required_argument, nullptr, 'd' },
             { "margin",      required_argument, nullptr, 'm' },
             { "lloyd",       required_argument, nullptr, 'L' },
-            { "speed",       required_argument, nullptr, 'v' },
+            { "speed",       required_argument, nullptr, 'V' },
             { "time-scale",  required_argument, nullptr, 't' },
             { "framerate",   required_argument, nullptr, 'f' },
             { "duration",    required_argument, nullptr, 'D' },
@@ -336,7 +337,7 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
             { "complex3",    required_argument, nullptr, '3' },
             { nullptr, 0, nullptr, 0 }
     };
-    static char short_options[] = "p:o:VR:s:c:d:m:L:v:t:f:D:l:B:n:r:1:2:3:";
+    static char short_options[] = "p:o:VR:s:c:d:m:L:V:t:f:D:l:B:n:r:1:2:3:v";
 
     int o, go = 1, index_opt;
     char * rest;
@@ -351,6 +352,9 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
             case -1:
             case '?':
                 go = false;
+                break;
+            case 'v':
+                verbose++;
                 break;
             case 'p':
                 if(strcmp(optarg, "none") == 0) config->mode = ExecutionMode::Serial;
@@ -387,7 +391,7 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
                 parse_resolution(optarg, &(config->canvas));
                 if(!config->canvas.width) return true;
                 break;
-            case 'v':
+            case 'V':
             {
                 double v = strtod(optarg, &rest);
                 CHECK_REMAINING("speed (v)")
@@ -481,6 +485,7 @@ void print_usage() {
               << "         [-t time_scale] [-v speed] [-1 complex] [-2 complex] [-3 complex] function" << std::endl << std::endl;
     std::cout << "OPTIONS" << std::endl;
     std::cout << "  Name                 Default        Description" << std::endl;
+    std::cout << "  -v  --verbose                       Increases the verbosity level" <<std::endl;
     std::cout << "  -p  --parallel       gpu            Which parallelization to adopt in computations. It must be one of: none, omp, gpu" << std::endl;
     std::cout << "  -o  --output         plot.raw       Path of the output file. If an extension different from '.raw' is specified, it attempts to run"
               << "                                      ffmpeg to produce a video with such format. If it fails, the raw version is left available." << std::endl;
@@ -494,7 +499,7 @@ void print_usage() {
     std::cout << "  -m  --margin         4              Number of layers of additional particles outside the video. Too low values lead to empty borders." << std::endl;
     std::cout << "  -L  --lloyd          8              Particles' lifetime in seconds; must be less than the video duration." << std::endl;
     std::cout << "  -l  --lifetime       75.0           Percentage of video duration for which each particle is alive (visible)." << std::endl;
-    std::cout << "  -v  --speed          1.0            Value of speed around which logarithmic color sensitivity is maximum. Red or blue" << std::endl
+    std::cout << "  -V  --speed          1.0            Value of speed around which logarithmic color sensitivity is maximum. Red or blue" << std::endl
               << "                                      occur when the speed is respectively one order less or more than the specified value." << std::endl;
     std::cout << "  -t  --time-scale     0.12           Time scale used to convert 1 real second into the computational time unit. Lower values guarantee" << std::endl
               << "                                      a more precise computation of the particle evolution at the cost of less motion." << std::endl;

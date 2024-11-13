@@ -43,14 +43,16 @@ int main(int argc, char * argv[]) {
         raw_output_file = raw_output_m;
     }
 
-    std::cout << "Configuration:" << std::endl;
-    std::cout << "  Output file: " << config.output;
-    if(!raw_output) std::cout << " (raw: " << raw_output_file << ')';
-    std::cout << std::endl;
-    std::cout << "  Complex numbers: " << config.vars.z[0] << ' ' << config.vars.z[1] << ' ' << config.vars.z[2] << std::endl;
-    std::cout << "  Real and int numbers: " << config.vars.x << ", " << config.vars.n << std::endl;
-    std::cout << "  Canvas: " << config.canvas << std::endl;
-    std::cout << "  Evolution: " << config.evolution << std::endl;
+    if(verbose) {
+        std::cout << "Configuration:" << std::endl;
+        std::cout << "  Output file: " << config.output;
+        if(!raw_output) std::cout << " (raw: " << raw_output_file << ')';
+        std::cout << std::endl;
+        std::cout << "  Complex numbers: " << config.vars.z[0] << ' ' << config.vars.z[1] << ' ' << config.vars.z[2] << std::endl;
+        std::cout << "  Real and int numbers: " << config.vars.x << ", " << config.vars.n << std::endl;
+        std::cout << "  Canvas: " << config.canvas << std::endl;
+        std::cout << "  Evolution: " << config.evolution << std::endl;
+    }
 
     auto start_computation = std::chrono::steady_clock::now();
 
@@ -95,8 +97,8 @@ int main(int argc, char * argv[]) {
 
             Tiles tiles(&config);
             unsigned tiles_count = tiles.total();
-            std::cout << "  Tiles: " << tiles.rows << 'x' << tiles.cols << '=' << tiles_count << " with "
-                      << (float) N / (float) tiles_count << " particles each" << std::endl;
+            if(verbose) std::cout << "  Tiles: " << tiles.rows << 'x' << tiles.cols << '=' << tiles_count << " with "
+                                  << (float) N / (float) tiles_count << " particles each" << std::endl;
             points = particles_gpu(min, max, N, config.lloyd_iterations);
             auto tile_offsets = tiles.sort(min, max, points, N);
             auto canvas_count = get_canvas_count_serial(tile_offsets, tiles_count);

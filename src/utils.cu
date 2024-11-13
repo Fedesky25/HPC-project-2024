@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <iostream>
 
+int verbose = 0;
 
 __device__ __host__ int32_t CanvasAdapter::where(complex_t z) {
     auto col = static_cast<int32_t>(std::round(scale*(z.real() - center.real()))) + (int32_t)(width >> 1);

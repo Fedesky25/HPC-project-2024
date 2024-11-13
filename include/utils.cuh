@@ -57,6 +57,7 @@ inline std::ostream& operator<<(std::ostream& stream, const complex_t& z) {
 }
 #endif
 
+extern int verbose;
 
 struct CanvasAdapter {
     /** Center complex point in the canvas */
