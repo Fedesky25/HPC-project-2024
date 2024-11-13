@@ -99,11 +99,11 @@ Canvas * create_canvas_device(uint32_t count, CanvasAdapter * adapter) {
 
 uint32_t get_canvas_count_serial(const uint32_t * offsets, uint32_t tiles) {
     timers(1) tick(0)
-    auto size = (tiles+1) * sizeof(uint32_t);
+    auto size = (1+4*tiles) * sizeof(uint32_t);
     auto h_ofs = (uint32_t*) malloc(size);
     cudaMemcpy(h_ofs, offsets, size, cudaMemcpyDeviceToHost);
     uint32_t max_c = h_ofs[1], v;
-    for(int i=1; i<tiles; i++) {
+    for(int i=1; i<4*tiles; i++) {
         v = h_ofs[i+1] - h_ofs[i];
         if(v > max_c) max_c = v;
     }

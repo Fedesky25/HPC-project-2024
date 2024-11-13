@@ -38,9 +38,10 @@ __device__ __host__ void draw(Canvas canvas, CanvasAdapter * adapter, EvolutionO
 }
 
 __global__ void evolve_kernel(Configuration * config, Canvas* canvas, complex_t* particles,
-                              const uint32_t * tile_offsets, const float * rand_offsets, ComplexFunction_t func
+                              const uint32_t * tile_offsets, const float * rand_offsets, ComplexFunction_t func,
+                              unsigned subtile
                        ){
-    auto tile_idx = threadIdx.x;
+    auto tile_idx = threadIdx.x + subtile*blockDim.x;
     auto count = tile_offsets[tile_idx + 1] - tile_offsets[tile_idx];
     auto canvas_idx = blockIdx.x;
     if(canvas_idx >= count) return;
@@ -71,11 +72,14 @@ void evolve_gpu(Configuration * config,
     tick(0);
     auto func = get_function_global(fn_choice);
     auto d_config = devicify(config);
-    evolve_kernel<<<canvas_count, tiles_count>>>(d_config, canvas, particles, tile_offsets, d_rand_floats, func);
+    evolve_kernel<<<canvas_count, tiles_count>>>(d_config, canvas, particles, tile_offsets, d_rand_floats, func, 0);
+    evolve_kernel<<<canvas_count, tiles_count>>>(d_config, canvas, particles, tile_offsets, d_rand_floats, func, 1);
+    evolve_kernel<<<canvas_count, tiles_count>>>(d_config, canvas, particles, tile_offsets, d_rand_floats, func, 2);
+    evolve_kernel<<<canvas_count, tiles_count>>>(d_config, canvas, particles, tile_offsets, d_rand_floats, func, 3);
     cudaFree(d_config);
     cudaDeviceSynchronize();
-    tock_s(0);
-    std::cout << "Particle evolution computed in " << t_elapsed << 's' << std::endl;
+    tock_ms(0);
+    std::cout << "Particle evolution computed in " << t_elapsed << "ms" << std::endl;
 }
 
 // Divide particle evolution between threads by #pragma omp parallel for.
