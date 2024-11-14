@@ -78,7 +78,7 @@ void write_video_serial_internal(
         out.write(reinterpret_cast<const char *>(frame), mem);
         tock_ms(1)
         tw[t&7] += t_elapsed;
-        if((t&7) == 7 && verbose) PRINT_TIMES(t+1)
+        if(verbose && (t&7) == 7) PRINT_TIMES(t+1)
     }
     tock_s(0)
     auto total = t_elapsed;
@@ -182,7 +182,7 @@ void write_video_omp_internal(
                 tc[t&7] += (std::chrono::duration<float, std::milli>(end-start)).count();
             }
         }
-        if((t&7) == 7 && verbose) PRINT_TIMES(t+1)
+        if(verbose && (t&7) == 7) PRINT_TIMES(t+1)
     }
     out.write(reinterpret_cast<const char *>(frame_buffers[(frame_count-1)&1]), mem);
     auto end_all = std::chrono::steady_clock::now();
@@ -258,7 +258,7 @@ void write_video_gpu_internal(
                 tc[t & 7] += (std::chrono::duration<float,std::micro>(end - start)).count();
             }
         }
-        if((t & 7) == 0 && verbose) PRINT_TIMES(t)
+        if(verbose && (t & 7) == 0) PRINT_TIMES(t)
     }
     begin = std::chrono::steady_clock::now();
     cudaMemcpy(h_frame, d_frame[(frame_count-1)&1], frame_mem, cudaMemcpyDeviceToHost);
