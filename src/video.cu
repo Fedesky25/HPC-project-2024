@@ -29,8 +29,9 @@
     auto m = 0.1f / total;                    \
     auto writing = tw[0] + tw[1] + tw[2] + tw[3] + tw[4] + tw[5] + tw[6] + tw[7];     \
     auto computation = tc[0] + tc[1] + tc[2] + tc[3] + tc[4] + tc[5] + tc[6] + tc[7]; \
-    std::cout << frame_count << " frames written in " << total << "s (computation: "  \
-              << computation*m*(FACTOR) << "%, file write: " << writing*m << "%)" << std::endl; \
+    std::cout << frame_count << " frames written in " << std::setprecision(3) << total << "s (computation: "  \
+              << std::fixed << std::setprecision(2) << computation*m*(FACTOR) << "%, file write: "  \
+              << std::fixed << std::setprecision(2) << writing*m << "%)" << std::endl; \
 }
 
 
