@@ -24,6 +24,11 @@
 
 #define PRINT_INITIAL std::cout << "Random initial numbers (" << N << " sites, " << n_density << " density points)";
 
+#define PRINT_TOTAL_TIME std::cout << "  :: total " << std::setprecision(3) << t_elapsed << 's' << std::endl;
+#define PRINT_SUMMARY_HEAD std::cout << iterations << " iterations of Lloyd's algorithm done in " << t_elapsed \
+                                     << "s (compute nearest: " << std::fixed << std::setprecision(2) << times[0]*m
+#define PRINT_SUMMARY_TAIL(INDEX) "%, update sites: " << std::fixed << std::setprecision(2) << times[INDEX]*m << "%)" << std::endl;
+
 /**
  * Generates M random complex numbers in the rectangle
  * @param z1 lower-left vertex
@@ -104,12 +109,10 @@ complex_t* particles_serial(complex_t z1, complex_t z2, uint32_t N, unsigned ite
     free(nearest);
     free(count);
     tock_s(0)
-    if(verbose) std::cout << "  :: total " << std::setprecision(3) << t_elapsed << 's' << std::endl;
+    if(verbose) PRINT_TOTAL_TIME
     else {
         float m = 100.0f / t_elapsed;
-        std::cout << iterations << " iterations of Lloyd's algorithm done in " << t_elapsed
-                  << "s (compute nearest: " << std::setprecision(2) << times[0]*m
-                  << "%, site update: " << std::setprecision(2) << times[1]*m << "%)" << std::endl;
+        PRINT_SUMMARY_HEAD << PRINT_SUMMARY_TAIL(1)
     }
     return sites;
 }
@@ -205,12 +208,10 @@ complex_t* particles_omp(complex_t z1, complex_t z2, uint32_t N, unsigned iterat
     free(nearest);
     free(count);
     tock_s(0)
-    if(verbose) std::cout << "  :: total " << std::setprecision(3) << t_elapsed << 's' << std::endl;
+    if(verbose) PRINT_TOTAL_TIME
     else {
         float m = 100.0f/t_elapsed;
-        std::cout << iterations << " iterations of Lloyd's algorithm done in " << t_elapsed
-                  << "s (compute nearest: " << std::setprecision(2) << times[0]*m
-                  << "%, update sites: " << std::setprecision(2) << times[1]*m << "%)" << std::endl;
+        PRINT_SUMMARY_HEAD << PRINT_SUMMARY_TAIL(1)
     }
     return sites;
 }
@@ -391,13 +392,10 @@ complex_t* particles_gpu(complex_t z1, complex_t z2, uint32_t N, unsigned iterat
         }
     }
     tock_s(0)
-    if(verbose) std::cout << "  :: total " << std::setprecision(3) << t_elapsed << 's' << std::endl;
+    if(verbose) PRINT_TOTAL_TIME
     else {
         float m = 0.1f / t_elapsed;
-        std::cout << iterations << " iterations of Lloyd algorithm done in " << t_elapsed
-                  << "s (compute nearest: " << std::setprecision(2) << times[0]*m << "%, sort: "
-                  << std::setprecision(2) << times[1]*m << "%, site update: "
-                  << std::setprecision(2) << times[2]*m << "%)" << std::endl;
+        PRINT_SUMMARY_HEAD << "%, sort: " << std::fixed << std::setprecision(2) << times[1]*m << PRINT_SUMMARY_TAIL(2)
     }
     return d_sites;
 }
