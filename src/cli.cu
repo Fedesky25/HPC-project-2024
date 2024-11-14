@@ -487,7 +487,7 @@ void print_usage() {
     std::cout << "  Name                 Default        Description" << std::endl;
     std::cout << "  -v  --verbose                       Increases the verbosity level" <<std::endl;
     std::cout << "  -p  --parallel       gpu            Which parallelization to adopt in computations. It must be one of: none, omp, gpu" << std::endl;
-    std::cout << "  -o  --output         plot.raw       Path of the output file. If an extension different from '.raw' is specified, it attempts to run"
+    std::cout << "  -o  --output         plot.raw       Path of the output file. If an extension different from '.raw' is specified, it attempts to run" << std::endl
               << "                                      ffmpeg to produce a video with such format. If it fails, the raw version is left available." << std::endl;
     std::cout << "  -D  --duration       10             Duration in seconds of the webp animation" << std::endl;
     std::cout << "  -f  --framerate      60             Number of frames per seconds i.e. the refresh rate" << std::endl;
