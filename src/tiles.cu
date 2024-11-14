@@ -1,6 +1,7 @@
 #include "tiles.cuh"
 #include "lower_bound.cuh"
 #include "sorter.cuh"
+#include <iomanip>
 
 
 Tiles::Tiles(Configuration * config) {
@@ -58,7 +59,10 @@ uint32_t * Tiles::sort(complex_t &min, complex_t &max, complex_t *particles, uin
     tock_us(0)
     float m = 100.0f / t_elapsed;
     std::cout.precision(1);
-    std::cout << "Particles sorted by tile in " << std::fixed << t_elapsed << "us {alloc: " << times[0]*m
-              << ", comp: " << times[1]*m << ", sort: " << times[2]*m << ", offsets: " << times[3]*m << '}' << std::endl;
+    std::cout << "Particles sorted by tile in " << std::fixed << t_elapsed << "us (allocation: "
+              << std::fixed << std::setprecision(1) << times[0]*m << "%, compute indexes: "
+              << std::fixed << std::setprecision(1) << times[1]*m << "%, sort: "
+              << std::fixed << std::setprecision(1) << times[2]*m << "%, compute offsets: "
+              << std::fixed << std::setprecision(1) << times[3]*m << "%)" << std::endl;
     return offsets;
 }
