@@ -5,6 +5,13 @@
 #include <omp.h>
 #include <random>
 #include <curand.h>
+#include <iomanip>
+
+#define PRINT_TIME { \
+    std::cout << "Particle evolution computed in " << std::setprecision(3); \
+    if(t_elapsed >= 1e3) std::cout << t_elapsed*1e-3 << 's' << std::endl;   \
+    else std::cout << t_elapsed << "ms" << std::endl;                       \
+}
 
 __device__ __host__ void draw(Canvas canvas, CanvasAdapter * adapter, EvolutionOptions * options,
                               ComplexFunction_t func, FnVariables* variables,
@@ -79,7 +86,7 @@ void evolve_gpu(Configuration * config,
     cudaFree(d_config);
     cudaDeviceSynchronize();
     tock_ms(0);
-    std::cout << "Particle evolution computed in " << t_elapsed << "ms" << std::endl;
+    PRINT_TIME
 }
 
 // Divide particle evolution between threads by #pragma omp parallel for.
@@ -103,9 +110,7 @@ void evolve_omp(Configuration* config, Canvas* canvas,
         }
     }
     tock_ms(0)
-    std::cout << "Particle evolution computed in ";
-    if(t_elapsed >= 1e3) std::cout << t_elapsed*1e-3 << 's' << std::endl;
-    else std::cout << t_elapsed << "ms" << std::endl;
+    PRINT_TIME
 }
 
 void evolve_serial(Configuration* config, Canvas canvas,
@@ -122,8 +127,5 @@ void evolve_serial(Configuration* config, Canvas canvas,
              &config->vars, particles[i], rand_int(generator));
     }
     tock_ms(0)
-    std::cout << "Particle evolution computed in ";
-    if(t_elapsed >= 1e3) std::cout << t_elapsed*1e-3 << 's';
-    else std::cout << t_elapsed << "ms";
-    std::cout << std::endl;
+    PRINT_TIME
 }
