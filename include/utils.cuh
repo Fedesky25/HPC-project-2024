@@ -12,6 +12,9 @@
 #define PI 3.1415926535897932384626433
 
 
+#define EXIT_IF(COND, MSG) if(COND) { std::cerr << MSG << std::endl; exit(1); }
+
+
 #ifdef NDEBUG
     #define PRINT(X)
     #define PRINTLN(X)
