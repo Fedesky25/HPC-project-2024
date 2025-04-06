@@ -1,7 +1,7 @@
 #ifndef HPC_PROJECT_2024_TILES_CUH
 #define HPC_PROJECT_2024_TILES_CUH
 
-#include "utils.cuh"
+#include "config.cuh"
 
 struct Tiles {
     uint_fast16_t rows = 0, cols = 0;

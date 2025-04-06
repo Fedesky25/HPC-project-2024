@@ -5,7 +5,6 @@
 #ifndef HPC_PROJECT_2024_EVOLUTION_CUH
 #define HPC_PROJECT_2024_EVOLUTION_CUH
 
-#include "utils.cuh"
 #include "canvas.cuh"
 #include "complex_functions.cuh"
 

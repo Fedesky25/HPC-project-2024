@@ -1,7 +1,7 @@
 #ifndef HPC_PROJECT_2024_CANVAS_CUH
 #define HPC_PROJECT_2024_CANVAS_CUH
 
-#include "utils.cuh"
+#include "config.cuh"
 #include "color.cuh"
 
 struct ARGB {

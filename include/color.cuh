@@ -9,16 +9,10 @@
 #ifndef HPC_PROJECT_2024_COLOR_CUH
 #define HPC_PROJECT_2024_COLOR_CUH
 
-#include "cstdint"
+#include "utils.cuh"
 
 #define ICE_1 97920
 #define IC_16b 65280
-
-#ifdef __CUDACC__
-    #define BOTH __host__ __device__
-#else
-    #define BOTH
-#endif
 
 /**
  * Integer Color Encode

@@ -1,4 +1,4 @@
-#include "utils.cuh"
+#include "config.cuh"
 #include <cstdlib>
 #include <iostream>
 

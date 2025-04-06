@@ -5,7 +5,7 @@
 #ifndef HPC_PROJECT_2024_COMPLEX_FUNCTIONS_CUH
 #define HPC_PROJECT_2024_COMPLEX_FUNCTIONS_CUH
 
-#include "utils.cuh"
+#include "config.cuh"
 
 enum class FunctionChoice {
     Poly1, Poly2, Poly3, PolyFact,

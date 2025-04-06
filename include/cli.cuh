@@ -1,7 +1,7 @@
 #ifndef HPC_PROJECT_2024_CLI_CUH
 #define HPC_PROJECT_2024_CLI_CUH
 
-#include "utils.cuh"
+#include "config.cuh"
 
 /** Prints the usage of the CLI */
 void print_usage();

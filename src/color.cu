@@ -7,19 +7,6 @@
 #define MANUAL_DIV_3 0
 #define Over255 3.92156862745098033773416545955114997923374176025390625e-3f
 
-#if __cplusplus >= 201700L || (defined(_MSVC_LANG) && _MSVC_LANG >= 201700L)
-    #define SAFE_IF_CONSTEXPR constexpr
-#else
-    // we hope compiler removes unused branch
-    #define SAFE_IF_CONSTEXPR
-    #if defined(__GNUC__) || defined(__MINGW32__) || defined(__MINGW64__)
-        #warning C++ version is 14 or less
-    #elif defined(_MSC_VER) || defined(__clang__)
-        #pragma message("C++ version is 14 or less (" __c)
-    #endif
-    #include <algorithm>
-#endif
-
 /**
  * Perform the rounded division by 3*128
  * @param x integer value between 0 and 97920
@@ -146,11 +133,11 @@ __device__ __host__ void RGBA::from_hue(uint16_t hue) {
 template<bool opaque>
 __device__ __host__ void RGBA::over(const RGBA * backdrop) {
     float cA = 1.0f - A;
-    if SAFE_IF_CONSTEXPR (!opaque) cA *= backdrop->A;
+    CONSTEXPR_IF (!opaque) cA *= backdrop->A;
     R = R*A + backdrop->R*cA;
     G = G*A + backdrop->G*cA;
     B = B*A + backdrop->B*cA;
-    if SAFE_IF_CONSTEXPR (opaque) A = 1.0f;
+    CONSTEXPR_IF (opaque) A = 1.0f;
     else {
         A += cA;
         float f = 1.0f/A;
@@ -174,7 +161,7 @@ __device__ __host__ void RGBA::write(unsigned char * buffer) const {
     buffer[0] = static_cast<unsigned char>(255.0f*R + 0.5f);
     buffer[1] = static_cast<unsigned char>(255.0f*G + 0.5f);
     buffer[2] = static_cast<unsigned char>(255.0f*B + 0.5f);
-    if SAFE_IF_CONSTEXPR (!opaque) buffer[3] = static_cast<unsigned char>(255.0f*A + 0.5f);
+    CONSTEXPR_IF (!opaque) buffer[3] = static_cast<unsigned char>(255.0f*A + 0.5f);
 }
 
 template __device__ __host__ void RGBA::write<false>(unsigned char *buffer) const;
