@@ -7,6 +7,23 @@
 #include <fstream>
 #include <iomanip>
 #include <omp.h>
+#include <tuple>
+
+extern "C" {
+#include <libavutil/opt.h>
+#include "libavcodec/avcodec.h"
+}
+
+
+#define HANDLE_AV_ERROR(EXPR, MSG) { \
+    auto errnum = (EXPR);       \
+    if(errnum < 0) {            \
+        char reason[AV_ERROR_MAX_STRING_SIZE] = {0}; \
+        av_strerror(errnum, reason, AV_ERROR_MAX_STRING_SIZE); \
+        std::cerr << MSG << ": " << reason << std::endl; \
+        exit(1);                    \
+    }                                \
+}
 
 
 #define PRINT_TIMES(TIME) {\
@@ -35,6 +52,59 @@
 }
 
 
+template<bool opaque>
+BOTH void write_color(const YUV & clr, AVFrame * frame, int x, int y) {
+    int i = x + y*frame->width;
+    frame->data[0][x + y*frame->linesize[0]] = clr.Y;
+    frame->data[1][x + y*frame->linesize[1]] = clr.U;
+    frame->data[2][x + y*frame->linesize[2]] = clr.V;
+    CONSTEXPR_IF(opaque) frame->data[3][x + y*frame->linesize[3]] = clr.A;
+}
+
+
+auto init_av(int width, int height, int frame_rate, bool opaque) {
+    auto codec = avcodec_find_encoder(AV_CODEC_ID_H264);
+    EXIT_IF(!codec, "Could not find H264 codec")
+    auto ctx = avcodec_alloc_context3(codec);
+    EXIT_IF(!ctx, "Could not allocate codec context")
+
+    ctx->bit_rate = 400000;
+    ctx->width = width;
+    ctx->height = height;
+    ctx->time_base = AVRational{1, frame_rate};
+    ctx->framerate = AVRational{frame_rate, 1};
+    ctx->pix_fmt = opaque ? AV_PIX_FMT_YUVJ444P : AV_PIX_FMT_YUVA444P;
+//    if (codec->id == AV_CODEC_ID_H264)
+    av_opt_set(ctx->priv_data, "preset", "slow", 0);
+    HANDLE_AV_ERROR(avcodec_open2(ctx, codec, nullptr), "Could not open codec")
+    auto frame = av_frame_alloc();
+    EXIT_IF(!frame, "Could not allocate video frame")
+    frame->format = ctx->pix_fmt;
+    frame->width  = ctx->width;
+    frame->height = ctx->height;
+    HANDLE_AV_ERROR(av_frame_get_buffer(frame, 0), "Could not allocate the video frame buffer");
+    auto packet = av_packet_alloc();
+    EXIT_IF(!packet, "Could not allocate AV packet")
+    return std::make_tuple(ctx, frame, packet);
+}
+
+void encode(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, FILE *outfile) {
+    HANDLE_AV_ERROR(avcodec_send_frame(enc_ctx, frame), "Could not send frame")
+    int ret;
+    do {
+        ret = avcodec_receive_packet(enc_ctx, pkt);
+        if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
+            return;
+        else if (ret < 0) {
+            char reason[AV_ERROR_MAX_STRING_SIZE] = {0};
+            av_strerror(ret, reason, AV_ERROR_MAX_STRING_SIZE);
+            std::cerr << "Error during encoding: " << reason << std::endl;
+            exit(1);
+        }
+        fwrite(pkt->data, 1, pkt->size, outfile);
+        av_packet_unref(pkt);
+    } while (ret >= 0);
+}
 
 
 template<bool opaque>
