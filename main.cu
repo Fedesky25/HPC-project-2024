@@ -1,6 +1,6 @@
 #include <iostream>
 #include <cstdio>
-#include "utils.cuh"
+#include "config.cuh"
 #include "cli.cuh"
 #include "getopt.h"
 #include "tiles.cuh"
@@ -22,15 +22,12 @@ int main(int argc, char * argv[]) {
     auto err = parse_args(argc, argv, &config);
     if(err) return 1;
 
-    if(optind >= argc) {
-        std::cerr << "Missing function to plot" << std::endl;
-        return 1;
-    }
+    EXIT_IF(optind >= argc, "Missing function to plot")
     auto fn_choice = strtofn(argv[optind]);
-    if(fn_choice == FunctionChoice::NONE) {
-        std::cerr << "Function string name not recognized" << std::endl;
-        return 1;
-    }
+    EXIT_IF(fn_choice == FunctionChoice::NONE, "Function string name not recognized")
+
+    auto video_file = fopen(config.output, "wb");
+    EXIT_IF(!video_file, "Could not create output file")
 
     auto output_filepath_len = strlen(config.output);
     auto raw_output = output_filepath_len > 4 && 0 == strcmp(config.output+output_filepath_len-4, ".raw");
@@ -119,7 +116,7 @@ int main(int argc, char * argv[]) {
     std::cout << "All computations completed in " << time_all << 's' << std::endl;
 
     if(raw_output) {
-        std::cout << "Run the command:  ffmpeg -f rawvideo -pixel_format rgb"
+        std::cout << "Run the command:  ffmpeg -video_file rawvideo -pixel_format rgb"
                   << ((config.background.A == 1.0f) ? "24" : "a")
                   << " -video_size " << config.canvas.width << 'x' << config.canvas.height
                   << " -framerate " << config.evolution.frame_rate
@@ -127,7 +124,7 @@ int main(int argc, char * argv[]) {
     }
     else {
         auto command = new char [100 + 2*output_filepath_len];
-        strcpy(command, "ffmpeg -f rawvideo -pixel_format rgb");
+        strcpy(command, "ffmpeg -video_file rawvideo -pixel_format rgb");
         strcpy(command+36, (config.background.A == 1.0f) ? "24" : "a ");
         sprintf(command+38, " -video_size %dx%d -framerate %d -i %s %s",
                 config.canvas.width, config.canvas.height, config.evolution.frame_rate,
