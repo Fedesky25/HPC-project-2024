@@ -128,4 +128,15 @@ struct RGBA {
     BOTH void write(unsigned char * buffer) const;
 };
 
+struct YUV {
+    uint8_t Y, U, V, A;
+
+    /**
+     * Transform the given RGB(A) value into YUV(A) format
+     * @see https://en.wikipedia.org/wiki/Y%E2%80%B2UV#Conversion_to/from_RGB
+     * @param clr RGB(A) color
+     */
+    BOTH void from_rgba(const RGBA & clr);
+};
+
 #endif //HPC_PROJECT_2024_COLOR_CUH

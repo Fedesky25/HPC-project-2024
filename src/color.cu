@@ -179,3 +179,15 @@ __device__ __host__ void RGBA::write(unsigned char * buffer) const {
 
 template __device__ __host__ void RGBA::write<false>(unsigned char *buffer) const;
 template __device__ __host__ void RGBA::write<true>(unsigned char *buffer) const;
+
+#define WR 0.299f
+#define WG 0.587f
+#define WB 0.114f
+
+__device__ __host__ void YUV::from_rgba(const RGBA &clr) {
+    auto fY = WR*clr.R + WG*clr.G + WB*clr.B;
+    U = static_cast<uint8_t>(0.5f*(1.f + 255.0f*(1.f + (clr.B - fY)/(1.f - WB))));
+    V = static_cast<uint8_t>(0.5f*(1.f + 255.0f*(1.f + (clr.R - fY)/(1.f - WR))));
+    Y = static_cast<uint8_t>(255.f * fY + 0.4999f);
+    A = static_cast<unsigned char>(255.0f*clr.A + 0.5f);
+}
