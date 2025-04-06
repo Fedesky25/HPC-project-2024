@@ -5,7 +5,7 @@
 #ifndef HPC_PROJECT_2024_COMPLEX_FUNCTIONS_CUH
 #define HPC_PROJECT_2024_COMPLEX_FUNCTIONS_CUH
 
-#include "config.cuh"
+#include "utils.cuh"
 
 enum class FunctionChoice {
     Poly1, Poly2, Poly3, PolyFact,
@@ -24,6 +24,13 @@ enum class FunctionChoice {
  * @return choice
  */
 FunctionChoice strtofn(const char * str);
+
+/** Struct containing the input parameter of any complex function */
+struct FnVariables {
+    complex_t z[3] = {1.0, {0.0, 1.0}, {0.7071067811865476, 0.7071067811865476}};
+    double x = PI;
+    long n = 0;
+};
 
 typedef complex_t (*ComplexFunction_t)(complex_t, FnVariables*);
 

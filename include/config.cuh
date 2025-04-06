@@ -5,6 +5,7 @@
 #include <chrono>
 #include <iostream>
 #include "color.cuh"
+#include "complex_functions.cuh"
 
 #define timers(N) std::chrono::steady_clock::time_point _tp[(N)<<1]; float t_elapsed;
 #define tick(I) _tp[(I)<<1] = std::chrono::steady_clock::now();
@@ -66,12 +67,6 @@ struct CanvasAdapter {
      * @return -1 if out of bounds, else the index of the pixel
      */
     BOTH int32_t where(complex_t z);
-};
-
-struct FnVariables {
-    complex_t z[3] = {1.0, {0.0, 1.0}, {0.7071067811865476, 0.7071067811865476}};
-    double x = PI;
-    long n = 0;
 };
 
 struct EvolutionOptions {
