@@ -34,6 +34,44 @@ else ()
 endif ()
 message("-- CXX/CUDA standard set to ${CMAKE_CXX_STANDARD}")
 
+# retrieve base path of ffmpeg installation from env variable
+if (DEFINED ENV{FFMPEG_PATH})
+    set(FFMPEG_INCLUDE_DIR "$ENV{FFMPEG_PATH}/include/")
+    set(FFMPEG_LIBRARY_DIR "$ENV{FFMPEG_PATH}/lib/")
+else ()
+    message(FATAL_ERROR "FFMPEG_PATH environment variable not specified!")
+endif ()
+
+
+# Include libraries and header files for libavcodec, libavformat, libavutils
+# https://stackoverflow.com/questions/50760024/cmake-configuration-for-ffmpeg-in-c-project
+
+# for some reason I don't know find_library does not work
+set(MANUAL_LIB_PREFIX "")
+if (MSVC)
+    set(MANUAL_LIB_SUFFIX ".lib")
+elseif (MINGW)
+    set(MANUAL_LIB_SUFFIX ".dll.a")
+elseif (LINUX)
+    set(MANUAL_LIB_SUFFIX ".a")
+    set(MANUAL_LIB_PREFIX "lib")
+else ()
+    message(FATAL_ERROR "I don't know which library prefix/suffix you need in this case")
+endif ()
+
+find_path(AVFORMAT_INCLUDE_DIR libavformat/avformat.h PATHS ${FFMPEG_INCLUDE_DIR} REQUIRED)
+#find_library(AVFORMAT_LIBRARY avformat PATHS ${FFMPEG_LIBRARY_DIR} REQUIRED)
+set(AVFORMAT_LIBRARY "${FFMPEG_LIBRARY_DIR}${MANUAL_LIB_PREFIX}avformat${MANUAL_LIB_SUFFIX}")
+
+find_path(AVCODEC_INCLUDE_DIR libavcodec/avcodec.h PATHS ${FFMPEG_INCLUDE_DIR} REQUIRED)
+#find_library(AVCODEC_LIBRARY NAMES avcodec PATHS ${FFMPEG_LIBRARY_DIR} REQUIRED)
+set(AVCODEC_LIBRARY "${FFMPEG_LIBRARY_DIR}${MANUAL_LIB_PREFIX}avcodec${MANUAL_LIB_SUFFIX}")
+
+find_path(AVUTIL_INCLUDE_DIR libavutil/avutil.h PATHS ${FFMPEG_INCLUDE_DIR} REQUIRED)
+#find_library(AVUTIL_LIBRARY avutil PATHS ${FFMPEG_LIBRARY_DIR} REQUIRED)
+set(AVUTIL_LIBRARY "${FFMPEG_LIBRARY_DIR}${MANUAL_LIB_PREFIX}avutil${MANUAL_LIB_SUFFIX}")
+
+
 # https://stackoverflow.com/questions/9313585/specifying-openmp-cuda-flag-in-a-cmake-project
 find_package(OpenMP REQUIRED)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
@@ -56,6 +94,9 @@ add_executable(HPC_project_2024
         include/video.cuh src/video.cu
         include/sorter.cuh
 )
+
+target_include_directories(HPC_project_2024 PRIVATE ${FFMPEG_INCLUDE_DIR})
+target_link_libraries(HPC_project_2024 PRIVATE ${AVFORMAT_LIBRARY} ${AVCODEC_LIBRARY} ${AVUTIL_LIBRARY})
 
 include_directories(include)
 include_directories("${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}")
