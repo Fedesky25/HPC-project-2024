@@ -7,16 +7,6 @@
 #include "color.cuh"
 #include "complex_functions.cuh"
 
-#define timers(N) std::chrono::steady_clock::time_point _tp[(N)<<1]; float t_elapsed;
-#define tick(I) _tp[(I)<<1] = std::chrono::steady_clock::now();
-#define tock(I, RATIO) { \
-    _tp[1+((I)<<1)] = std::chrono::steady_clock::now(); \
-    t_elapsed = (std::chrono::duration<float, RATIO>(_tp[1+((I)<<1)] - _tp[(I)<<1])).count(); \
-}
-#define tock_us(I) tock(I, std::micro)
-#define tock_ms(I) tock(I, std::milli)
-#define tock_s(I) tock(I, std::ratio<1>)
-
 
 template<unsigned N>
 class Timers {
