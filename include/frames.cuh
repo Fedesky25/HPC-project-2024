@@ -6,7 +6,10 @@
 #define HPC_PROJECT_2024_FRAMES_CUH
 
 #include "canvas.cuh"
-#include "libavutil/frame.h"
+
+extern "C" {
+#include <libavutil/frame.h>
+}
 
 
 /**
