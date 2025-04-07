@@ -14,6 +14,27 @@
 
 #define EXIT_IF(COND, MSG) if(COND) { std::cerr << MSG << std::endl; exit(1); }
 
+#ifdef __PRETTY_FUNCTION__
+    #define FN_NAME_HERE __PRETTY_FUNCTION__
+#elif defined(_MSVC_LANG)
+    #define FN_NAME_HERE __FUNCSIG__
+#else
+    #define FN_NAME_HERE "[unknown function signature]"
+#endif
+
+//#define FN_NAME_HERE ""
+
+#define CATCH_CUDA_ERROR(EXPR) { \
+    auto err = (EXPR);                \
+    if(err) {                         \
+        auto details = cudaGetErrorString(err); \
+        std::cerr << "Cuda Error: " << details; \
+        std::cerr << "\n in function ";         \
+        std::cerr << FN_NAME_HERE;    \
+        std::cerr << " (l:" << __LINE__ << ")" << std::endl; \
+        exit(1);                      \
+    }                                 \
+}
 
 #ifdef NDEBUG
     #define PRINT(X)
