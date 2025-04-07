@@ -14,6 +14,7 @@
 #include <iostream>
 #include <iomanip>
 
+extern int verbose;
 
 #define SETUP_CPU \
     auto sites = (complex_t*) malloc(N * sizeof(complex_t));           \
