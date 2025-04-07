@@ -28,6 +28,20 @@ BOTH constexpr inline int32_t icenc(float x) { return static_cast<int32_t>(ICE_1
  */
 BOTH constexpr inline int32_t icenc_inv(float x) { return static_cast<int32_t>(ICE_1 / x); }
 
+/**
+ * Convert a color channel to a byte value
+ * @param x channel value in [0,1]
+ * @return corresponding value in [0, 255]
+ */
+BOTH constexpr inline uint8_t byte_clr_chl1(float x) { return 255*x + 0.5f; }
+
+/**
+ * Convert a color channel to a byte value
+ * @param x channel value in [-1,+1]
+ * @return corresponding value in [0, 255]
+ */
+BOTH constexpr inline uint8_t byte_clr_chl2(float x) { return 0.5f * (256 + 255*x); }
+
 struct FixedFraction {
     int32_t value;
 
@@ -122,15 +136,32 @@ struct RGBA {
     BOTH void write(unsigned char * buffer) const;
 };
 
-struct YUV {
-    uint8_t Y, U, V, A;
+struct YUVA {
+    /** Luminance [0,1] */
+    float Y;
+    /** Blue difference chroma [-1,+1] */
+    float U;
+    /** Red difference chroma [-1,+1] */
+    float V;
+    /** Alpha channel [0,1] */
+    float A;
 
     /**
-     * Transform the given RGB(A) value into YUV(A) format
-     * @see https://en.wikipedia.org/wiki/Y%E2%80%B2UV#Conversion_to/from_RGB
-     * @param clr RGB(A) color
+     * Sets the RGB values given the integer-encoded hue.
+     * It assumes standard values of saturation (0.55) and lightness (0.55)
+     * @param hue
      */
-    BOTH void from_rgba(const RGBA & clr);
+    BOTH void from_hue(uint16_t hue);
+
+    /**
+     * Mixes this color and the backdrop using the alpha channel as the mixing percentage.
+     * It rewrites YUVA values of the current color.
+     * Alpha blending is exploited since the mapping from RGB to YUV is linear
+     * @tparam opaque
+     * @param backdrop
+     */
+    template<bool opaque>
+    BOTH void over(const YUVA * backdrop);
 };
 
 #endif //HPC_PROJECT_2024_COLOR_CUH
