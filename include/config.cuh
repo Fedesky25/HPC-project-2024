@@ -47,7 +47,7 @@ struct CanvasAdapter {
     /** How many pixel is the unitary distance */
     double scale = 100.0; // px^(-1)
     /** Size in pixel of the canvas */
-    uint32_t width = 1920, height = 1080;
+    int32_t width = 1920, height = 1080;
 
     friend std::ostream& operator<<(std::ostream& os, CanvasAdapter& cv);
 

@@ -125,7 +125,7 @@ complex_t parse_complex(const char * str) {
 inline bool isnan(complex_t z) { return isnan(z.real()) || isnan(z.imag()); }
 
 void parse_resolution(const char * str, CanvasAdapter * canvas) {
-    unsigned width = 0, height = 0;
+    int32_t width = 0, height = 0;
     bool rotate = false;
     if(*str == '^') {
         rotate = true;
@@ -133,13 +133,21 @@ void parse_resolution(const char * str, CanvasAdapter * canvas) {
     }
     if(isdigit(*str)) {
         int consumed;
-        int c = sscanf(str, "%ux%u%n", &width, &height, &consumed);
+        int c = sscanf(str, "%dx%d%n", &width, &height, &consumed);
         if(c != 2 || str[consumed] != '\0') {
             std::cerr << "Custom resolution format invalid" << std::endl;
             width = height = 0;
         }
         else if(width > 8192 || height > 8192) {
             std::cerr << "Resolution must be at most 8192x8192" << std::endl;
+            width = height = 0;
+        }
+        else if(width < 64 || height < 64) {
+            std::cerr << "Resolution cannot be less than 64x64" << std::endl;
+            width = height = 0;
+        }
+        else if(width&1 || height&1) {
+            std::cerr << "Video sizes must be even" << std::endl;
             width = height = 0;
         }
     }

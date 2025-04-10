@@ -5,10 +5,10 @@
 int verbose = 0;
 
 __device__ __host__ int32_t CanvasAdapter::where(complex_t z) {
-    auto col = static_cast<int32_t>(std::round(scale*(z.real() - center.real()))) + (int32_t)(width >> 1);
-    auto row = static_cast<int32_t>(std::round(scale*(z.imag() - center.imag()))) + (int32_t)(height >> 1);
+    auto col = static_cast<int32_t>(std::round(scale*(z.real() - center.real()))) + (width >> 1);
+    auto row = static_cast<int32_t>(std::round(scale*(z.imag() - center.imag()))) + (height >> 1);
     if(row < 0 || row >= height || col < 0 || col >= width) return -1;
-    else return col + row * (int32_t)width;
+    else return col + row * width;
 }
 
 std::ostream &operator<<(std::ostream &os, CanvasAdapter &cv) {
