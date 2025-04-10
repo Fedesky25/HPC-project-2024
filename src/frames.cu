@@ -14,11 +14,10 @@ BOTH void write_color(const YUVA & clr, AVFrame * frame, int x, int y) {
 }
 
 
-template<bool opaque>
-void compute_frame_serial(
+DEF_OPAQUE_FN(compute_frame_serial, (
         int32_t time, int32_t frame_count, int32_t lifetime,
         const Canvas& canvas, AVFrame * frame, const YUVA * background
-) {
+)) {
     YUVA brush;
     auto inv_lifetime = 1.0f / (float) lifetime;
     uint8_t bytes_bg[] = {
@@ -50,13 +49,11 @@ void compute_frame_serial(
     }
 }
 
-
-template<bool opaque>
-void compute_frame_omp(
+DEF_OPAQUE_FN(compute_frame_omp, (
         int32_t time, int32_t frame_count, int32_t lifetime,
         const Canvas * canvas_array, unsigned canvas_count,
         AVFrame * frame, const YUVA * background
-) {
+)) {
     YUVA brush;
     auto inv_lifetime = 1.0f / (float) lifetime;
     uint8_t bytes_bg[] = {
@@ -127,6 +124,9 @@ void FrameKernelArguments::free() {
 }
 
 
+template __global__ void compute_frame_kernel<true>(int32_t time, const FrameKernelArguments * args);
+template __global__ void compute_frame_kernel<false>(int32_t time, const FrameKernelArguments * args);
+
 template<bool opaque>
 __global__ void compute_frame_kernel(int32_t time, const FrameKernelArguments * args) {
     auto x = threadIdx.x + blockIdx.x * blockDim.x;
@@ -158,7 +158,7 @@ __global__ void compute_frame_kernel(int32_t time, const FrameKernelArguments * 
         color.A = 1.0f;
         if(time_delta >= 0) {
             color.A -= (float) time_delta / (float) args->lifetime;
-            color.over<opaque>(args->background);
+            color.over<opaque>(&args->background);
         }
         args->channels[0][x + y*args->line_size[0]] = byte_clr_chl1(color.Y);
         args->channels[1][x + y*args->line_size[1]] = byte_clr_chl2(color.U);

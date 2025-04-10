@@ -102,4 +102,13 @@ inline std::ostream& operator<<(std::ostream& stream, const complex_t& z) {
 #define tock_ms(I) tock(I, std::milli)
 #define tock_s(I) tock(I, std::ratio<1>)
 
+
+#define DEF_OPAQUE_FN(NAME, ARGS) \
+    template void NAME<false> ARGS; \
+    template void NAME<true> ARGS;\
+    template<bool opaque>         \
+    void NAME ARGS
+
+
+
 #endif //HPC_PROJECT_2024_UTILS_CUH
