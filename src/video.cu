@@ -7,11 +7,10 @@
 #include <fstream>
 #include <iomanip>
 #include <omp.h>
-#include <tuple>
 
 extern "C" {
 #include <libavutil/opt.h>
-#include "libavcodec/avcodec.h"
+#include <libavcodec/avcodec.h>
 }
 
 
@@ -52,22 +51,11 @@ extern "C" {
 }
 
 
-template<bool opaque>
-BOTH void write_color(const YUV & clr, AVFrame * frame, int x, int y) {
-    int i = x + y*frame->width;
-    frame->data[0][x + y*frame->linesize[0]] = clr.Y;
-    frame->data[1][x + y*frame->linesize[1]] = clr.U;
-    frame->data[2][x + y*frame->linesize[2]] = clr.V;
-    CONSTEXPR_IF(opaque) frame->data[3][x + y*frame->linesize[3]] = clr.A;
-}
-
-
-auto init_av(int width, int height, int frame_rate, bool opaque) {
+auto get_ctx(int width, int height, int frame_rate, bool opaque) {
     auto codec = avcodec_find_encoder(AV_CODEC_ID_H264);
     EXIT_IF(!codec, "Could not find H264 codec")
     auto ctx = avcodec_alloc_context3(codec);
     EXIT_IF(!ctx, "Could not allocate codec context")
-
     ctx->bit_rate = 400000;
     ctx->width = width;
     ctx->height = height;
@@ -77,15 +65,17 @@ auto init_av(int width, int height, int frame_rate, bool opaque) {
 //    if (codec->id == AV_CODEC_ID_H264)
     av_opt_set(ctx->priv_data, "preset", "slow", 0);
     HANDLE_AV_ERROR(avcodec_open2(ctx, codec, nullptr), "Could not open codec")
+    return ctx;
+}
+
+auto get_frame(AVCodecContext * ctx) {
     auto frame = av_frame_alloc();
     EXIT_IF(!frame, "Could not allocate video frame")
     frame->format = ctx->pix_fmt;
     frame->width  = ctx->width;
     frame->height = ctx->height;
     HANDLE_AV_ERROR(av_frame_get_buffer(frame, 0), "Could not allocate the video frame buffer");
-    auto packet = av_packet_alloc();
-    EXIT_IF(!packet, "Could not allocate AV packet")
-    return std::make_tuple(ctx, frame, packet);
+    return frame;
 }
 
 void encode(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, FILE *outfile) {
@@ -108,48 +98,32 @@ void encode(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, FILE *outfil
 
 
 template<bool opaque>
-void write_video_serial_internal(
-        const char * filename, Canvas canvas,
-        uint32_t frame_size, int32_t frame_count,
-        int32_t lifetime, const RGBA & background
-) {
-    constexpr auto bytes = opaque ? 3 : 4;
-    auto mem = bytes * frame_size;
-    auto frame = new unsigned char [mem];
-    std::ofstream out(filename);
-    RGBA color;
-    unsigned char bg_bytes[bytes];
-    background.write<opaque>(bg_bytes);
-    auto inv_lifetime = 1.0f / (float) lifetime;
+void write_video_serial_internal(const Configuration & config, Canvas canvas) {
+    FILE * f = fopen(config.output, "wb");
+    EXIT_IF(!f, "Could not create output file")
+    auto packet = av_packet_alloc();
+    EXIT_IF(!packet, "Could not allocate AV packet")
+    auto ctx = get_ctx(config.canvas.width, config.canvas.height, config.evolution.frame_count, opaque);
+    auto frame = get_frame(ctx);
+
+    auto frame_count = config.evolution.frame_count;
     float tc[8] = {0}, tw[8] = {0};
     if(verbose) std::cout << "Frame computation (iteration, (computation [ms], writing [ms]) * 8):" << std::endl << std::setprecision(1);
     timers(2)
     tick(0)
     for(int32_t t=0; t<frame_count; t++) {
+        HANDLE_AV_ERROR(av_frame_make_writable(frame), "Frame cannot be written")
         tick(1)
-        for(uint32_t i=0; i<frame_size; i++) {
-            auto delta = canvas[i].time_distance(t, frame_count);
-            if(delta >= lifetime + canvas[i].multiplicity) {
-                for(int b=0; b<bytes; b++) frame[bytes*i + b] = bg_bytes[b];
-            }
-            else {
-                color.from_hue(canvas[i].hue);
-                if(delta < canvas[i].multiplicity) color.A = 1.0f;
-                else {
-                    color.A = (float) (lifetime+canvas[i].multiplicity-delta) * inv_lifetime;
-                    color.over<opaque>(&background);
-                }
-                color.write<opaque>(frame + bytes*i);
-            }
-        }
+        compute_frame_serial<opaque>(t, frame_count, config.evolution.life_time, canvas, frame, &config.background);
         tock_ms(1)
         tc[t&7] += t_elapsed;
         tick(1)
-        out.write(reinterpret_cast<const char *>(frame), mem);
+        encode(ctx, frame, packet, f);
         tock_ms(1)
         tw[t&7] += t_elapsed;
         if(verbose && (t&7) == 7) PRINT_TIMES(t+1)
     }
+    encode(ctx, nullptr, packet, f);
     tock_s(0)
     auto total = t_elapsed;
     auto remaining = (frame_count-1)&7;
@@ -164,116 +138,83 @@ void write_video_serial_internal(
         std::cout << "  :: total " << total << 's' << std::endl;
     }
     else PRINT_SUMMARY(1)
-    delete [] frame;
+
+    fclose(f);
+    avcodec_free_context(&ctx);
+    av_frame_free(&frame);
+    av_packet_free(&packet);
 }
 
-void write_video_serial(
-        const char * filename, Canvas canvas,
-        uint32_t frame_size, int32_t frame_count,
-        int32_t lifetime, const RGBA & background
-) {
-    if(background.A == 1.0f) write_video_serial_internal<true>(filename, canvas, frame_size, frame_count, lifetime, background);
-    else write_video_serial_internal<false>(filename, canvas, frame_size, frame_count, lifetime, background);
+void write_video_serial(const Configuration & config, Canvas canvas) {
+    if(config.background.A == 1.0f) write_video_serial_internal<true>(config, canvas);
+    else write_video_serial_internal<false>(config, canvas);
 }
 
 
 template<bool opaque>
-void write_video_omp_internal(
-        const char * filename,
-        const Canvas * canvases, uint32_t canvas_count,
-        uint32_t frame_size, int32_t frame_count,
-        int32_t lifetime, const RGBA & background
-) {
-    std::ofstream out(filename);
-    constexpr auto bytes = opaque ? 3 : 4;
-    auto mem = bytes * frame_size;
-    unsigned char * frame_buffers[2];
-    frame_buffers[0] = new unsigned char [mem];
-    frame_buffers[1] = new unsigned char [mem];
-    unsigned char bg_bytes[bytes];
-    background.write<opaque>(bg_bytes);
-    auto inv_lifetime = 1.0f / (float) lifetime;
+void write_video_omp_internal(const Configuration & config, const Canvas * canvases, uint32_t canvas_count) {
+    FILE * f = fopen(config.output, "wb");
+    EXIT_IF(!f, "Could not create output file")
+    auto packet = av_packet_alloc();
+    EXIT_IF(!packet, "Could not allocate AV packet")
+    auto ctx = get_ctx(config.canvas.width, config.canvas.height, config.evolution.frame_count, opaque);
+    AVFrame * frame_buffers[2] = { get_frame(ctx), get_frame(ctx) };
+
+    auto frame_count = config.evolution.frame_count;
+    auto life_time = config.evolution.life_time;
     float tc[8] = {0}, tw[8] = {0};
     tw[0] = -1.0;
-
-    auto frame_size_signed = (int32_t) frame_size;
 
     omp_set_nested(1);
 
     if(verbose) std::cout << "Frame computation (iteration, (computation [ms], writing [ms]) * 8):" << std::endl << std::setprecision(1);
     auto start_all = std::chrono::steady_clock::now();
-    for(int32_t t=0; t<frame_count; t++) {
+
+    compute_frame_omp<opaque>(0, frame_count, life_time, canvases, canvas_count, frame_buffers[0], &config.background);
+
+    for(int32_t t=1; t<frame_count; t++) {
         #pragma omp parallel sections
         {
             #pragma omp section
             {
-                if(t > 0) {
-                    auto start = std::chrono::steady_clock::now();
-                    out.write(reinterpret_cast<const char *>(frame_buffers[(t-1)&1]), mem);
-                    auto end = std::chrono::steady_clock::now();
-                    tw[t&7] += (std::chrono::duration<float, std::milli>(end-start)).count();
-                }
+                auto start = std::chrono::steady_clock::now();
+                encode(ctx, frame_buffers[(t-1)&1], packet, f);
+                auto end = std::chrono::steady_clock::now();
+                tw[t&7] += (std::chrono::duration<float, std::milli>(end-start)).count();
             }
             #pragma omp section
             {
                 auto start = std::chrono::steady_clock::now();
                 auto frame = frame_buffers[t&1];
-                #pragma omp parallel
-                {
-                    RGBA color;
-                    CanvasPixel * pixel;
-                    int32_t delta_min, delta;
-                    #pragma omp for schedule(static)
-                    for(int32_t i=0; i<frame_size_signed; i++) {
-                        pixel = &canvases[0][i];
-                        delta_min = canvases[0][i].time_distance(t, frame_count);
-                        for(uint32_t c=1; c<canvas_count; c++) {
-                            delta = canvases[c][i].time_distance(t, frame_count);
-                            if(delta < delta_min) {
-                                delta_min = delta;
-                                pixel = &canvases[c][i];
-                            }
-                        }
-                        if(delta_min >= lifetime + pixel->multiplicity) {
-                            for(int b=0; b<bytes; b++) frame[bytes*i + b] = bg_bytes[b];
-                        }
-                        else {
-                            color.from_hue(pixel->hue);
-                            if(delta_min < pixel->multiplicity) color.A = 1.0f;
-                            else {
-                                color.A = (float) (lifetime+pixel->multiplicity-delta_min) * inv_lifetime;
-                                color.over<opaque>(&background);
-                            }
-                            color.write<opaque>(frame + bytes*i);
-                        }
-                    }
-                }
+                compute_frame_omp<opaque>(t, frame_count, life_time, canvases, canvas_count, frame_buffers[t&1], &config.background);
                 auto end = std::chrono::steady_clock::now();
                 tc[t&7] += (std::chrono::duration<float, std::milli>(end-start)).count();
             }
         }
         if(verbose && (t&7) == 7) PRINT_TIMES(t+1)
     }
-    out.write(reinterpret_cast<const char *>(frame_buffers[(frame_count-1)&1]), mem);
+    auto start = std::chrono::steady_clock::now();
+    encode(ctx, frame_buffers[(frame_count-1)&1], packet, f);
+    encode(ctx, nullptr, packet, f);
+    auto end = std::chrono::steady_clock::now();
+    tw[(frame_count-1)&7] += (std::chrono::duration<float, std::milli>(end-start)).count();
     auto end_all = std::chrono::steady_clock::now();
     float total = (std::chrono::duration<float, std::ratio<1>>(end_all-start_all)).count();
 
     if(verbose) std::cout << "  :: total " << total << 's' << std::endl;
     else PRINT_SUMMARY(1)
 
-    delete [] frame_buffers[0];
-    delete [] frame_buffers[1];
+    fclose(f);
+    avcodec_free_context(&ctx);
+    av_frame_free(&frame_buffers[0]);
+    av_frame_free(&frame_buffers[1]);
+    av_packet_free(&packet);
 }
 
 
-void write_video_omp(
-        const char * filename,
-        const Canvas * canvases, uint32_t canvas_count,
-        uint32_t frame_size, int32_t frame_count,
-        int32_t lifetime, const RGBA & background
-) {
-    if(background.A == 1.0f) write_video_omp_internal<true>(filename, canvases, canvas_count, frame_size, frame_count, lifetime, background);
-    else write_video_omp_internal<false>(filename, canvases, canvas_count, frame_size, frame_count, lifetime, background);
+void write_video_omp(const Configuration & config, const Canvas * canvases, uint32_t canvas_count) {
+    if(config.background.A == 1.0f) write_video_omp_internal<true>(config, canvases, canvas_count);
+    else write_video_omp_internal<false>(config, canvases, canvas_count);
 }
 
 
