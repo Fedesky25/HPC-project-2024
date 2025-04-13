@@ -436,12 +436,10 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
                 CHECK_REMAINING("background color")
                 config->background.A = 1.0f;
                 if(rest - optarg > 6) {
-                    config->background.A = (float)(val & 0xff) * div_255;
+                    config->background.A = (float)(val & 0xff) / 255.f;
                     val >>= 8;
                 }
-                config->background.R = (float)(val>>16) * div_255;
-                config->background.G = (float)((val>>8)&0xff) * div_255;
-                config->background.B = (float)(val&0xff) * div_255;
+                config->background.from_RGB((val>>16), ((val>>8)&0xff), (val&0xff));
                 break;
             }
             case 'n':

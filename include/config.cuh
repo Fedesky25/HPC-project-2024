@@ -75,7 +75,7 @@ struct Configuration {
     FnVariables vars;
     CanvasAdapter canvas;
     EvolutionOptions evolution;
-    RGBA background{21*div_255, 21*div_255, 25*div_255, 1};
+    YUVA background{0.135f, 0.510f, 0.5f, 1};
 //    FixedHSLA background{ IC_16b, icenc(0.06), icenc(0.15), ICE_1 };
     const char * output = "plot.mp4";
     unsigned long particle_distance = 10;

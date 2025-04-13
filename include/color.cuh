@@ -106,7 +106,6 @@ struct FixedHSLA {
     BOTH void mixWith(const FixedHSLA & other, FixedFraction frac);
 };
 
-const constexpr float div_255 = 1.0f/255.0f;
 
 struct RGBA {
     float R, G, B, A;
@@ -147,7 +146,15 @@ struct YUVA {
     float A;
 
     /**
-     * Sets the RGB values given the integer-encoded hue.
+     * Sets the YUV values given the RGB values
+     * @param R red
+     * @param G green
+     * @param B blue
+     */
+    void from_RGB(uint8_t R, uint8_t G, uint8_t B);
+
+    /**
+     * Sets the YUV values given the integer-encoded hue.
      * It assumes standard values of saturation (0.55) and lightness (0.55)
      * @param hue
      */

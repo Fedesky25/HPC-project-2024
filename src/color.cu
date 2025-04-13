@@ -171,6 +171,13 @@ template __device__ __host__ void RGBA::write<true>(unsigned char *buffer) const
 #define WG 0.587f
 #define WB 0.114f
 
+void YUVA::from_RGB(uint8_t R, uint8_t G, uint8_t B) {
+    float fR = Over255*R, fG = Over255*G, fB = Over255*B;
+    Y = WR*fR + WG*fG + WB*fB;
+    U = (fB - Y)/(1 - WB);
+    V = (fR - Y)/(1 - WR);
+}
+
 __device__ __host__ void YUVA::from_hue(uint16_t hue) {
     float H = (float) hue * color_normalizer;
     auto G = component_from_t(H);
