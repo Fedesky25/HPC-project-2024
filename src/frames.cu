@@ -124,8 +124,6 @@ void FrameKernelArguments::free() {
 }
 
 
-template __global__ void compute_frame_kernel<true>(int32_t time, const FrameKernelArguments * args);
-template __global__ void compute_frame_kernel<false>(int32_t time, const FrameKernelArguments * args);
 
 template<bool opaque>
 __global__ void compute_frame_kernel(int32_t time, const FrameKernelArguments * args) {
@@ -203,29 +201,16 @@ __global__ void compute_frame_no_divergence(
     }
 }
 
-template<bool opaque>
-void compute_frame_gpu(
-        int32_t time, int32_t frame_count,
-        const Canvas * canvas_array, unsigned canvas_count,
-        unsigned char * frame, uint32_t size,
-        int32_t lifetime, const RGBA * background
-) {
-    uint32_t block_count = size >> 10;
-    compute_frame_no_divergence<opaque><<<block_count, 1024>>>(
-            time, frame_count, canvas_array, canvas_count, frame, lifetime, 0, background);
-    block_count = (size & 1023) >> 5;
-    if(block_count) compute_frame_no_divergence<opaque><<<block_count, 32>>>(
-            time, frame_count, canvas_array, canvas_count, frame, lifetime, size & (~1023), background);
-    if(size & 31) compute_frame_no_divergence<opaque><<<1, size & 31>>>(
-            time, frame_count, canvas_array, canvas_count, frame, lifetime, size & (~31), background);
+DEF_OPAQUE_FN(compute_frame_gpu, (int32_t time, const FrameKernelArguments * args)) {
+    dim3 block_size(32, 32);
+    dim3 grid_size((args->width + 31) >> 5, (args->height + 31) >> 5);
+    compute_frame_kernel<opaque><<<block_size, grid_size>>>(time, args);
+//    uint32_t block_count = size >> 10;
+//    compute_frame_no_divergence<opaque><<<block_count, 1024>>>(
+//            time, frame_count, canvas_array, canvas_count, frame, lifetime, 0, background);
+//    block_count = (size & 1023) >> 5;
+//    if(block_count) compute_frame_no_divergence<opaque><<<block_count, 32>>>(
+//            time, frame_count, canvas_array, canvas_count, frame, lifetime, size & (~1023), background);
+//    if(size & 31) compute_frame_no_divergence<opaque><<<1, size & 31>>>(
+//            time, frame_count, canvas_array, canvas_count, frame, lifetime, size & (~31), background);
 }
-
-template void compute_frame_gpu<false>(int32_t time, int32_t frame_count,
-                               const Canvas * canvas_array, unsigned canvas_count,
-                               unsigned char * frame, uint32_t size,
-                               int32_t lifetime, const RGBA * background);
-
-template void compute_frame_gpu<true>(int32_t time, int32_t frame_count,
-        const Canvas * canvas_array, unsigned canvas_count,
-        unsigned char * frame, uint32_t size,
-        int32_t lifetime, const RGBA * background);

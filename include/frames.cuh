@@ -72,28 +72,13 @@ struct FrameKernelArguments {
     void free();
 };
 
-/**
- * Computes the frame at a specific time using the GPU
- * @tparam opaque whether the video has opaque background or not
- * @param time current simulation time index
- * @param args pointer to arguments allocated on the gpu
- */
-template<bool opaque>
-__global__ void compute_frame_kernel(int32_t time, const FrameKernelArguments * args);
 
 /**
  * Computes the frame at a specific time using the GPU
  * @param time time instant in range [0, frame_count)
- * @param frame_count total number of frames in range [0, UINT16_MAX)
- * @param canvas_array (device) array of canvases
- * @param canvas_count number of canvases
- * @param frame output frame (device) buffer
- * @param size total number of pixels
+ * @param args arguments to be passed to the kernel
  */
 template<bool opaque>
-void compute_frame_gpu(int32_t time, int32_t frame_count,
-                       const Canvas * canvas_array, unsigned canvas_count,
-                       unsigned char * frame, uint32_t size,
-                       int32_t lifetime, const RGBA * background);
+void compute_frame_gpu(int32_t time, const FrameKernelArguments * args);
 
 #endif //HPC_PROJECT_2024_FRAMES_CUH
