@@ -11,6 +11,7 @@
 extern "C" {
 #include <libavutil/opt.h>
 #include <libavcodec/avcodec.h>
+#include <libavformat/avformat.h>
 }
 
 
@@ -50,6 +51,99 @@ extern "C" {
               << std::fixed << std::setprecision(2) << writing*m << "%)" << std::endl; \
 }
 
+
+struct StreamWrapper {
+    const AVCodec * codec;
+    AVStream * stream;
+    AVPacket * packet;
+    /// Encoding context
+    AVCodecContext * enc_ctx;
+    /// Format context
+    AVFormatContext * fmt_ctx;
+
+    void open(const Configuration& config, bool opaque) {
+        packet = av_packet_alloc();
+        EXIT_IF(!packet, "Could not allocate AV packet")
+
+        avformat_alloc_output_context2(&fmt_ctx, nullptr, nullptr, config.output);
+        if(!fmt_ctx || fmt_ctx->oformat->video_codec == AV_CODEC_ID_NONE) {
+            std::cout << "The output format could not be deduced from file extension"
+                      << " or does not support video output: fallback to MPEG" << std::endl;
+            avformat_alloc_output_context2(&fmt_ctx, nullptr, "mpeg", config.output);
+            EXIT_IF(!fmt_ctx, "Could not open MPEG output context")
+        }
+
+        codec = avcodec_find_encoder(fmt_ctx->oformat->video_codec);
+        EXIT_IF(!codec, "Could not find encoder for" << avcodec_get_name(fmt_ctx->oformat->video_codec))
+
+        stream = avformat_new_stream(fmt_ctx, codec);
+        EXIT_IF(!stream, "Could not allocate video stream")
+        stream->id = 0;
+        stream->time_base = AVRational{1, config.evolution.frame_rate};
+
+        enc_ctx = avcodec_alloc_context3(codec);
+        EXIT_IF(!enc_ctx, "Could not allocate encoding context")
+        enc_ctx->bit_rate = 400000;
+        enc_ctx->codec_id = fmt_ctx->oformat->video_codec;
+        enc_ctx->width = config.canvas.width;
+        enc_ctx->height = config.canvas.height;
+        enc_ctx->time_base = AVRational{1, config.evolution.frame_rate};
+        enc_ctx->framerate = AVRational{config.evolution.frame_rate, 1};
+        enc_ctx->gop_size = 12;
+        enc_ctx->pix_fmt = opaque ? AV_PIX_FMT_YUVJ444P : AV_PIX_FMT_YUVA444P;
+        // if (codec->id == AV_CODEC_ID_H264) av_opt_set(enc_ctx->priv_data, "preset", "slow", 0);
+        if (enc_ctx->codec_id == AV_CODEC_ID_MPEG2VIDEO) enc_ctx->max_b_frames = 2;
+        if (enc_ctx->codec_id == AV_CODEC_ID_MPEG1VIDEO) enc_ctx->mb_decision = 2;
+        if (fmt_ctx->oformat->flags & AVFMT_GLOBALHEADER) enc_ctx->flags |= AVFMT_GLOBALHEADER;
+
+        HANDLE_AV_ERROR(avcodec_open2(enc_ctx, codec, nullptr), "Could not open video codec")
+        HANDLE_AV_ERROR(avcodec_parameters_from_context(stream->codecpar, enc_ctx), "Could not copy the stream parameters")
+
+        av_dump_format(fmt_ctx, 0, config.output, 1);
+        HANDLE_AV_ERROR(avio_open(&(fmt_ctx->pb), config.output, AVIO_FLAG_WRITE), "Could not open output file")
+        HANDLE_AV_ERROR(avformat_write_header(fmt_ctx, nullptr), "Could not write headers")
+    }
+
+    AVFrame * get_frame() const {
+        auto frame = av_frame_alloc();
+        EXIT_IF(!frame, "Could not allocate video frame")
+        frame->format = enc_ctx->pix_fmt;
+        frame->width  = enc_ctx->width;
+        frame->height = enc_ctx->height;
+        HANDLE_AV_ERROR(av_frame_get_buffer(frame, 0), "Could not allocate the video frame buffer")
+        return frame;
+    }
+
+    void encode(AVFrame * frame) const {
+        HANDLE_AV_ERROR(avcodec_send_frame(enc_ctx, frame), "Could not send frame")
+        int ret;
+        do {
+            ret = avcodec_receive_packet(enc_ctx, packet);
+            if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
+                return;
+            else if (ret < 0) {
+                char reason[AV_ERROR_MAX_STRING_SIZE] = {0};
+                av_strerror(ret, reason, AV_ERROR_MAX_STRING_SIZE);
+                std::cerr << "Error during encoding: " << reason << std::endl;
+                exit(1);
+            }
+            av_packet_rescale_ts(packet, enc_ctx->time_base, stream->time_base);
+            packet->stream_index = stream->index;
+            av_interleaved_write_frame(fmt_ctx, packet);
+//            av_write_frame(fmt_ctx, packet);
+//            av_packet_unref(packet);
+        } while (ret >= 0);
+    }
+
+    void close() {
+        encode(nullptr);
+        av_write_trailer(fmt_ctx);
+        avcodec_free_context(&enc_ctx);
+        av_packet_free(&packet);
+        avio_closep(&(fmt_ctx->pb));
+        avformat_free_context(fmt_ctx);
+    }
+};
 
 auto get_ctx(int width, int height, int frame_rate, bool opaque) {
     auto codec = avcodec_find_encoder(AV_CODEC_ID_H264);
@@ -99,12 +193,9 @@ void encode(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, FILE *outfil
 
 template<bool opaque>
 void write_video_serial_internal(const Configuration & config, Canvas canvas) {
-    FILE * f = fopen(config.output, "wb");
-    EXIT_IF(!f, "Could not create output file")
-    auto packet = av_packet_alloc();
-    EXIT_IF(!packet, "Could not allocate AV packet")
-    auto ctx = get_ctx(config.canvas.width, config.canvas.height, config.evolution.frame_count, opaque);
-    auto frame = get_frame(ctx);
+    StreamWrapper w = { nullptr };
+    w.open(config, opaque);
+    auto frame = w.get_frame();
 
     auto frame_count = config.evolution.frame_count;
     float tc[8] = {0}, tw[8] = {0};
@@ -113,17 +204,17 @@ void write_video_serial_internal(const Configuration & config, Canvas canvas) {
     tick(0)
     for(int32_t t=0; t<frame_count; t++) {
         HANDLE_AV_ERROR(av_frame_make_writable(frame), "Frame cannot be written")
+        frame->pts = t;
         tick(1)
         compute_frame_serial<opaque>(t, frame_count, config.evolution.life_time, canvas, frame, &config.background);
         tock_ms(1)
         tc[t&7] += t_elapsed;
         tick(1)
-        encode(ctx, frame, packet, f);
+        w.encode(frame);
         tock_ms(1)
         tw[t&7] += t_elapsed;
         if(verbose && (t&7) == 7) PRINT_TIMES(t+1)
     }
-    encode(ctx, nullptr, packet, f);
     tock_s(0)
     auto total = t_elapsed;
     auto remaining = (frame_count-1)&7;
@@ -138,11 +229,8 @@ void write_video_serial_internal(const Configuration & config, Canvas canvas) {
         std::cout << "  :: total " << total << 's' << std::endl;
     }
     else PRINT_SUMMARY(1)
-
-    fclose(f);
-    avcodec_free_context(&ctx);
     av_frame_free(&frame);
-    av_packet_free(&packet);
+    w.close();
 }
 
 void write_video_serial(const Configuration & config, Canvas canvas) {
@@ -153,12 +241,9 @@ void write_video_serial(const Configuration & config, Canvas canvas) {
 
 template<bool opaque>
 void write_video_omp_internal(const Configuration & config, const Canvas * canvases, uint32_t canvas_count) {
-    FILE * f = fopen(config.output, "wb");
-    EXIT_IF(!f, "Could not create output file")
-    auto packet = av_packet_alloc();
-    EXIT_IF(!packet, "Could not allocate AV packet")
-    auto ctx = get_ctx(config.canvas.width, config.canvas.height, config.evolution.frame_count, opaque);
-    AVFrame * frame_buffers[2] = { get_frame(ctx), get_frame(ctx) };
+    StreamWrapper w = {nullptr};
+    w.open(config, opaque);
+    AVFrame * frame_buffers[2] = { w.get_frame(), w.get_frame() };
 
     auto frame_count = config.evolution.frame_count;
     auto life_time = config.evolution.life_time;
@@ -178,7 +263,7 @@ void write_video_omp_internal(const Configuration & config, const Canvas * canva
             #pragma omp section
             {
                 auto start = std::chrono::steady_clock::now();
-                encode(ctx, frame_buffers[(t-1)&1], packet, f);
+                w.encode(frame_buffers[(t-1)&1]);
                 auto end = std::chrono::steady_clock::now();
                 tw[t&7] += (std::chrono::duration<float, std::milli>(end-start)).count();
             }
@@ -186,7 +271,9 @@ void write_video_omp_internal(const Configuration & config, const Canvas * canva
             {
                 auto start = std::chrono::steady_clock::now();
                 auto frame = frame_buffers[t&1];
+                HANDLE_AV_ERROR(av_frame_make_writable(frame), "Frame cannot be written")
                 compute_frame_omp<opaque>(t, frame_count, life_time, canvases, canvas_count, frame_buffers[t&1], &config.background);
+                frame->pts = t;
                 auto end = std::chrono::steady_clock::now();
                 tc[t&7] += (std::chrono::duration<float, std::milli>(end-start)).count();
             }
@@ -194,8 +281,7 @@ void write_video_omp_internal(const Configuration & config, const Canvas * canva
         if(verbose && (t&7) == 7) PRINT_TIMES(t+1)
     }
     auto start = std::chrono::steady_clock::now();
-    encode(ctx, frame_buffers[(frame_count-1)&1], packet, f);
-    encode(ctx, nullptr, packet, f);
+    w.encode(frame_buffers[(frame_count-1)&1]);
     auto end = std::chrono::steady_clock::now();
     tw[(frame_count-1)&7] += (std::chrono::duration<float, std::milli>(end-start)).count();
     auto end_all = std::chrono::steady_clock::now();
@@ -204,11 +290,9 @@ void write_video_omp_internal(const Configuration & config, const Canvas * canva
     if(verbose) std::cout << "  :: total " << total << 's' << std::endl;
     else PRINT_SUMMARY(1)
 
-    fclose(f);
-    avcodec_free_context(&ctx);
     av_frame_free(&frame_buffers[0]);
     av_frame_free(&frame_buffers[1]);
-    av_packet_free(&packet);
+    w.close();
 }
 
 
