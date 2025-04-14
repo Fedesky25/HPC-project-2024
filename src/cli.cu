@@ -351,7 +351,7 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
     char * rest;
     double time_scale = 0.12;
     float lifetime = 0.75;
-    unsigned long fps = 60, duration = 10;
+    int32_t fps = 60, duration = 10;
     ScaleScaling action = ScaleScaling::NONE;
 
     while(go) {
@@ -407,8 +407,12 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
                 break;
             }
             case 'f':
-                fps = strtoul(optarg, &rest, 10);
+                fps = strtol(optarg, &rest, 10);
                 CHECK_REMAINING("fps")
+                if(fps < 10) {
+                    std::cerr << "The frame rate cannot be less than 10" << std::endl;
+                    return true;
+                }
                 break;
             case 't':
                 time_scale = strtod(optarg, &rest);
@@ -419,8 +423,12 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
                 }
                 break;
             case 'D':
-                duration = strtoul(optarg, &rest, 10);
+                duration = strtol(optarg, &rest, 10);
                 CHECK_REMAINING("duration")
+                if(duration < 1) {
+                    std::cerr << "Video duration cannot be less than 1 second" << std::endl;
+                    return true;
+                }
                 break;
             case 'l':
                 lifetime = strtof(optarg, &rest) * 1e-2f;
@@ -472,7 +480,7 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
             break;
     }
     config->evolution.delta_time = time_scale / fps;
-    config->evolution.frame_count = (int32_t) (duration * fps);
+    config->evolution.frame_count = duration * fps;
     config->evolution.frame_rate = fps;
     config->evolution.life_time = static_cast<int32_t>(std::ceil(lifetime * (float) config->evolution.frame_count));
     if(config->evolution.frame_count > 64800) {
