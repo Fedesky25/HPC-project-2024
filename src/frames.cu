@@ -10,7 +10,7 @@ BOTH void write_color(const YUVA & clr, AVFrame * frame, int x, int y) {
     frame->data[0][x + y*frame->linesize[0]] = byte_clr_chl1(clr.Y);
     frame->data[1][x + y*frame->linesize[1]] = byte_clr_chl2(clr.U);
     frame->data[2][x + y*frame->linesize[2]] = byte_clr_chl2(clr.V);
-    CONSTEXPR_IF(opaque) frame->data[3][x + y*frame->linesize[3]] = byte_clr_chl1(clr.A);
+    CONSTEXPR_IF(!opaque) frame->data[3][x + y*frame->linesize[3]] = byte_clr_chl1(clr.A);
 }
 
 
@@ -34,7 +34,7 @@ DEF_OPAQUE_FN(compute_frame_serial, (
                 frame->data[0][x + y*frame->linesize[0]] = bytes_bg[0];
                 frame->data[1][x + y*frame->linesize[1]] = bytes_bg[1];
                 frame->data[2][x + y*frame->linesize[2]] = bytes_bg[2];
-                CONSTEXPR_IF(opaque) frame->data[3][x + y*frame->linesize[3]] =  bytes_bg[3];
+                CONSTEXPR_IF(!opaque) frame->data[3][x + y*frame->linesize[3]] =  bytes_bg[3];
             }
             else {
                 brush.from_hue(canvas[i].hue);
@@ -81,7 +81,7 @@ DEF_OPAQUE_FN(compute_frame_omp, (
                 frame->data[0][x + y*frame->linesize[0]] = bytes_bg[0];
                 frame->data[1][x + y*frame->linesize[1]] = bytes_bg[1];
                 frame->data[2][x + y*frame->linesize[2]] = bytes_bg[2];
-                CONSTEXPR_IF(opaque) frame->data[3][x + y*frame->linesize[3]] =  bytes_bg[3];
+                CONSTEXPR_IF(!opaque) frame->data[3][x + y*frame->linesize[3]] =  bytes_bg[3];
             }
             else {
                 brush.from_hue(pixel.hue);
@@ -150,7 +150,7 @@ __global__ void compute_frame_kernel(int32_t time, const FrameKernelArguments * 
         args->channels[0][x + y*args->line_size[0]] = byte_clr_chl1(args->background.Y);
         args->channels[1][x + y*args->line_size[1]] = byte_clr_chl2(args->background.U);
         args->channels[2][x + y*args->line_size[2]] = byte_clr_chl2(args->background.V);
-        CONSTEXPR_IF(opaque) args->channels[3][x + y*args->line_size[3]] = byte_clr_chl1(args->background.A);
+        CONSTEXPR_IF(!opaque) args->channels[3][x + y*args->line_size[3]] = byte_clr_chl1(args->background.A);
     }
     else {
         YUVA color;
@@ -163,7 +163,7 @@ __global__ void compute_frame_kernel(int32_t time, const FrameKernelArguments * 
         args->channels[0][x + y*args->line_size[0]] = byte_clr_chl1(color.Y);
         args->channels[1][x + y*args->line_size[1]] = byte_clr_chl2(color.U);
         args->channels[2][x + y*args->line_size[2]] = byte_clr_chl2(color.V);
-        CONSTEXPR_IF(opaque) args->channels[3][x + y*args->line_size[3]] = byte_clr_chl1(color.A);
+        CONSTEXPR_IF(!opaque) args->channels[3][x + y*args->line_size[3]] = byte_clr_chl1(color.A);
     }
 }
 
