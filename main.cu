@@ -26,25 +26,9 @@ int main(int argc, char * argv[]) {
     auto fn_choice = strtofn(argv[optind]);
     EXIT_IF(fn_choice == FunctionChoice::NONE, "Function string name not recognized")
 
-    auto video_file = fopen(config.output, "wb");
-    EXIT_IF(!video_file, "Could not create output file")
-
-    auto output_filepath_len = strlen(config.output);
-    auto raw_output = output_filepath_len > 4 && 0 == strcmp(config.output+output_filepath_len-4, ".raw");
-    const char * raw_output_file = config.output;
-    if(!raw_output) {
-        auto raw_output_m = new char [output_filepath_len + 5];
-        strcpy(raw_output_m, config.output);
-        strcpy(raw_output_m+output_filepath_len, ".raw");
-        raw_output_m[output_filepath_len+4] = '\0';
-        raw_output_file = raw_output_m;
-    }
-
     if(verbose) {
         std::cout << "Configuration:" << std::endl;
-        std::cout << "  Output file: " << config.output;
-        if(!raw_output) std::cout << " (raw: " << raw_output_file << ')';
-        std::cout << std::endl;
+        std::cout << "  Output file: " << config.output << std::endl;
         std::cout << "  Complex numbers: " << config.vars.z[0] << ' ' << config.vars.z[1] << ' ' << config.vars.z[2] << std::endl;
         std::cout << "  Real and int numbers: " << config.vars.x << ", " << config.vars.n << std::endl;
         std::cout << "  Canvas: " << config.canvas << std::endl;
@@ -66,7 +50,7 @@ int main(int argc, char * argv[]) {
             points = particles_serial(min, max, N, config.lloyd_iterations);
             auto canvas = new CanvasPixel [frame_size];
             evolve_serial(&config, canvas, points, N, fn_choice);
-            write_video_serial(raw_output_file, canvas, frame_size, config.evolution.frame_count, config.evolution.life_time, config.background);
+            write_video_serial(config, canvas);
             delete[] canvas;
             break;
         }
@@ -76,9 +60,7 @@ int main(int argc, char * argv[]) {
             auto canvas_count = omp_get_max_threads();
             auto canvases = create_canvas_host(canvas_count, &config.canvas);
             evolve_omp(&config, canvases, points, N, fn_choice);
-            write_video_omp(
-                    raw_output_file, canvases, canvas_count, frame_size,
-                    config.evolution.frame_count, config.evolution.life_time, config.background);
+            write_video_omp(config, canvases, canvas_count);
             break;
         }
         case ExecutionMode::GPU:
@@ -104,9 +86,7 @@ int main(int argc, char * argv[]) {
                        tile_offsets, tiles_count, fn_choice);
             cudaFree(tile_offsets);
             cudaFree(points);
-            write_video_gpu(
-                    config.output, canvases, canvas_count, frame_size,
-                    config.evolution.frame_count, config.evolution.life_time, &config.background);
+            write_video_gpu(config, canvases, canvas_count);
             break;
         }
     }
@@ -114,27 +94,6 @@ int main(int argc, char * argv[]) {
     auto end_computation = std::chrono::steady_clock::now();
     float time_all = (std::chrono::duration<float,std::ratio<1>>(end_computation-start_computation)).count();
     std::cout << "All computations completed in " << time_all << 's' << std::endl;
-
-    if(raw_output) {
-        std::cout << "Run the command:  ffmpeg -video_file rawvideo -pixel_format rgb"
-                  << ((config.background.A == 1.0f) ? "24" : "a")
-                  << " -video_size " << config.canvas.width << 'x' << config.canvas.height
-                  << " -framerate " << config.evolution.frame_rate
-                  << " -i " << config.output << " <output>" << std::endl;
-    }
-    else {
-        auto command = new char [100 + 2*output_filepath_len];
-        strcpy(command, "ffmpeg -video_file rawvideo -pixel_format rgb");
-        strcpy(command+36, (config.background.A == 1.0f) ? "24" : "a ");
-        sprintf(command+38, " -video_size %dx%d -framerate %d -i %s %s",
-                config.canvas.width, config.canvas.height, config.evolution.frame_rate,
-                raw_output_file, config.output);
-        std::cout << "Running: " << command << std::endl;
-        std::cout.flush();
-        auto error = system(command);
-        if(error) std::cout << "Errors occurred: leaving '" << raw_output_file << "' behind" << std::endl;
-        else std::remove(raw_output_file);
-    }
 
     #if 0
     std::ofstream test("test.raw");
