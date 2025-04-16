@@ -26,13 +26,6 @@ extern "C" {
 }
 
 
-#define TIMEIT(VAR, BODY) { \
-    auto start = std::chrono::steady_clock::now(); \
-    BODY;                   \
-    auto end = std::chrono::steady_clock::now();   \
-    VAR += (std::chrono::duration<float, std::milli>(end-start)).count(); \
-}
-
 #define TIMEIT_us(VAR, BODY) { \
     auto start = std::chrono::steady_clock::now(); \
     BODY;                   \

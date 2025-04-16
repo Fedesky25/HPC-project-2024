@@ -103,6 +103,14 @@ inline std::ostream& operator<<(std::ostream& stream, const complex_t& z) {
 #define tock_s(I) tock(I, std::ratio<1>)
 
 
+#define TIMEIT(VAR, BODY) { \
+    auto start = std::chrono::steady_clock::now(); \
+    BODY;                   \
+    auto end = std::chrono::steady_clock::now();   \
+    VAR += (std::chrono::duration<float, std::milli>(end-start)).count(); \
+}
+
+
 #define DEF_OPAQUE_FN(NAME, ARGS) \
     template void NAME<false> ARGS; \
     template void NAME<true> ARGS;\
