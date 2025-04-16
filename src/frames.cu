@@ -86,11 +86,12 @@ DEF_OPAQUE_FN(compute_frame_omp, (
             else {
                 brush.from_hue(pixel.hue);
                 brush.A = 1.0f;
-                if (time_delta >= 0)
+                if (time_delta >= 0) {
                     brush.A -= (float) time_delta * inv_lifetime;
-                brush.over<opaque>(background);
+                    brush.over<opaque>(background);
+                }
+                write_color<opaque>(brush, frame, x, y);
             }
-            write_color<opaque>(brush, frame, x, y);
         }
     }
 }
