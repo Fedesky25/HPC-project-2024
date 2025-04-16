@@ -198,6 +198,7 @@ complex_t* particles_omp(complex_t z1, complex_t z2, uint32_t N, unsigned iterat
                       << " | " << std::setw(6) << std::setprecision(3) << t_elapsed
                       << " | " << std::setw(5) << std::setprecision(2) << times[0]*m
                       << " | " << std::setw(5) << std::setprecision(2) << times[1]*m << std::endl;
+            times = {0};
         }
     }
     #if PRINT_PARTICLES
@@ -282,13 +283,16 @@ complex_t* particles_mixed(complex_t z1, complex_t z2, uint32_t N, unsigned iter
         }
         tock_ms(2) times[3] = t_elapsed;
         tock_ms(1)
-        float m = 100.0f / t_elapsed;
-        std::cout << "                   " << std::setw(2) << i+1
-                  << " | " << std::setw(6) << std::setprecision(1) << t_elapsed
-                  << " | " << std::setw(5) << std::setprecision(2) << times[0]*m
-                  << " | " << std::setw(5) << std::setprecision(2) << times[1]*m
-                  << " | " << std::setw(5) << std::setprecision(2) << times[2]*m
-                  << " | " << std::setw(5) << std::setprecision(2) << times[3]*m << std::endl;
+        if(verbose) {
+            float m = 100.0f / t_elapsed;
+            std::cout << "                   " << std::setw(2) << i+1
+                      << " | " << std::setw(6) << std::setprecision(1) << t_elapsed
+                      << " | " << std::setw(5) << std::setprecision(2) << times[0]*m
+                      << " | " << std::setw(5) << std::setprecision(2) << times[1]*m
+                      << " | " << std::setw(5) << std::setprecision(2) << times[2]*m
+                      << " | " << std::setw(5) << std::setprecision(2) << times[3]*m << std::endl;
+            times = {0};
+        }
     }
     cudaFree(d_density);
     cudaFree(d_nearest);
@@ -390,6 +394,7 @@ complex_t* particles_gpu(complex_t z1, complex_t z2, uint32_t N, unsigned iterat
                       << " | " << std::setw(5) << std::setprecision(2) << times[0] * m
                       << " | " << std::setw(5) << std::setprecision(2) << times[1] * m
                       << " | " << std::setw(5) << std::setprecision(2) << times[2] * m << std::endl;
+            times = {0};
         }
     }
     tock_s(0)
