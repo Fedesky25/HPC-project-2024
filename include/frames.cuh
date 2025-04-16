@@ -55,12 +55,13 @@ struct FrameKernelArguments {
     int line_size[4];
     int width, height;
 
+    const FrameKernelArguments * device_copy;
+
     /**
      * Allocates the channels and line_size on the gpu
      * @param frame reference (allocated) frame
-     * @return a copy of this instance on the gpu
      */
-    const FrameKernelArguments * init(AVFrame * frame, bool opaque);
+    void init(AVFrame * frame, bool opaque);
 
     /**
      * Copies the contents into the given frame
@@ -79,6 +80,6 @@ struct FrameKernelArguments {
  * @param args arguments to be passed to the kernel
  */
 template<bool opaque>
-void compute_frame_gpu(int32_t time, const FrameKernelArguments * args);
+void compute_frame_gpu(int32_t time, const FrameKernelArguments & args);
 
 #endif //HPC_PROJECT_2024_FRAMES_CUH

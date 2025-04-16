@@ -96,7 +96,7 @@ DEF_OPAQUE_FN(compute_frame_omp, (
     }
 }
 
-const FrameKernelArguments * FrameKernelArguments::init(AVFrame *frame, bool opaque) {
+void FrameKernelArguments::init(AVFrame *frame, bool opaque) {
     width = frame->width;
     height = frame->height;
     for(int i=0; i < 3+!opaque; i++) {
@@ -105,10 +105,8 @@ const FrameKernelArguments * FrameKernelArguments::init(AVFrame *frame, bool opa
         CATCH_CUDA_ERROR(cudaMalloc(channels+i,size))
     }
     if(opaque) channels[3] = nullptr;
-    FrameKernelArguments * this_d;
-    CATCH_CUDA_ERROR(cudaMalloc(&this_d, sizeof(FrameKernelArguments)))
-    CATCH_CUDA_ERROR(cudaMemcpy(this_d, this, sizeof(FrameKernelArguments), cudaMemcpyHostToDevice));
-    return this_d;
+    CATCH_CUDA_ERROR(cudaMalloc(&device_copy, sizeof(FrameKernelArguments)))
+    CATCH_CUDA_ERROR(cudaMemcpy((void*) device_copy, this, sizeof(FrameKernelArguments), cudaMemcpyHostToDevice));
 }
 
 void FrameKernelArguments::copy_into(AVFrame *frame) const {
@@ -122,6 +120,7 @@ void FrameKernelArguments::copy_into(AVFrame *frame) const {
 void FrameKernelArguments::free() {
     auto N = channels[3] == nullptr ? 3 : 4;
     for(int i=0; i < N; i++) CATCH_CUDA_ERROR(cudaFree(channels[i]));
+    CATCH_CUDA_ERROR(cudaFree((void*) device_copy));
 }
 
 
@@ -202,10 +201,10 @@ __global__ void compute_frame_no_divergence(
     }
 }
 
-DEF_OPAQUE_FN(compute_frame_gpu, (int32_t time, const FrameKernelArguments * args)) {
+DEF_OPAQUE_FN(compute_frame_gpu, (int32_t time, const FrameKernelArguments & args)) {
     dim3 block_size(32, 32);
-    dim3 grid_size((args->width + 31) >> 5, (args->height + 31) >> 5);
-    compute_frame_kernel<opaque><<<block_size, grid_size>>>(time, args);
+    dim3 grid_size((args.width + 31) >> 5, (args.height + 31) >> 5);
+    compute_frame_kernel<opaque><<<block_size, grid_size>>>(time, args.device_copy);
 //    uint32_t block_count = size >> 10;
 //    compute_frame_no_divergence<opaque><<<block_count, 1024>>>(
 //            time, frame_count, canvas_array, canvas_count, frame, lifetime, 0, background);
