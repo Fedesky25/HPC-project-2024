@@ -255,6 +255,7 @@ void write_video_omp_internal(const Configuration & config, const Canvas * canva
     if(verbose) std::cout << "Frame computation (iteration, (computation [ms], writing [ms]) * 8):" << std::endl << std::setprecision(1);
     auto start_all = std::chrono::steady_clock::now();
 
+    frame_buffers[0]->pts = 0;
     compute_frame_omp<opaque>(0, frame_count, life_time, canvases, canvas_count, frame_buffers[0], &config.background);
 
     for(int32_t t=1; t<frame_count; t++) {
