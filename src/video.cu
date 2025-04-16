@@ -62,6 +62,12 @@ struct StreamWrapper {
     AVFormatContext * fmt_ctx;
 
     void open(const Configuration& config, bool opaque) {
+        #ifdef NDEBUG
+        av_log_set_level(AV_LOG_ERROR);
+        #else
+        av_log_set_level(AV_LOG_VERBOSE);
+        #endif
+
         packet = av_packet_alloc();
         EXIT_IF(!packet, "Could not allocate AV packet")
 
