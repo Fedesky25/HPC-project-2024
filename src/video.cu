@@ -28,14 +28,14 @@ extern "C" {
 
 #define PRINT_TIMES(TIME) {\
     std::cout << "   " << std::setw(5) << (TIME)                                  \
-              << " | " << std::setw(5) << tc[0] << " | " << std::setw(5) << tw[0] \
-              << " | " << std::setw(5) << tc[1] << " | " << std::setw(5) << tw[1] \
-              << " | " << std::setw(5) << tc[2] << " | " << std::setw(5) << tw[2] \
-              << " | " << std::setw(5) << tc[3] << " | " << std::setw(5) << tw[3] \
-              << " | " << std::setw(5) << tc[4] << " | " << std::setw(5) << tw[4] \
-              << " | " << std::setw(5) << tc[5] << " | " << std::setw(5) << tw[5] \
-              << " | " << std::setw(5) << tc[6] << " | " << std::setw(5) << tw[6] \
-              << " | " << std::setw(5) << tc[7] << " | " << std::setw(5) << tw[7] \
+              << " | " << std::setw(5) << tc[0] << " : " << std::setw(5) << tw[0] \
+              << " | " << std::setw(5) << tc[1] << " : " << std::setw(5) << tw[1] \
+              << " | " << std::setw(5) << tc[2] << " : " << std::setw(5) << tw[2] \
+              << " | " << std::setw(5) << tc[3] << " : " << std::setw(5) << tw[3] \
+              << " | " << std::setw(5) << tc[4] << " : " << std::setw(5) << tw[4] \
+              << " | " << std::setw(5) << tc[5] << " : " << std::setw(5) << tw[5] \
+              << " | " << std::setw(5) << tc[6] << " : " << std::setw(5) << tw[6] \
+              << " | " << std::setw(5) << tc[7] << " : " << std::setw(5) << tw[7] \
               << std::endl;                                                       \
     tc[0] = tc[1] = tc[2] = tc[3] = tc[4] = tc[5] = tc[6] = tc[7] = 0;            \
     tw[0] = tw[1] = tw[2] = tw[3] = tw[4] = tw[5] = tw[6] = tw[7] = 0;            \
