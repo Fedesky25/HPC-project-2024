@@ -198,7 +198,7 @@ complex_t* particles_omp(complex_t z1, complex_t z2, uint32_t N, unsigned iterat
                       << " | " << std::setw(6) << std::setprecision(3) << t_elapsed
                       << " | " << std::setw(5) << std::setprecision(2) << times[0]*m
                       << " | " << std::setw(5) << std::setprecision(2) << times[1]*m << std::endl;
-            times = {0};
+            times[0] = times[1] = 0.f;
         }
     }
     #if PRINT_PARTICLES
@@ -291,7 +291,7 @@ complex_t* particles_mixed(complex_t z1, complex_t z2, uint32_t N, unsigned iter
                       << " | " << std::setw(5) << std::setprecision(2) << times[1]*m
                       << " | " << std::setw(5) << std::setprecision(2) << times[2]*m
                       << " | " << std::setw(5) << std::setprecision(2) << times[3]*m << std::endl;
-            times = {0};
+            times[0] = times[1] = times[2] = times[3] = 0.f;
         }
     }
     cudaFree(d_density);
@@ -394,7 +394,7 @@ complex_t* particles_gpu(complex_t z1, complex_t z2, uint32_t N, unsigned iterat
                       << " | " << std::setw(5) << std::setprecision(2) << times[0] * m
                       << " | " << std::setw(5) << std::setprecision(2) << times[1] * m
                       << " | " << std::setw(5) << std::setprecision(2) << times[2] * m << std::endl;
-            times = {0};
+            times[0] = times[1] = times[2] = 0.f;
         }
     }
     tock_s(0)
