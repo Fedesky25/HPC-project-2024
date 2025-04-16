@@ -311,80 +311,70 @@ void write_video_omp(const Configuration & config, const Canvas * canvases, uint
 
 
 template<bool opaque>
-void write_video_gpu_internal(
-        const char * filename,
-        const Canvas * canvases, uint32_t canvas_count,
-        uint32_t frame_size, int32_t frame_count, int32_t lifetime,
-        const RGBA * background
-) {
-    std::ofstream raw_output(filename);
-    auto frame_mem = frame_size * sizeof(uint32_t);
-    unsigned char *h_frame, *d_frame[2];
-    h_frame = (unsigned char*) malloc(frame_mem);
-    cudaMalloc(d_frame, frame_mem);
-    cudaMalloc(d_frame+1, frame_mem);
-    if(verbose) {
-        std::cout << "Frame buffers: CPU=" << (((frame_mem - 1) >> 20) + 1) << "MB, GPU="
-                  << (((frame_mem * 2 - 1) >> 20) + 1) << "MB" << std::endl << std::fixed;
-        std::cout << "Frame computation (iteration, (computation [us], writing [ms]) * 8):" << std::endl;
-    }
+void write_video_gpu_internal(const Configuration & config, const Canvas * canvases, uint32_t canvas_count) {
+    StreamWrapper w = {nullptr};
+    w.open(config, opaque);
+    auto frame = w.get_frame();
+
+
+    auto frame_count = config.evolution.frame_count;
+    FrameKernelArguments args[2];
+    args[0].lifetime     = args[1].lifetime     = config.evolution.life_time;
+    args[0].frame_count  = args[1].frame_count  = frame_count;
+    args[0].canvas_array = args[1].canvas_array = canvases;
+    args[0].canvas_count = args[1].canvas_count = canvas_count;
+    args[0].background   = args[1].background   = config.background;
+
+    args[0].init(frame, opaque);
+    args[1].init(frame, opaque);
+
+    if(verbose) std::cout << "Frame computation (iteration, (computation [us], writing [ms]) * 8):" << std::endl;
 
     float tw[8] = {0}, tc[8] = {0};
-    auto begin = std::chrono::steady_clock::now();
-    compute_frame_gpu<opaque>(
-            0, frame_count,
-            canvases, canvas_count,
-            d_frame[0], frame_size, lifetime,
-            background);
-    cudaDeviceSynchronize();
-    auto _end = std::chrono::steady_clock::now();
-    tc[0] += (std::chrono::duration<float,std::micro>(_end-begin)).count();
-    auto start_all = begin;
+    auto start_all = std::chrono::steady_clock::now();
+
+    TIMEIT(tc[0], {
+        compute_frame_gpu<opaque>(0, args[0]);
+        cudaDeviceSynchronize();
+    })
 
     for(int32_t t=1; t < frame_count; t++) {
         #pragma omp parallel sections num_threads(2)
         {
             #pragma omp section
-            {
-                auto start = std::chrono::steady_clock::now();
-                cudaMemcpy(h_frame, d_frame[(t & 1) ^ 1], frame_mem, cudaMemcpyDeviceToHost);
-                raw_output.write(reinterpret_cast<const char *>(h_frame), frame_mem);
-                auto end = std::chrono::steady_clock::now();
-                tw[(t - 1) & 7] += (std::chrono::duration<float, std::milli>(end - start)).count();
-            }
+            TIMEIT(tw[(t-1)&7], {
+                HANDLE_AV_ERROR(av_frame_make_writable(frame), "Frame cannot be written")
+                args[(t-1)&1].copy_into(frame);
+                frame->pts = t-1;
+                w.encode(frame);
+            })
             #pragma omp section
-            {
-                auto start = std::chrono::steady_clock::now();
-                compute_frame_gpu<opaque>(t, frame_count, canvases, canvas_count, d_frame[t & 1], frame_size, lifetime, background);
+            TIMEIT(tc[t&7], {
+                compute_frame_gpu<opaque>(t, args[t&1]);
                 cudaDeviceSynchronize();
-                auto end = std::chrono::steady_clock::now();
-                tc[t & 7] += (std::chrono::duration<float,std::micro>(end - start)).count();
-            }
+            })
         }
         if(verbose && (t & 7) == 0) PRINT_TIMES(t)
     }
-    begin = std::chrono::steady_clock::now();
-    cudaMemcpy(h_frame, d_frame[(frame_count-1)&1], frame_mem, cudaMemcpyDeviceToHost);
-    raw_output.write(reinterpret_cast<const char *>(h_frame), frame_mem);
-    _end = std::chrono::steady_clock::now();
-    tw[(frame_count-1)&7] += (std::chrono::duration<float,std::milli>(_end-begin)).count();
-    if((frame_count & 7) == 0 && verbose) PRINT_TIMES(frame_count)
-    _end = std::chrono::steady_clock::now();
-    float total = (std::chrono::duration<float, std::ratio<1>>(_end-start_all)).count();
+    TIMEIT(tw[(frame_count-1)&7], {
+        args[(frame_count-1)&1].copy_into(frame);
+        frame->pts = frame_count-1;
+        w.encode(frame);
+    })
+
+    if(verbose && (frame_count & 7) == 0) PRINT_TIMES(frame_count)
+    auto end_all = std::chrono::steady_clock::now();
+    float total = (std::chrono::duration<float, std::ratio<1>>(end_all-start_all)).count();
     if(verbose) std::cout << "  :: total " << total << 's' << std::endl;
     else PRINT_SUMMARY(1e-3f)
 
-    cudaFree(d_frame[0]);
-    cudaFree(d_frame[1]);
-    free(h_frame);
+    w.close();
+    av_frame_free(&frame);
+    args[0].free();
+    args[1].free();
 }
 
-void write_video_gpu(
-        const char * filename,
-        const Canvas * canvases, uint32_t canvas_count,
-        uint32_t frame_size, int32_t frame_count,
-        int32_t lifetime, const RGBA * background
-) {
-    if(background->A == 1.0f) write_video_gpu_internal<true>(filename, canvases, canvas_count, frame_size, frame_count, lifetime, background);
-    else write_video_gpu_internal<false>(filename, canvases, canvas_count, frame_size, frame_count, lifetime, background);
+void write_video_gpu(const Configuration & config, const Canvas * canvases, uint32_t canvas_count) {
+    if(config.background.A == 1.0f) write_video_gpu_internal<true>(config, canvases, canvas_count);
+    else write_video_gpu_internal<false>(config, canvases, canvas_count);
 }
