@@ -26,6 +26,21 @@ extern "C" {
 }
 
 
+#define TIMEIT(VAR, BODY) { \
+    auto start = std::chrono::steady_clock::now(); \
+    BODY;                   \
+    auto end = std::chrono::steady_clock::now();   \
+    VAR += (std::chrono::duration<float, std::milli>(end-start)).count(); \
+}
+
+#define TIMEIT_us(VAR, BODY) { \
+    auto start = std::chrono::steady_clock::now(); \
+    BODY;                   \
+    auto end = std::chrono::steady_clock::now();   \
+    VAR += (std::chrono::duration<float, std::micro>(end-start)).count(); \
+}
+
+
 #define PRINT_TIMES(TIME) {\
     std::cout << "   " << std::setw(5) << (TIME)                                  \
               << " | " << std::setw(5) << tc[0] << " : " << std::setw(5) << tw[0] \
@@ -206,32 +221,25 @@ void write_video_serial_internal(const Configuration & config, Canvas canvas) {
     auto frame_count = config.evolution.frame_count;
     float tc[8] = {0}, tw[8] = {0};
     if(verbose) std::cout << "Frame computation (iteration, (computation [ms], writing [ms]) * 8):" << std::endl << std::setprecision(1);
-    timers(2)
-    tick(0)
+    auto start_all = std::chrono::steady_clock::now();
     for(int32_t t=0; t<frame_count; t++) {
         HANDLE_AV_ERROR(av_frame_make_writable(frame), "Frame cannot be written")
         frame->pts = t;
-        tick(1)
-        compute_frame_serial<opaque>(t, frame_count, config.evolution.life_time, canvas, frame, &config.background);
-        tock_ms(1)
-        tc[t&7] += t_elapsed;
-        tick(1)
-        w.encode(frame);
-        tock_ms(1)
-        tw[t&7] += t_elapsed;
+        TIMEIT(tc[t&7], compute_frame_serial<opaque>(t, frame_count, config.evolution.life_time, canvas, frame, &config.background))
+        TIMEIT(tw[t&7], w.encode(frame))
         if(verbose && (t&7) == 7) PRINT_TIMES(t+1)
     }
-    tock_s(0)
-    auto total = t_elapsed;
-    auto remaining = (frame_count-1)&7;
+    auto end_all = std::chrono::steady_clock::now();
+    auto total = (std::chrono::duration<float, std::micro>(end_all-start_all)).count();
     if(verbose) {
-        if(remaining) {
-            std::cout << "   " << std::setw(5) << frame_count
-                      << " | " << std::setw(5) << tc[0] << " | " << std::setw(5) << tw[0];
-            for(int32_t j=1; j<remaining; j++)
-                std::cout << " | " << std::setw(5) << tc[j] << " | " << std::setw(5) << tw[j];
-            std::cout << std::endl;
-        }
+//        auto remaining = (frame_count-1)&7;
+//        if(remaining) {
+//            std::cout << "   " << std::setw(5) << frame_count
+//                      << " | " << std::setw(5) << tc[0] << " | " << std::setw(5) << tw[0];
+//            for(int32_t j=1; j<remaining; j++)
+//                std::cout << " | " << std::setw(5) << tc[j] << " | " << std::setw(5) << tw[j];
+//            std::cout << std::endl;
+//        }
         std::cout << "  :: total " << total << 's' << std::endl;
     }
     else PRINT_SUMMARY(1)
@@ -254,43 +262,36 @@ void write_video_omp_internal(const Configuration & config, const Canvas * canva
     auto frame_count = config.evolution.frame_count;
     auto life_time = config.evolution.life_time;
     float tc[8] = {0}, tw[8] = {0};
-    tw[0] = -1.0;
 
     omp_set_nested(1);
 
     if(verbose) std::cout << "Frame computation (iteration, (computation [ms], writing [ms]) * 8):" << std::endl << std::setprecision(1);
     auto start_all = std::chrono::steady_clock::now();
 
-    frame_buffers[0]->pts = 0;
-    compute_frame_omp<opaque>(0, frame_count, life_time, canvases, canvas_count, frame_buffers[0], &config.background);
+    TIMEIT(tc[0], {
+        frame_buffers[0]->pts = 0;
+        compute_frame_omp<opaque>(0, frame_count, life_time, canvases, canvas_count, frame_buffers[0], &config.background);
+    })
 
     for(int32_t t=1; t<frame_count; t++) {
         #pragma omp parallel sections
         {
             #pragma omp section
-            {
-                auto start = std::chrono::steady_clock::now();
-                w.encode(frame_buffers[(t-1)&1]);
-                auto end = std::chrono::steady_clock::now();
-                tw[t&7] += (std::chrono::duration<float, std::milli>(end-start)).count();
-            }
+            TIMEIT(tw[(t-1)&7], w.encode(frame_buffers[(t-1)&1]))
+
             #pragma omp section
-            {
-                auto start = std::chrono::steady_clock::now();
+            TIMEIT(tc[t&7], {
                 auto frame = frame_buffers[t&1];
                 HANDLE_AV_ERROR(av_frame_make_writable(frame), "Frame cannot be written")
                 compute_frame_omp<opaque>(t, frame_count, life_time, canvases, canvas_count, frame_buffers[t&1], &config.background);
                 frame->pts = t;
-                auto end = std::chrono::steady_clock::now();
-                tc[t&7] += (std::chrono::duration<float, std::milli>(end-start)).count();
-            }
+            })
         }
-        if(verbose && (t&7) == 7) PRINT_TIMES(t+1)
+        if(verbose && (t&7) == 0) PRINT_TIMES(t)
     }
-    auto start = std::chrono::steady_clock::now();
-    w.encode(frame_buffers[(frame_count-1)&1]);
-    auto end = std::chrono::steady_clock::now();
-    tw[(frame_count-1)&7] += (std::chrono::duration<float, std::milli>(end-start)).count();
+    TIMEIT(tw[(frame_count-1)&7], w.encode(frame_buffers[(frame_count-1)&1]))
+    if(verbose && (frame_count&7) == 0) PRINT_TIMES(frame_count)
+
     auto end_all = std::chrono::steady_clock::now();
     float total = (std::chrono::duration<float, std::ratio<1>>(end_all-start_all)).count();
 
