@@ -19,7 +19,7 @@
  * @see https://en.cppreference.com/w/cpp/algorithm/lower_bound
  */
 template<class T, class Index>
-__device__ Index lower_bound(T value, T * data, Index length) {
+__device__ Index lower_bound(T value, const T * data, Index length) {
     #if CUDART_VERSION > 11000
     static_assert(cuda::std::is_integral<Index>::value, "Type used as index must be of integral type");
     #endif
@@ -48,7 +48,7 @@ __device__ Index lower_bound(T value, T * data, Index length) {
  * @see https://en.cppreference.com/w/cpp/algorithm/upper_bound
  */
 template<class T, class Index>
-__device__ Index upper_bound(T value, T * data, Index length) {
+__device__ Index upper_bound(T value, const T * data, Index length) {
 //    static_assert(std::is_integral_v<Index>, "Type used as index must be of integral type");
     Index step, index, first = 0;
     while (length > 0)
