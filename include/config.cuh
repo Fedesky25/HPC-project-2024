@@ -56,7 +56,7 @@ struct CanvasAdapter {
      * @param z input complex number
      * @return -1 if out of bounds, else the index of the pixel
      */
-    BOTH int32_t where(complex_t z);
+    BOTH int32_t where(complex_t z) const;
 };
 
 struct EvolutionOptions {

@@ -4,7 +4,7 @@
 
 int verbose = 0;
 
-__device__ __host__ int32_t CanvasAdapter::where(complex_t z) {
+__device__ __host__ int32_t CanvasAdapter::where(complex_t z) const {
     auto col = static_cast<int32_t>(std::round(scale*(z.real() - center.real()))) + (width >> 1);
     auto row = static_cast<int32_t>(std::round(scale*(z.imag() - center.imag()))) + (height >> 1);
     if(row < 0 || row >= height || col < 0 || col >= width) return -1;
