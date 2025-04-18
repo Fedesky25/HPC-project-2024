@@ -44,18 +44,57 @@ __device__ __host__ void draw(Canvas canvas, CanvasAdapter * adapter, EvolutionO
     }
 }
 
-__global__ void evolve_kernel(Configuration * config, Canvas* canvas, complex_t* particles,
-                              const uint32_t * tile_offsets, const float * rand_offsets, ComplexFunction_t func,
-                              unsigned subtile
-                       ){
-    auto tile_idx = threadIdx.x + subtile*blockDim.x;
-    auto count = tile_offsets[tile_idx + 1] - tile_offsets[tile_idx];
-    auto canvas_idx = blockIdx.x;
-    if(canvas_idx >= count) return;
-    auto particle_idx = tile_offsets[tile_idx] + canvas_idx;
-    auto z = particles[particle_idx];
-    auto offset = static_cast<uint32_t>(rand_offsets[particle_idx] * (float) config->evolution.frame_count);
-    draw(canvas[canvas_idx], &config->canvas, &config->evolution, func, &config->vars, z, offset);
+__global__ void evolve_kernel(
+        Canvas * canvas_array, const CanvasAdapter * adapter,
+        double speed_factor, double dt,
+        complex_t* particles,
+        const uint32_t * tile_offsets,
+        const float * rand_offsets,
+        ComplexFunction_t func,
+        FnVariables * fn_vars,
+        int32_t frame_count, uint8_t subtile
+){
+
+    complex_t z;
+    uint32_t offset;
+    Canvas canvas;
+
+    {
+        auto tile_idx = threadIdx.x + subtile*blockDim.x;
+        auto count = tile_offsets[tile_idx + 1] - tile_offsets[tile_idx];
+        auto canvas_idx = blockIdx.x;
+        if(canvas_idx >= count) return;
+        auto particle_idx = tile_offsets[tile_idx] + canvas_idx;
+        z = particles[particle_idx];
+        offset = static_cast<uint32_t>(rand_offsets[particle_idx] * (float) frame_count);
+        canvas = canvas_array[canvas_idx];
+    };
+
+    double elapsed;
+    for(int32_t j=0; j<frame_count; j++) {
+        elapsed = 0.0;
+        do {
+            auto pixel_idx = adapter->where(z);
+            auto dz = func(z, fn_vars);
+            double speed = C_NORM(dz);
+            dz *= dt;
+            {
+                double D = (adapter->scale * C_ABS(dz));
+                if (D > 1) {
+                    dz /= D;
+                    elapsed += dt / D;
+                } else {
+                    elapsed += dt;
+                }
+            };
+            z += dz;
+
+            if (pixel_idx != -1) {
+                if(!canvas[pixel_idx].update_age((offset + j) % frame_count)) return;
+                canvas[pixel_idx].set_color(speed, speed_factor);
+            }
+        } while (elapsed < dt);
+    }
 }
 
 void evolve_gpu(Configuration * config,
@@ -79,10 +118,48 @@ void evolve_gpu(Configuration * config,
     tick(0);
     auto func = get_function_global(fn_choice);
     auto d_config = devicify(config);
-    evolve_kernel<<<canvas_count, tiles_count>>>(d_config, canvas, particles, tile_offsets, d_rand_floats, func, 0);
-    evolve_kernel<<<canvas_count, tiles_count>>>(d_config, canvas, particles, tile_offsets, d_rand_floats, func, 1);
-    evolve_kernel<<<canvas_count, tiles_count>>>(d_config, canvas, particles, tile_offsets, d_rand_floats, func, 2);
-    evolve_kernel<<<canvas_count, tiles_count>>>(d_config, canvas, particles, tile_offsets, d_rand_floats, func, 3);
+
+    evolve_kernel<<<canvas_count, tiles_count>>>(
+            canvas, &config->canvas,
+            config->evolution.speed_factor, config->evolution.delta_time,
+            particles, tile_offsets, d_rand_floats,
+            func, &config->vars,
+            config->evolution.frame_count, 0);
+    cudaDeviceSynchronize();
+    auto err = cudaPeekAtLastError();
+    std::cout << cudaGetErrorString(err) << std::endl;
+
+    evolve_kernel<<<canvas_count, tiles_count>>>(
+            canvas, &config->canvas,
+            config->evolution.speed_factor, config->evolution.delta_time,
+            particles, tile_offsets, d_rand_floats,
+            func, &config->vars,
+            config->evolution.frame_count, 1);
+
+    cudaDeviceSynchronize();
+    err = cudaPeekAtLastError();
+    std::cout << cudaGetErrorString(err) << std::endl;
+
+    evolve_kernel<<<canvas_count, tiles_count>>>(
+            canvas, &config->canvas,
+            config->evolution.speed_factor, config->evolution.delta_time,
+            particles, tile_offsets, d_rand_floats,
+            func, &config->vars,
+            config->evolution.frame_count, 2);
+    cudaDeviceSynchronize();
+    err = cudaPeekAtLastError();
+    std::cout << cudaGetErrorString(err) << std::endl;
+
+    evolve_kernel<<<canvas_count, tiles_count>>>(
+            canvas, &config->canvas,
+            config->evolution.speed_factor, config->evolution.delta_time,
+            particles, tile_offsets, d_rand_floats,
+            func, &config->vars,
+            config->evolution.frame_count, 3);
+    cudaDeviceSynchronize();
+    err = cudaPeekAtLastError();
+    std::cout << cudaGetErrorString(err) << std::endl;
+
     cudaFree(d_config);
     cudaDeviceSynchronize();
     tock_ms(0);
