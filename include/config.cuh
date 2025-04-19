@@ -111,7 +111,7 @@ struct Configuration {
  * @return device pointer to a copy of obj
  */
 template<class T>
-T* devicify(T* obj) {
+T* devicify(const T * obj) {
     T* d_obj;
     cudaMalloc(&d_obj, sizeof(T));
     cudaMemcpy(d_obj, obj, sizeof(T), cudaMemcpyHostToDevice);
