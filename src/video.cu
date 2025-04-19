@@ -208,6 +208,8 @@ void encode(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, FILE *outfil
     } while (ret >= 0);
 }
 
+static const char * const header = "Frame computation (iteration, (computation [ms], writing [ms]) * 8):";
+
 
 template<bool opaque>
 void write_video_serial_internal(const Configuration & config, Canvas canvas) {
@@ -217,7 +219,7 @@ void write_video_serial_internal(const Configuration & config, Canvas canvas) {
 
     auto frame_count = config.evolution.frame_count;
     float tc[8] = {0}, tw[8] = {0};
-    if(verbose) std::cout << "Frame computation (iteration, (computation [ms], writing [ms]) * 8):" << std::endl << std::setprecision(1);
+    if(verbose) std::cout << header << std::endl << std::setprecision(1);
     auto start_all = std::chrono::steady_clock::now();
     for(int32_t t=0; t<frame_count; t++) {
         HANDLE_AV_ERROR(av_frame_make_writable(frame), "Frame cannot be written")
@@ -262,7 +264,7 @@ void write_video_omp_internal(const Configuration & config, const Canvas * canva
 
     omp_set_nested(1);
 
-    if(verbose) std::cout << "Frame computation (iteration, (computation [ms], writing [ms]) * 8):" << std::endl << std::setprecision(1);
+    if(verbose) std::cout << header << std::endl << std::setprecision(1);
     auto start_all = std::chrono::steady_clock::now();
 
     TIMEIT(tc[0], {
@@ -325,7 +327,7 @@ void write_video_gpu_internal(const Configuration & config, const Canvas * canva
     args[0].init(frame, opaque);
     args[1].init(frame, opaque);
 
-    if(verbose) std::cout << "Frame computation (iteration, (computation [us], writing [ms]) * 8):" << std::endl;
+    if(verbose) std::cout << header << std::endl;
 
     float tw[8] = {0}, tc[8] = {0};
     auto start_all = std::chrono::steady_clock::now();
