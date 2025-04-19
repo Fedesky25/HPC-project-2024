@@ -8,6 +8,8 @@
 #include "canvas.cuh"
 #include "complex_functions.cuh"
 
+int get_evolve_regs();
+
 /**
  * Calculates and draws particle evolution on different canvases using the GPU
  * @param config device pointer to configuration

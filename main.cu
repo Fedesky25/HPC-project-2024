@@ -19,8 +19,8 @@ int main(int argc, char * argv[]) {
     }
 
     Configuration config;
-    auto err = parse_args(argc, argv, &config);
-    if(err) return 1;
+    auto error = parse_args(argc, argv, &config);
+    if(error) return 1;
 
     EXIT_IF(optind >= argc, "Missing function to plot")
     auto fn_choice = strtofn(argv[optind]);
@@ -74,10 +74,14 @@ int main(int argc, char * argv[]) {
             }
             else if(gpu_count > 1) cudaSetDevice(0);
 
-            Tiles tiles(&config);
+            int block_regs;
+            CATCH_CUDA_ERROR(cudaDeviceGetAttribute(&block_regs, cudaDevAttrMaxRegistersPerBlock, 0))
+            float tile_count_target = (float) block_regs / (float) get_evolve_regs();
+            Tiles tiles(&config, tile_count_target);
             unsigned tiles_count = tiles.total();
             if(verbose) std::cout << "  Tiles: " << tiles.rows << 'x' << tiles.cols << '=' << tiles_count << " with "
                                   << (float) N / (float) tiles_count << " particles each" << std::endl;
+
             points = particles_gpu(min, max, N, config.lloyd_iterations);
             auto tile_offsets = tiles.sort(min, max, points, N);
             auto canvas_count = get_canvas_count_serial(tile_offsets, tiles_count);

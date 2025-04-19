@@ -4,16 +4,17 @@
 #include <iomanip>
 
 
-Tiles::Tiles(Configuration * config) {
+Tiles::Tiles(Configuration * config, float target) {
     unsigned width, height;
     config->sizes(&width, &height);
-    cover(width, height);
+    cover(width, height, target);
 }
 
-void Tiles::cover(unsigned int width, unsigned int height) {
+void Tiles::cover(unsigned int width, unsigned int height, float target) {
+    float base = sqrt(target);
     float r = sqrt((float) width / (float) height);
-    cols = static_cast<uint_fast16_t>(32*r);
-    rows = static_cast<uint_fast16_t>(32/r);
+    cols = static_cast<uint_fast16_t>(base*r);
+    rows = static_cast<uint_fast16_t>(base/r);
 }
 
 __global__ void compute_tile(

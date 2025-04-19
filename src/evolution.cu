@@ -97,6 +97,12 @@ __global__ void evolve_kernel(
     }
 }
 
+int get_evolve_regs() {
+    cudaFuncAttributes attrs;
+    cudaFuncGetAttributes(&attrs, evolve_kernel);
+    return attrs.numRegs;
+}
+
 void evolve_gpu(Configuration * config,
                 Canvas* canvas, uint32_t canvas_count,
                 complex_t* particles, uint64_t N_particles,

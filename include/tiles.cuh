@@ -7,7 +7,7 @@ struct Tiles {
     uint_fast16_t rows = 0, cols = 0;
 
     inline Tiles() = default;
-    explicit Tiles(Configuration * config);
+    explicit Tiles(Configuration * config, float target = 1024.f);
 
     /** @returns total number of tiles */
     inline auto total() const { return rows * cols; }
@@ -17,8 +17,9 @@ struct Tiles {
      * square as possible and as close as possible to 1024 in number
      * @param width
      * @param height
+     * @param target target number of tiles
      */
-    void cover(unsigned width, unsigned height);
+    void cover(unsigned width, unsigned height, float target = 1024.f);
 
     /**
      *
