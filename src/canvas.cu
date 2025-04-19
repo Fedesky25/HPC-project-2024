@@ -87,8 +87,8 @@ Canvas * create_canvas_device(uint32_t count, CanvasAdapter * adapter) {
     auto h_array = (Canvas*) malloc(array_bytes);
     for(uint32_t i=0; i<count; i++) cudaMalloc(&h_array[i], canvas_bytes);
     Canvas * d_array;
-    cudaMalloc(&d_array, array_bytes);
-    cudaMemcpy(d_array, h_array, array_bytes, cudaMemcpyHostToDevice);
+    CATCH_CUDA_ERROR(cudaMalloc(&d_array, array_bytes))
+    CATCH_CUDA_ERROR(cudaMemcpy(d_array, h_array, array_bytes, cudaMemcpyHostToDevice))
     free(h_array);
     init_canvas_array<<<count, 1024>>>(d_array, len);
     tock_ms(0)
@@ -101,7 +101,7 @@ uint32_t get_canvas_count_serial(const uint32_t * offsets, uint32_t tiles) {
     timers(1) tick(0)
     auto size = (1+4*tiles) * sizeof(uint32_t);
     auto h_ofs = (uint32_t*) malloc(size);
-    cudaMemcpy(h_ofs, offsets, size, cudaMemcpyDeviceToHost);
+    CATCH_CUDA_ERROR(cudaMemcpy(h_ofs, offsets, size, cudaMemcpyDeviceToHost))
     uint32_t max_c = h_ofs[1], v;
     for(uint32_t i=1; i<4*tiles; i++) {
         v = h_ofs[i+1] - h_ofs[i];

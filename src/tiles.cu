@@ -48,14 +48,14 @@ uint32_t * Tiles::sort(complex_t &min, complex_t &max, complex_t *particles, uin
     cudaDeviceSynchronize();
     tock_us(1) times[0] = t_elapsed; tick(1)
     compute_tile<<<M, tile_count>>>(N, particles, tile_map.keys(), min, hscale, vscale, cols, rows);
-    cudaDeviceSynchronize();
+    CATCH_CUDA_ERROR(cudaDeviceSynchronize())
     tock_us(1) times[1] = t_elapsed; tick(1)
     // thrust::sort_by_key(thrust::device, tile_map, tile_map + N, particles);
     tile_map.sort();
-    cudaDeviceSynchronize();
+    CATCH_CUDA_ERROR(cudaDeviceSynchronize())
     tock_us(1) times[2] = t_elapsed; tick(1)
     compute_offset_per_tile<<<4, tile_count>>>(N, tile_map.keys(), offsets);
-    cudaMemcpy(offsets + 4*tile_count, &N, sizeof(uint32_t), cudaMemcpyHostToDevice);
+    CATCH_CUDA_ERROR(cudaMemcpy(offsets + 4*tile_count, &N, sizeof(uint32_t), cudaMemcpyHostToDevice))
     tock_us(1) times[3] = t_elapsed;
     tock_us(0)
     float m = 100.0f / t_elapsed;

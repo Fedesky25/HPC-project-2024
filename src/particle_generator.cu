@@ -353,7 +353,7 @@ complex_t* particles_gpu(complex_t z1, complex_t z2, uint32_t N, unsigned iterat
     KVSorter<uint32_t, complex_t> density_points(n_density + 1); // +1 to have halo element
     {
         uint32_t halo = UINT32_MAX;
-        cudaMemcpy(density_points.keys() + n_density, &halo, sizeof(uint32_t), cudaMemcpyHostToDevice);
+        CATCH_CUDA_ERROR(cudaMemcpy(density_points.keys() + n_density, &halo, sizeof(uint32_t), cudaMemcpyHostToDevice))
     }
 
     PRINT_INITIAL timers(3) tick(0)
@@ -369,7 +369,7 @@ complex_t* particles_gpu(complex_t z1, complex_t z2, uint32_t N, unsigned iterat
     scale_complex<<<128, 1024>>>(deltaReal, deltaImag, z1, d_sites, N);
     curandGenerateUniformDouble(gen, (double*) density_points.values(), n_density*2);
     scale_complex<<<128, 1024>>>(deltaReal, deltaImag, z1, density_points.values(), n_density);
-    cudaDeviceSynchronize();
+    CATCH_CUDA_ERROR(cudaDeviceSynchronize())
     tock_ms(0) std::cout << " generated in " << t_elapsed << "ms" << std::endl;
 
     float times[3] = {0};
@@ -382,15 +382,15 @@ complex_t* particles_gpu(complex_t z1, complex_t z2, uint32_t N, unsigned iterat
 //        compute_nearest<<<D,1024>>>(density_points.values(), n_density, d_sites, N, density_points.keys());
         compute_nearest<<< (n_density >> 10), 1024 >>>(density_points.values()+D, d_sites, N, density_points.keys()+D);
         if(D) compute_nearest<<<1,D>>>(density_points.values(), d_sites, N, density_points.keys());
-        cudaDeviceSynchronize();
+        CATCH_CUDA_ERROR(cudaDeviceSynchronize())
         tock_ms(2) times[0] += t_elapsed; tick(2)
         // thrust::sort_by_key(thrust::device, d_nearest, d_nearest + n_density, d_density);
         // cub::DeviceRadixSort::SortPairs()
         density_points.sort();
-        cudaDeviceSynchronize();
+        CATCH_CUDA_ERROR(cudaDeviceSynchronize())
         tock_ms(2) times[1] += t_elapsed; tick(2)
         update_sites<<<M, 1024>>>(density_points.values(), n_density, d_sites, N, density_points.keys());
-        cudaDeviceSynchronize();
+        CATCH_CUDA_ERROR(cudaDeviceSynchronize())
         tock_ms(2) times[2] += t_elapsed; tock_ms(1)
         if(verbose) {
             float m = 100.0f / t_elapsed;

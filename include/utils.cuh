@@ -29,9 +29,9 @@
     if(err) {                         \
         auto details = cudaGetErrorString(err); \
         std::cerr << "Cuda Error: " << details; \
-        std::cerr << "\n in function ";         \
+        std::cerr << "\n >> in function ";         \
         std::cerr << FN_NAME_HERE;    \
-        std::cerr << " (l:" << __LINE__ << ")" << std::endl; \
+        std::cerr << " (L:" << __LINE__ << ")" << std::endl; \
         exit(1);                      \
     }                                 \
 }

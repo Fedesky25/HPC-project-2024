@@ -131,9 +131,7 @@ void evolve_gpu(Configuration * config,
             particles, tile_offsets, d_rand_floats,
             func, &config->vars,
             config->evolution.frame_count, 0);
-    cudaDeviceSynchronize();
-    auto err = cudaPeekAtLastError();
-    std::cout << cudaGetErrorString(err) << std::endl;
+    CATCH_CUDA_ERROR(cudaDeviceSynchronize());
 
     evolve_kernel<<<canvas_count, tiles_count>>>(
             canvas, &config->canvas,
@@ -142,9 +140,7 @@ void evolve_gpu(Configuration * config,
             func, &config->vars,
             config->evolution.frame_count, 1);
 
-    cudaDeviceSynchronize();
-    err = cudaPeekAtLastError();
-    std::cout << cudaGetErrorString(err) << std::endl;
+    CATCH_CUDA_ERROR(cudaDeviceSynchronize());
 
     evolve_kernel<<<canvas_count, tiles_count>>>(
             canvas, &config->canvas,
@@ -152,9 +148,7 @@ void evolve_gpu(Configuration * config,
             particles, tile_offsets, d_rand_floats,
             func, &config->vars,
             config->evolution.frame_count, 2);
-    cudaDeviceSynchronize();
-    err = cudaPeekAtLastError();
-    std::cout << cudaGetErrorString(err) << std::endl;
+    CATCH_CUDA_ERROR(cudaDeviceSynchronize());
 
     evolve_kernel<<<canvas_count, tiles_count>>>(
             canvas, &config->canvas,
@@ -162,9 +156,7 @@ void evolve_gpu(Configuration * config,
             particles, tile_offsets, d_rand_floats,
             func, &config->vars,
             config->evolution.frame_count, 3);
-    cudaDeviceSynchronize();
-    err = cudaPeekAtLastError();
-    std::cout << cudaGetErrorString(err) << std::endl;
+    CATCH_CUDA_ERROR(cudaDeviceSynchronize());
 
     cudaFree(d_config);
     cudaDeviceSynchronize();
