@@ -120,6 +120,7 @@ void evolve_gpu(const Configuration * config,
     auto seed = std::chrono::system_clock::now().time_since_epoch().count();
     curandSetPseudoRandomGeneratorSeed(gen, seed);
     curandGenerateUniform(gen, d_rand_floats, N_particles);
+    CATCH_CUDA_ERROR(cudaDeviceSynchronize())
     tock_ms(0)
     std::cout << "Random time offsets generated in " << t_elapsed << "ms" << std::endl;
 
@@ -134,7 +135,6 @@ void evolve_gpu(const Configuration * config,
             particles, tile_offsets, d_rand_floats,
             func, d_vars,
             config->evolution.frame_count, 0);
-    CATCH_CUDA_ERROR(cudaDeviceSynchronize());
 
     evolve_kernel<<<canvas_count, tiles_count>>>(
             canvas, d_adapter,
@@ -143,15 +143,12 @@ void evolve_gpu(const Configuration * config,
             func, d_vars,
             config->evolution.frame_count, 1);
 
-    CATCH_CUDA_ERROR(cudaDeviceSynchronize());
-
     evolve_kernel<<<canvas_count, tiles_count>>>(
             canvas, d_adapter,
             config->evolution.speed_factor, config->evolution.delta_time,
             particles, tile_offsets, d_rand_floats,
             func, d_vars,
             config->evolution.frame_count, 2);
-    CATCH_CUDA_ERROR(cudaDeviceSynchronize());
 
     evolve_kernel<<<canvas_count, tiles_count>>>(
             canvas, d_adapter,
@@ -159,13 +156,14 @@ void evolve_gpu(const Configuration * config,
             particles, tile_offsets, d_rand_floats,
             func, d_vars,
             config->evolution.frame_count, 3);
+
     CATCH_CUDA_ERROR(cudaDeviceSynchronize());
 
+    tock_ms(0);
     cudaFree(d_vars);
     cudaFree(d_adapter);
     cudaFree(d_rand_floats);
     cudaDeviceSynchronize();
-    tock_ms(0);
     PRINT_TIME
 }
 
