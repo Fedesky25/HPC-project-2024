@@ -125,13 +125,14 @@ void evolve_gpu(const Configuration * config,
 
     tick(0);
     auto func = get_function_global(fn_choice);
-    auto d_config = devicify(config);
+    auto d_adapter = devicify(&config->canvas);
+    auto d_vars = devicify(&config->vars);
 
-    evolve_kernel<<<canvas_count, tiles_count>>>(
-            canvas, &config->canvas,
+    evolve_kernel<<<canvas_count, 10>>>(
+            canvas, d_adapter,
             config->evolution.speed_factor, config->evolution.delta_time,
             particles, tile_offsets, d_rand_floats,
-            func, &config->vars,
+            func, d_vars,
             config->evolution.frame_count, 0);
     CATCH_CUDA_ERROR(cudaDeviceSynchronize());
 
@@ -139,7 +140,7 @@ void evolve_gpu(const Configuration * config,
             canvas, &config->canvas,
             config->evolution.speed_factor, config->evolution.delta_time,
             particles, tile_offsets, d_rand_floats,
-            func, &config->vars,
+            func, d_vars,
             config->evolution.frame_count, 1);
 
     CATCH_CUDA_ERROR(cudaDeviceSynchronize());
@@ -148,7 +149,7 @@ void evolve_gpu(const Configuration * config,
             canvas, &config->canvas,
             config->evolution.speed_factor, config->evolution.delta_time,
             particles, tile_offsets, d_rand_floats,
-            func, &config->vars,
+            func, d_vars,
             config->evolution.frame_count, 2);
     CATCH_CUDA_ERROR(cudaDeviceSynchronize());
 
@@ -156,11 +157,13 @@ void evolve_gpu(const Configuration * config,
             canvas, &config->canvas,
             config->evolution.speed_factor, config->evolution.delta_time,
             particles, tile_offsets, d_rand_floats,
-            func, &config->vars,
+            func, d_vars,
             config->evolution.frame_count, 3);
     CATCH_CUDA_ERROR(cudaDeviceSynchronize());
 
-    cudaFree(d_config);
+    cudaFree(d_vars);
+    cudaFree(d_adapter);
+    cudaFree(d_rand_floats);
     cudaDeviceSynchronize();
     tock_ms(0);
     PRINT_TIME
