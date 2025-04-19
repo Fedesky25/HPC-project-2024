@@ -132,6 +132,13 @@ endif ()
 
 set_target_properties(HPC_project_2024 PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
+target_compile_options(HPC_project_2024 PRIVATE -Xptxas -maxrregcount=64)
+target_compile_options(HPC_project_2024 PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:
+        --generate-line-info
+#        --use_fast_math
+#        --relocatable-device-code=true
+>)
+
 target_compile_options(HPC_project_2024 PRIVATE $<$<CONFIG:Debug>:-Xptxas -v>)
 target_compile_options(HPC_project_2024 PRIVATE $<$<CONFIG:RelWithDebInfo>:-Xptxas -v>)
 
