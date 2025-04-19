@@ -137,7 +137,7 @@ void evolve_gpu(const Configuration * config,
     CATCH_CUDA_ERROR(cudaDeviceSynchronize());
 
     evolve_kernel<<<canvas_count, tiles_count>>>(
-            canvas, &config->canvas,
+            canvas, d_adapter,
             config->evolution.speed_factor, config->evolution.delta_time,
             particles, tile_offsets, d_rand_floats,
             func, d_vars,
@@ -146,7 +146,7 @@ void evolve_gpu(const Configuration * config,
     CATCH_CUDA_ERROR(cudaDeviceSynchronize());
 
     evolve_kernel<<<canvas_count, tiles_count>>>(
-            canvas, &config->canvas,
+            canvas, d_adapter,
             config->evolution.speed_factor, config->evolution.delta_time,
             particles, tile_offsets, d_rand_floats,
             func, d_vars,
@@ -154,7 +154,7 @@ void evolve_gpu(const Configuration * config,
     CATCH_CUDA_ERROR(cudaDeviceSynchronize());
 
     evolve_kernel<<<canvas_count, tiles_count>>>(
-            canvas, &config->canvas,
+            canvas, d_adapter,
             config->evolution.speed_factor, config->evolution.delta_time,
             particles, tile_offsets, d_rand_floats,
             func, d_vars,
