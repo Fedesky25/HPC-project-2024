@@ -51,4 +51,6 @@ complex_t* particles_mixed(complex_t z1, complex_t z2, uint32_t N, unsigned iter
  */
 complex_t* particles_gpu(complex_t z1, complex_t z2, uint32_t N, unsigned iterations);
 
+void pgen_print_regs();
+
 #endif //HPC_PROJECT_2024_PARTICLE_GENERATOR_CUH

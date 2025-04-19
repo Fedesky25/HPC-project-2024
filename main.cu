@@ -8,6 +8,7 @@
 #include "complex_functions.cuh"
 #include "canvas.cuh"
 #include "evolution.cuh"
+#include "frames.cuh"
 #include "video.cuh"
 #include "omp.h"
 
@@ -74,13 +75,23 @@ int main(int argc, char * argv[]) {
             }
             else if(gpu_count > 1) cudaSetDevice(0);
 
-            int block_regs;
-            CATCH_CUDA_ERROR(cudaDeviceGetAttribute(&block_regs, cudaDevAttrMaxRegistersPerBlock, 0))
-            float tile_count_target = (float) block_regs / (float) get_evolve_regs();
+            int regs_needed = get_evolve_regs();
+            float tile_count_target = std::min(1024.f, 65536.f / (float) regs_needed);
+//            tile_count_target = 100;
+
             Tiles tiles(&config, tile_count_target);
             unsigned tiles_count = tiles.total();
-            if(verbose) std::cout << "  Tiles: " << tiles.rows << 'x' << tiles.cols << '=' << tiles_count << " with "
-                                  << (float) N / (float) tiles_count << " particles each" << std::endl;
+            if(verbose) {
+                std::cout << "  Tiles: " << tiles.rows << 'x' << tiles.cols << '=' << tiles_count
+                          << " (target: " << tile_count_target << ") with "
+                          << (float) N / (float) tiles_count << " particles each" << std::endl;
+                std::cout << "\nRegisters used by kernels: \n";
+                pgen_print_regs();
+                tiles_print_regs();
+                std::cout << " - evolve: " << regs_needed << "\n";
+                frame_print_regs();
+                std::cout << std::endl;
+            }
 
             points = particles_gpu(min, max, N, config.lloyd_iterations);
             auto tile_offsets = tiles.sort(min, max, points, N);

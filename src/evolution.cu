@@ -99,7 +99,7 @@ __global__ void evolve_kernel(
 
 int get_evolve_regs() {
     cudaFuncAttributes attrs;
-    cudaFuncGetAttributes(&attrs, evolve_kernel);
+    cudaFuncGetAttributes(&attrs, &evolve_kernel);
     return attrs.numRegs;
 }
 
