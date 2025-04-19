@@ -23,13 +23,11 @@ __device__ Index lower_bound(T value, const T * data, Index length) {
     #if CUDART_VERSION > 11000
     static_assert(cuda::std::is_integral<Index>::value, "Type used as index must be of integral type");
     #endif
-    Index step, index, first = 0;
+    Index step, first = 0;
     while (length > 0) {
-        index = first;
         step = length >> 1;
-        index += step;
-        if (data[index] < value) {
-            first = index + 1;
+        if (data[first + step] < value) {
+            first += step + 1;
             length -= step + 1;
         }
         else length = step;
