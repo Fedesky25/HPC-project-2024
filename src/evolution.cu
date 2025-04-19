@@ -13,9 +13,11 @@
     else std::cout << t_elapsed << "ms" << std::endl;                       \
 }
 
-__device__ __host__ void draw(Canvas canvas, CanvasAdapter * adapter, EvolutionOptions * options,
-                              ComplexFunction_t func, FnVariables* variables,
-                              complex_t z, uint32_t offset){
+__host__ void draw(
+        Canvas canvas, const CanvasAdapter * adapter, const EvolutionOptions * options,
+        ComplexFunction_t func, const FnVariables* variables,
+        complex_t z, uint32_t offset
+){
     complex_t v, dz;
     double D, elapsed;
     auto dt = options->delta_time;
@@ -51,7 +53,7 @@ __global__ void evolve_kernel(
         const uint32_t * tile_offsets,
         const float * rand_offsets,
         ComplexFunction_t func,
-        FnVariables * fn_vars,
+        const FnVariables * fn_vars,
         int32_t frame_count, uint8_t subtile
 ){
 
@@ -103,7 +105,7 @@ int get_evolve_regs() {
     return attrs.numRegs;
 }
 
-void evolve_gpu(Configuration * config,
+void evolve_gpu(const Configuration * config,
                 Canvas* canvas, uint32_t canvas_count,
                 complex_t* particles, uint64_t N_particles,
                 const uint32_t* tile_offsets, uint32_t tiles_count,
@@ -166,7 +168,7 @@ void evolve_gpu(Configuration * config,
 
 // Divide particle evolution between threads by #pragma omp parallel for.
 // Each thread writes particles on its own canvas
-void evolve_omp(Configuration* config, Canvas* canvas,
+void evolve_omp(const Configuration * config, Canvas* canvas,
                 complex_t* particles, uint64_t N_particles,
                 FunctionChoice fn_choice){
 
@@ -188,7 +190,8 @@ void evolve_omp(Configuration* config, Canvas* canvas,
     PRINT_TIME
 }
 
-void evolve_serial(Configuration* config, Canvas canvas,
+void evolve_serial(
+                const Configuration * config, Canvas canvas,
                 complex_t* particles, uint64_t N_particles,
                 FunctionChoice fn_choice){
 

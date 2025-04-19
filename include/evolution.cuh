@@ -12,7 +12,7 @@ int get_evolve_regs();
 
 /**
  * Calculates and draws particle evolution on different canvases using the GPU
- * @param config device pointer to configuration
+ * @param config host pointer to configuration
  * @param canvas device array of canvases
  * @param canvas_count number of canvases
  * @param particles array of particles ordered by tile
@@ -22,7 +22,7 @@ int get_evolve_regs();
  * @param tiles_count number of tiles
  */
 void evolve_gpu(
-        Configuration * config,
+        const Configuration * config,
         Canvas* canvas, uint32_t canvas_count,
         complex_t* particles, uint64_t N_particles,
         const uint32_t * tile_offsets, uint32_t tiles_count,
@@ -37,7 +37,7 @@ void evolve_gpu(
  * @param fn_choice choice of function
  */
 void evolve_omp(
-        Configuration* config, Canvas* canvas,
+        const Configuration * config, Canvas* canvas,
         complex_t* particles, uint64_t N_particles,
         FunctionChoice fn_choice);
 
@@ -50,7 +50,7 @@ void evolve_omp(
  * @param fn_choice choice of function
  */
 void evolve_serial(
-        Configuration* config, Canvas canvas,
+        const Configuration * config, Canvas canvas,
         complex_t* particles, uint64_t N_particles,
         FunctionChoice fn_choice);
 
