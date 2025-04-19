@@ -225,17 +225,13 @@ __global__ void compute_nearest(
 ){
     auto index = threadIdx.x + blockIdx.x*blockDim.x;
     // if(index >= N_density) return;
-    double current, min = INFINITY;
-    complex_t z = density_points[index];
-    uint32_t n;
+    double min = INFINITY;
     for (uint32_t k = 0; k < N_sites; k++) {  // Iterating on sites to save the nearest site to each density point
-        current = C_NORM(z - sites[k]);
-        if (current < min) {
-            n = k;
-            min = current;
+        if (C_NORM(density_points[index] - sites[k]) < min) {
+            nearest[index] = k;
+            min = C_NORM(density_points[index] - sites[k]);
         }
     }
-    nearest[index] = n;
 }
 
 complex_t* particles_mixed(complex_t z1, complex_t z2, uint32_t N, unsigned iterations){
