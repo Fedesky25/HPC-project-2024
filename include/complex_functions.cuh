@@ -32,7 +32,7 @@ struct FnVariables {
     long n = 0;
 };
 
-typedef complex_t (*ComplexFunction_t)(complex_t, FnVariables*);
+typedef complex_t (*ComplexFunction_t)(complex_t, const FnVariables *);
 
 /**
  * Given the choice, it returns a host pointer to a host function

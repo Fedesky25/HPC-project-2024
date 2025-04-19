@@ -23,143 +23,143 @@ __device__ __host__ inline complex_t complex_log(complex_t z, long k){
 
 // ------------------------------------------------------------------------------------- polynomial
 
-__device__ __host__ complex_t polynomial1(complex_t z, FnVariables* variables){
+__device__ __host__ complex_t polynomial1(complex_t z, const FnVariables* variables){
     return variables->z[0] * z + variables->z[1];
 }
 
-__device__ __host__ complex_t polynomial2(complex_t z, FnVariables* variables){
+__device__ __host__ complex_t polynomial2(complex_t z, const FnVariables* variables){
     return variables->z[0] * (z*z) + variables->z[1] * z + variables->z[2];
 }
 
-__device__ __host__ complex_t polynomial3(complex_t z, FnVariables* variables){
+__device__ __host__ complex_t polynomial3(complex_t z, const FnVariables* variables){
     return variables->z[0] * (z*z*z) + variables->z[1] * z + variables->z[2];
 }
 
-__device__ __host__ complex_t polynomial_fact(complex_t z, FnVariables* variables){
+__device__ __host__ complex_t polynomial_fact(complex_t z, const FnVariables* variables){
     return (z-variables->z[0])*(z-variables->z[1])*(z-variables->z[2]);
 }
 
 // ------------------------------------------------------------------------------------- power
 
-__device__ __host__ complex_t int_power(complex_t z, FnVariables* variables){
+__device__ __host__ complex_t int_power(complex_t z, const FnVariables* variables){
     return calc::pow(z, variables->n);
 }
 
-__device__ __host__ complex_t real_power(complex_t z, FnVariables* variables){
+__device__ __host__ complex_t real_power(complex_t z, const FnVariables* variables){
     return calc::exp(complex_log(z, variables->n) * variables->x);
 }
 
-__device__ __host__ complex_t complex_power(complex_t z, FnVariables* variables){
+__device__ __host__ complex_t complex_power(complex_t z, const FnVariables* variables){
     return calc::exp(complex_log(z, variables->n) * variables->z[0]);
 }
 
 // ------------------------------------------------------------------------------------- exponential
 
-__device__ __host__ complex_t exp_simple(complex_t z, FnVariables*){
+__device__ __host__ complex_t exp_simple(complex_t z, const FnVariables*){
     return calc::exp(z);
 }
 
-__device__ __host__ complex_t exp_parametric(complex_t z, FnVariables* variables){
+__device__ __host__ complex_t exp_parametric(complex_t z, const FnVariables* variables){
     return calc::exp(z * variables->z[0] + variables->z[1]);
 }
 
-__device__ __host__ complex_t exp_pow_int(complex_t z, FnVariables* variables){
+__device__ __host__ complex_t exp_pow_int(complex_t z, const FnVariables* variables){
     return calc::exp(int_power(z, variables));
 }
 
-__device__ __host__ complex_t exp_pow_real(complex_t z, FnVariables* variables){
+__device__ __host__ complex_t exp_pow_real(complex_t z, const FnVariables* variables){
     return calc::exp(real_power(z, variables));
 }
 
-__device__ __host__ complex_t zxp(complex_t z, FnVariables* variables){
+__device__ __host__ complex_t zxp(complex_t z, const FnVariables* variables){
     return calc::exp(complex_log(variables->z[0], variables->n) * z);
 }
 
-__device__ __host__ complex_t pow_int_exp(complex_t z, FnVariables* variables){
+__device__ __host__ complex_t pow_int_exp(complex_t z, const FnVariables* variables){
     return int_power(z, variables) * calc::exp(z);
 }
 
-__device__ __host__ complex_t pow_real_exp(complex_t z, FnVariables* variables){
+__device__ __host__ complex_t pow_real_exp(complex_t z, const FnVariables* variables){
     return real_power(z, variables) * calc::exp(z);
 }
 
 // ------------------------------------------------------------------------------------- logarithm
 
-__device__ __host__ complex_t log_simple(complex_t z, FnVariables* variables){
+__device__ __host__ complex_t log_simple(complex_t z, const FnVariables* variables){
     return complex_log(z, variables->n);
 }
 
-__device__ __host__ complex_t log_parametric(complex_t z, FnVariables* vars){
+__device__ __host__ complex_t log_parametric(complex_t z, const FnVariables* vars){
     return vars->z[0] * complex_log(vars->z[1] + z * vars->z[2], vars->n);
 }
 
-__device__ __host__ complex_t log_mul(complex_t z, FnVariables* vars){
+__device__ __host__ complex_t log_mul(complex_t z, const FnVariables* vars){
     return z * complex_log(z, vars->n);
 }
 
 // ------------------------------------------------------------------------------------- trigonometric
 
-__device__ __host__ inline complex_t sin_simple(complex_t z, FnVariables *) {
+__device__ __host__ inline complex_t sin_simple(complex_t z, const FnVariables *) {
     return calc::sin(z);
 }
 
-__device__ __host__ inline complex_t cos_simple(complex_t z, FnVariables *) {
+__device__ __host__ inline complex_t cos_simple(complex_t z, const FnVariables *) {
     return calc::cos(z);
 }
 
-__device__ __host__ inline complex_t tan_simple(complex_t z, FnVariables *) {
+__device__ __host__ inline complex_t tan_simple(complex_t z, const FnVariables *) {
     return calc::tan(z);
 }
 
-__device__ __host__ complex_t sin_parametric(complex_t z, FnVariables * vars) {
+__device__ __host__ complex_t sin_parametric(complex_t z, const FnVariables * vars) {
     return vars->z[0] * calc::sin(vars->z[1] + z * vars->z[2]);
 }
 
-__device__ __host__ complex_t cos_parametric(complex_t z, FnVariables * vars) {
+__device__ __host__ complex_t cos_parametric(complex_t z, const FnVariables * vars) {
     return vars->z[0] * calc::cos(vars->z[1] + z * vars->z[2]);
 }
 
-__device__ __host__ complex_t tan_parametric(complex_t z, FnVariables * vars) {
+__device__ __host__ complex_t tan_parametric(complex_t z, const FnVariables * vars) {
     return vars->z[0] * calc::tan(vars->z[1] + z * vars->z[2]);
 }
 
 // ------------------------------------------------------------------------------------- hyperbolic
 
-__device__ __host__ inline complex_t sinh_simple(complex_t z, FnVariables *) {
+__device__ __host__ inline complex_t sinh_simple(complex_t z, const FnVariables *) {
     return calc::sinh(z);
 }
 
-__device__ __host__ inline complex_t cosh_simple(complex_t z, FnVariables *) {
+__device__ __host__ inline complex_t cosh_simple(complex_t z, const FnVariables *) {
     return calc::cosh(z);
 }
 
-__device__ __host__ inline complex_t tanh_simple(complex_t z, FnVariables *) {
+__device__ __host__ inline complex_t tanh_simple(complex_t z, const FnVariables *) {
     return calc::tanh(z);
 }
 
-__device__ __host__ complex_t sinh_parametric(complex_t z, FnVariables * vars) {
+__device__ __host__ complex_t sinh_parametric(complex_t z, const FnVariables * vars) {
     return vars->z[0] * calc::sinh(vars->z[1] + z * vars->z[2]);
 }
 
-__device__ __host__ complex_t cosh_parametric(complex_t z, FnVariables * vars) {
+__device__ __host__ complex_t cosh_parametric(complex_t z, const FnVariables * vars) {
     return vars->z[0] * calc::cosh(vars->z[1] + z * vars->z[2]);
 }
 
-__device__ __host__ complex_t tanh_parametric(complex_t z, FnVariables * vars) {
+__device__ __host__ complex_t tanh_parametric(complex_t z, const FnVariables * vars) {
     return vars->z[0] * calc::tanh(vars->z[1] + z * vars->z[2]);
 }
 
 // ------------------------------------------------------------------------------------- special
 
-__device__ __host__ complex_t conjugate_z(complex_t z, FnVariables* variables){
+__device__ __host__ complex_t conjugate_z(complex_t z, const FnVariables* variables){
     return variables->z[0] * calc::conj(z);
 }
 
-__device__ __host__ complex_t fraction(complex_t z, FnVariables* variables){
+__device__ __host__ complex_t fraction(complex_t z, const FnVariables* variables){
     return (z*z - variables->z[0]) * calc::pow(z - variables->z[1], 2) / (z*z + variables->z[2]);
 }
 
-__device__ __host__ complex_t fibonacci(complex_t z, FnVariables* variables){
+__device__ __host__ complex_t fibonacci(complex_t z, const FnVariables* variables){
     return (calc::pow(PHI, z) - (cos(PI*z) * calc::pow(PHI, -z))) * INV_SQRT_5;
 }
 
@@ -188,7 +188,7 @@ __device__ __host__ complex_t gamma_positive_half_plane(complex_t z) {
     return SQRT_2PI * calc::pow(t, z+0.5) * calc::exp(-t) * A;
 }
 
-__device__ __host__ complex_t gamma(complex_t z, FnVariables*) {
+__device__ __host__ complex_t gamma(complex_t z, const FnVariables*) {
     complex_t y;
     if(z.real() >= 0.5) y = gamma_positive_half_plane(z);
     else y = PI / (calc::sin(z*PI) * gamma_positive_half_plane(1.0 - z));
