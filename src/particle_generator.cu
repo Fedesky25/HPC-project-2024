@@ -345,7 +345,11 @@ complex_t* particles_gpu(complex_t z1, complex_t z2, uint32_t N, unsigned iterat
 
     complex_t *d_sites;
     cudaMalloc((void **)&d_sites, N * sizeof (complex_t));
-    KVSorter<uint32_t, complex_t> density_points(n_density);
+    KVSorter<uint32_t, complex_t> density_points(n_density + 1); // +1 to have halo element
+    {
+        uint32_t halo = UINT32_MAX;
+        cudaMemcpy(density_points.keys() + n_density, &halo, sizeof(uint32_t), cudaMemcpyHostToDevice);
+    }
 
     PRINT_INITIAL timers(3) tick(0)
     curandGenerator_t gen;
