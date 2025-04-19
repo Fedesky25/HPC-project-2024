@@ -7,6 +7,7 @@
 
 #include <cstdint>
 #include <chrono>
+#include <iostream>
 #include <cuda_runtime_api.h>
 
 #define PI 3.1415926535897932384626433
@@ -24,23 +25,21 @@
 
 //#define FN_NAME_HERE ""
 
+inline void internal_print_cuda_err(cudaError_t err, const char * fn_name, size_t line) {
+    std::cerr << "CUDA error: " << cudaGetErrorString(err) << "\n >> in function: "
+              << fn_name << " [L:" << line << ']' << std::endl;
+    exit(2);
+}
+
 #define CATCH_CUDA_ERROR(EXPR) { \
-    auto err = (EXPR);                \
-    if(err) {                         \
-        auto details = cudaGetErrorString(err); \
-        std::cerr << "Cuda Error: " << details; \
-        std::cerr << "\n >> in function ";         \
-        std::cerr << FN_NAME_HERE;    \
-        std::cerr << " (L:" << __LINE__ << ")" << std::endl; \
-        exit(1);                      \
-    }                                 \
+    auto _err = (EXPR);           \
+    if(_err) internal_print_cuda_err(_err, FN_NAME_HERE, __LINE__); \
 }
 
 #ifdef NDEBUG
     #define PRINT(X)
     #define PRINTLN(X)
 #else
-    #include <iostream>
     #define PRINT(X) std::cout << X;
     #define PRINTLN(X) std::cout << X << std::endl;
 #endif
@@ -84,8 +83,7 @@
 
 
 #if CUDART_VERSION < 12000
-#include <iostream>
-// For some reason thsi is not defined in libcu++ 11.8
+// For some reason this is not defined in libcu++ 11.8
 inline std::ostream& operator<<(std::ostream& stream, const complex_t& z) {
     return stream << '(' << z.real() << ',' << z.imag() << ')';
 }

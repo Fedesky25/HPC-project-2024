@@ -11,7 +11,6 @@
 #include "sorter.cuh"
 
 
-#include <iostream>
 #include <iomanip>
 
 extern int verbose;

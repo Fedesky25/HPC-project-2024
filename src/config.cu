@@ -1,6 +1,5 @@
 #include "config.cuh"
 #include <cstdlib>
-#include <iostream>
 
 int verbose = 0;
 

@@ -1,5 +1,3 @@
-#include <iostream>
-#include <cstdio>
 #include "config.cuh"
 #include "cli.cuh"
 #include "getopt.h"
