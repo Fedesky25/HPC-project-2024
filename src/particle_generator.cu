@@ -319,22 +319,27 @@ __global__ void scale_complex(double real, double imag, complex_t offset, comple
  * @param nearest
  */
 __global__ void update_sites(
-        complex_t * density_points, uint32_t N_density,
+        const complex_t * density_points, uint32_t N_density,
         complex_t * sites, uint32_t N_sites,
-        uint32_t * nearest
+        const uint32_t * nearest
 ) {
-    auto site_index = threadIdx.x + blockIdx.x * blockDim.x;
-    if(site_index >= N_sites) return;
+    uint32_t site_index =  threadIdx.x + blockIdx.x * blockDim.x;
+//    if(site_index >= N_sites) return;
 
-    int64_t count = 0;
+    {
+        auto first = lower_bound(site_index, nearest, N_density);
+        nearest += first;
+        density_points += first;
+    }
+
+    uint32_t count = 0;
     complex_t sum = 0.0;
-    uint32_t dpoint_index = lower_bound(site_index, nearest, N_density);
-    while(nearest[dpoint_index] == site_index) {
-        sum += density_points[dpoint_index];
-        dpoint_index++;
+
+    while(nearest[count] == site_index) {
+        sum += density_points[count];
         count++;
     }
-    if(count > 0) sites[site_index] = sum / (double) count;
+    if(count > 0 && site_index < N_sites) sites[site_index] = sum / (double) count;
 }
 
 complex_t* particles_gpu(complex_t z1, complex_t z2, uint32_t N, unsigned iterations){
