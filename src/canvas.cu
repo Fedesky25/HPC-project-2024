@@ -91,6 +91,7 @@ Canvas * create_canvas_device(uint32_t count, CanvasAdapter * adapter) {
     CATCH_CUDA_ERROR(cudaMemcpy(d_array, h_array, array_bytes, cudaMemcpyHostToDevice))
     free(h_array);
     init_canvas_array<<<count, 1024>>>(d_array, len);
+    CATCH_CUDA_ERROR(cudaDeviceSynchronize())
     tock_ms(0)
     std::cout << "Initialized " << count << " canvases (" << (((canvas_bytes*count-1) >> 20)+1)
               << "MB) in " << t_elapsed << "ms" << std::endl;
