@@ -110,6 +110,10 @@ struct StreamWrapper {
         if (enc_ctx->codec_id == AV_CODEC_ID_MPEG1VIDEO) enc_ctx->mb_decision = 2;
         if (fmt_ctx->oformat->flags & AVFMT_GLOBALHEADER) enc_ctx->flags |= AVFMT_GLOBALHEADER;
 
+        if(verbose) std::cout << "\nVideo info:\n - format: " << fmt_ctx->oformat->name
+                              << "\n - encoder: " << codec->name << "\n - pixels: yuv"
+                              << (opaque ? 'j' : 'a') << "44p\n" << std::endl;
+
         HANDLE_AV_ERROR(avcodec_open2(enc_ctx, codec, nullptr), "Could not open video codec")
         HANDLE_AV_ERROR(avcodec_parameters_from_context(stream->codecpar, enc_ctx), "Could not copy the stream parameters")
 
