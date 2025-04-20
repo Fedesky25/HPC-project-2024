@@ -129,7 +129,7 @@ void evolve_gpu(const Configuration * config,
     auto d_adapter = devicify(&config->canvas);
     auto d_vars = devicify(&config->vars);
 
-    evolve_kernel<<<canvas_count, 10>>>(
+    evolve_kernel<<<canvas_count, tiles_count>>>(
             canvas, d_adapter,
             config->evolution.speed_factor, config->evolution.delta_time,
             particles, tile_offsets, d_rand_floats,
