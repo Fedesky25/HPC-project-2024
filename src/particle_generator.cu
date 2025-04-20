@@ -343,7 +343,11 @@ __global__ void update_sites(
 
 complex_t* particles_gpu(complex_t z1, complex_t z2, uint32_t N, unsigned iterations){
     int64_t n_density = 128*N;
-    auto M = ((N-1) >> 10) + 1; // (n_density + 1023) / 1024 = (n_density-1)/ 2^(10)
+
+    int num_SM;
+    cudaDeviceGetAttribute(&num_SM, cudaDevAttrMultiProcessorCount, 0);
+    auto M = 1 + (N-1)/num_SM; // (n_density + 1023) / 1024 = (n_density-1)/ 2^(10)
+
 //    auto D = ((n_density-1) >> 10) + 1;
     auto D = n_density & 1023;
 
@@ -388,7 +392,7 @@ complex_t* particles_gpu(complex_t z1, complex_t z2, uint32_t N, unsigned iterat
         density_points.sort();
         CATCH_CUDA_ERROR(cudaDeviceSynchronize())
         tock_ms(2) times[1] += t_elapsed; tick(2)
-        update_sites<<<M, 1024>>>(density_points.values(), n_density, d_sites, N, density_points.keys());
+        update_sites<<<num_SM, M>>>(density_points.values(), n_density, d_sites, N, density_points.keys());
         CATCH_CUDA_ERROR(cudaDeviceSynchronize())
         tock_ms(2) times[2] += t_elapsed; tock_ms(1)
         if(verbose) {
