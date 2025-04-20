@@ -38,7 +38,7 @@ int main(int argc, char * argv[]) {
 
     complex_t min, max;
     config.bounds(&min, &max);
-    uint64_t N = config.particle_number();
+    auto N = config.particle_number();
 
     complex_t * points;
     auto frame_size = config.canvas.height * config.canvas.width;

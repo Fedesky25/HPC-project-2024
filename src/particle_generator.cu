@@ -63,7 +63,7 @@ complex_t* particles_serial(complex_t z1, complex_t z2, uint32_t N, unsigned ite
         tick(1) tick(2)
         for(uint64_t j=0; j<n_density; j++){ // Iterating on density points
             double current, min = INFINITY;
-            for(uint64_t k=0; k<N; k++){  // Iterating on sites to save the nearest site to each density point
+            for(uint32_t k=0; k<N; k++){  // Iterating on sites to save the nearest site to each density point
                 current = C_NORM(density[j]-sites[k]);
                 if(current < min){
                    nearest[j] = k;
@@ -168,7 +168,7 @@ complex_t* particles_omp(complex_t z1, complex_t z2, uint32_t N, unsigned iterat
         #pragma omp parallel for shared(nearest, density, sites) schedule(static)
         for (int64_t j = 0; j < n_density; j++) { // Iterating on density points
             double current, min = INFINITY;
-            for (int64_t k = 0; k < N; k++) {  // Iterating on sites to save the nearest site to each density point
+            for (uint32_t k = 0; k < N; k++) {  // Iterating on sites to save the nearest site to each density point
                 current = C_NORM(density[j] - sites[k]);
                 if (current < min) {
                     nearest[j] = k;
