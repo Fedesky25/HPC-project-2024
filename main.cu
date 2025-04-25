@@ -74,7 +74,7 @@ int main(int argc, char * argv[]) {
             else if(gpu_count > 1) cudaSetDevice(0);
 
             KernelSizes::set_SM();
-            float tile_count_target = std::min(1024.f, (float) N / (float) (KernelSizes::get_SM() * 2));
+            float tile_count_target = std::min(1024.f, (float) N / ((float) KernelSizes::get_SM() * 2.3f));
 
             Tiles tiles(&config, tile_count_target);
             unsigned tiles_count = tiles.total();

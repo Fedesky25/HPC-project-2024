@@ -12,9 +12,14 @@ Tiles::Tiles(Configuration * config, float target) {
 
 void Tiles::cover(unsigned int width, unsigned int height, float target) {
     float base = sqrt(target);
-    float r = sqrt((float) width / (float) height);
-    cols = static_cast<uint_fast16_t>(base*r);
-    rows = static_cast<uint_fast16_t>(base/r);
+    float ratio = sqrt((float) width / (float) height);
+    cols = std::round(base * ratio);
+    rows = std::round(base / ratio);
+
+    while(cols * rows > 1024) {
+        if(cols > rows) cols--;
+        else rows--;
+    }
 }
 
 __global__ void compute_tile(
