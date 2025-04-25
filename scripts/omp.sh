@@ -1,6 +1,6 @@
 #!/bin/bash +x
 #SBATCH --job-name="CFS (OpenMP)"
-#SBATCH --time=30:00
+#SBATCH --time=10:00
 #SBATCH --mem=5GB
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
@@ -18,15 +18,32 @@ if [[ ! -e "./build/HPC_project_2024" ]]
   exit
 fi
 
-# module load ffmpeg/4.3.4
+module load ffmpeg/4.3.4
 cd ./build
 
 num_threads=(4,8,16,32,64)
 for num in "${num_threads[@]}"; do
   export OMP_NUM_THREADS $num
   echo "================================================================================ threads = $num"
-  for i in $(seq 1 100); do
-    echo ">> iteration $i/100"
-    ./HPC_project_2024 -p omp -R FHD -D 10 -f 60 -s 4u/h -d 12 poly1
+
+  echo ""
+  echo "=========================================================== Fibonacci(z)"
+  for i in {1..20} do
+    echo "# ${i}/20"
+    ./HPC_project_2024 -p omp -o videos/omp-fib.mp4 -R qHD -D 2 fib
+  done
+
+  echo ""
+  echo "=========================================================== exp(z^3)"
+  for i in {1..20} do
+    echo "# ${i}/20"
+    ./HPC_project_2024 -p omp -o videos/omp-cubic.mp4 -R qHD -D 2 -n 3 exp^n
+  done
+
+  echo ""
+  echo "=========================================================== Gamma(z)"
+  for i in {1..20} do
+    echo "# ${i}/20"
+    ./HPC_project_2024 -p omp -o videos/omp-gamma.mp4 -R qHD -D 2  -v 0.1 gamma
   done
 done
