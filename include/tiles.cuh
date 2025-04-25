@@ -32,7 +32,7 @@ struct Tiles {
     uint32_t * sort(complex_t& min, complex_t& max, complex_t* particles, uint32_t N) const;
 };
 
-void tiles_print_regs();
+WHEN_OK(void tiles_print_regs();)
 
 
 #endif //HPC_PROJECT_2024_TILES_CUH

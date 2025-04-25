@@ -414,7 +414,7 @@ complex_t* particles_gpu(complex_t z1, complex_t z2, uint32_t N, unsigned iterat
     return d_sites;
 }
 
-
+WHEN_OK(
 void pgen_print_regs() {
     cudaFuncAttributes attrs;
     cudaFuncGetAttributes(&attrs, &scale_complex);
@@ -424,3 +424,4 @@ void pgen_print_regs() {
     cudaFuncGetAttributes(&attrs, &update_sites);
     std::cout << " - update_sites: " << attrs.numRegs << '\n';
 }
+)

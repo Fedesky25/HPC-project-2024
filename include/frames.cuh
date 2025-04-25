@@ -82,6 +82,6 @@ struct FrameKernelArguments {
 template<bool opaque>
 void compute_frame_gpu(int32_t time, const FrameKernelArguments & args);
 
-void frame_print_regs();
+WHEN_OK(void frame_print_regs();)
 
 #endif //HPC_PROJECT_2024_FRAMES_CUH

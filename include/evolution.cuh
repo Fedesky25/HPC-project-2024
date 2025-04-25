@@ -8,7 +8,7 @@
 #include "canvas.cuh"
 #include "complex_functions.cuh"
 
-int get_evolve_regs();
+WHEN_OK(int get_evolve_regs();)
 
 /**
  * Calculates and draws particle evolution on different canvases using the GPU

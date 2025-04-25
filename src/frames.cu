@@ -215,10 +215,11 @@ DEF_OPAQUE_FN(compute_frame_gpu, (int32_t time, const FrameKernelArguments & arg
 //            time, frame_count, canvas_array, canvas_count, frame, lifetime, size & (~31), background);
 }
 
+WHEN_OK(
 void frame_print_regs() {
     cudaFuncAttributes attrs;
     cudaFuncGetAttributes(&attrs, &compute_frame_kernel<true>);
     std::cout << " - compute_frame<opaque>: " << attrs.numRegs << '\n';
     cudaFuncGetAttributes(&attrs, &compute_frame_kernel<false>);
     std::cout << " - compute_frame<translucent>: " << attrs.numRegs << '\n';
-}
+})

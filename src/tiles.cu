@@ -77,10 +77,11 @@ uint32_t * Tiles::sort(complex_t &min, complex_t &max, complex_t *particles, uin
     return offsets;
 }
 
+WHEN_OK(
 void tiles_print_regs() {
     cudaFuncAttributes attrs;
     cudaFuncGetAttributes(&attrs, &compute_tile);
     std::cout << " - compute_tile: " << attrs.numRegs << '\n';
     cudaFuncGetAttributes(&attrs, &compute_offset_per_tile);
     std::cout << " - compute_offset_per_tile: " << attrs.numRegs << '\n';
-}
+})

@@ -47,9 +47,11 @@ inline void internal_print_cuda_err(cudaError_t err, const char * fn_name, size_
 
 #if __cplusplus >= 201700L || (defined(_MSVC_LANG) && _MSVC_LANG >= 201700L)
     #define CONSTEXPR_IF if constexpr
+    #define WHEN_OK(ARG) ARG
 #else
 // we hope compiler removes unused branch
     #define CONSTEXPR_IF if
+    #define WHEN_OK(ARG)
 //    #if defined(__GNUC__) || defined(__MINGW32__) || defined(__MINGW64__)
 //        #warning C++ version is 14 or less
 //    #elif defined(_MSC_VER) || defined(__clang__)

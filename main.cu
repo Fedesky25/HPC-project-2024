@@ -82,12 +82,15 @@ int main(int argc, char * argv[]) {
                 std::cout << "  Tiles: " << tiles.rows << 'x' << tiles.cols << '=' << tiles_count
                           << " (target: " << tile_count_target << ") with "
                           << (float) N / (float) tiles_count << " particles each" << std::endl;
-                std::cout << "\nCUDA SM count: " << KernelSizes::get_SM() << "\nRegisters used by kernels: \n";
-                pgen_print_regs();
-                tiles_print_regs();
-                std::cout << " - evolve: " << get_evolve_regs() << "\n";
-                frame_print_regs();
-                std::cout << std::endl;
+                std::cout << "\nCUDA SM count: " << KernelSizes::get_SM();
+                WHEN_OK(
+                    std::cout << "\nRegisters used by kernels: \n";
+                    pgen_print_regs();
+                    tiles_print_regs();
+                    std::cout << " - evolve: " << get_evolve_regs() << "\n";
+                    frame_print_regs();
+                    std::cout << std::endl;
+                )
             }
 
             points = particles_gpu(min, max, N, config.lloyd_iterations);
