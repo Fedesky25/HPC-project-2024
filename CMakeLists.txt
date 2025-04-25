@@ -144,7 +144,7 @@ target_compile_options(HPC_project_2024 PRIVATE $<$<CONFIG:Debug>:-Xptxas -v>)
 target_compile_options(HPC_project_2024 PRIVATE $<$<CONFIG:RelWithDebInfo>:-Xptxas -v>)
 
 if (CMAKE_CUDA_COMPILER_VERSION VERSION_LESS 11)
-    target_compile_options(HPC_project_2024 PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler -include -Xcompiler cstddef>)
+    target_compile_options(HPC_project_2024 PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler "-include cstddef">)
 endif ()
 
 #target_compile_options(HPC_project_2024 PRIVATE $<$<COMPILE_LANGUAGE:CUDA>: -Xcompiler=-fopenmp>)
