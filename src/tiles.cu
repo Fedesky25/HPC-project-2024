@@ -38,7 +38,7 @@ __global__ void compute_offset_per_tile(uint32_t N, unsigned int * tile_map, uin
 
 uint32_t * Tiles::sort(complex_t &min, complex_t &max, complex_t *particles, uint32_t N) const {
     timers(2) tick(0)
-    KernelSizes sz
+    KernelSizes sz;
     float times[4];
     uint32_t * offsets;
     auto hscale = 2 * cols / (max.real() - min.real());
