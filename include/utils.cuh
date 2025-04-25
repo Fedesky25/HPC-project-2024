@@ -90,6 +90,19 @@ inline std::ostream& operator<<(std::ostream& stream, const complex_t& z) {
 #endif
 
 
+struct KernelSizes {
+    unsigned grid, block;
+
+    void cover(unsigned N);
+    void warp_cover(unsigned N);
+
+    static void set_SM();
+    inline static unsigned get_SM() { return SM_count; }
+private:
+    static unsigned SM_count;
+};
+
+
 #define timers(N) std::chrono::steady_clock::time_point _tp[(N)<<1]; float t_elapsed;
 #define tick(I) _tp[(I)<<1] = std::chrono::steady_clock::now();
 #define tock(I, RATIO) { \

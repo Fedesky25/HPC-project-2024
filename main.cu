@@ -73,9 +73,8 @@ int main(int argc, char * argv[]) {
             }
             else if(gpu_count > 1) cudaSetDevice(0);
 
-            int num_SM;
-            cudaDeviceGetAttribute(&num_SM, cudaDevAttrMultiProcessorCount, 0);
-            float tile_count_target = std::min(1024.f, (float) N / (float) (num_SM * 2));
+            KernelSizes::set_SM();
+            float tile_count_target = std::min(1024.f, (float) N / (float) (KernelSizes::get_SM() * 2));
 
             Tiles tiles(&config, tile_count_target);
             unsigned tiles_count = tiles.total();
@@ -83,7 +82,7 @@ int main(int argc, char * argv[]) {
                 std::cout << "  Tiles: " << tiles.rows << 'x' << tiles.cols << '=' << tiles_count
                           << " (target: " << tile_count_target << ") with "
                           << (float) N / (float) tiles_count << " particles each" << std::endl;
-                std::cout << "\nCUDA SM count: " << num_SM << "\nRegisters used by kernels: \n";
+                std::cout << "\nCUDA SM count: " << KernelSizes::get_SM() << "\nRegisters used by kernels: \n";
                 pgen_print_regs();
                 tiles_print_regs();
                 std::cout << " - evolve: " << get_evolve_regs() << "\n";

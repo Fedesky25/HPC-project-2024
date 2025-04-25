@@ -81,7 +81,7 @@ link_libraries(OpenMP::OpenMP_CXX)
 
 add_executable(HPC_project_2024
         main.cu
-        include/utils.cuh
+        include/utils.cuh src/utils.cu
         include/config.cuh src/config.cu
         include/cli.cuh src/cli.cu
         include/lower_bound.cuh
