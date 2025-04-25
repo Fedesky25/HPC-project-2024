@@ -8,11 +8,6 @@
 #include <cstdint>
 #include <chrono>
 #include <iostream>
-
-#if __cplusplus < 201700L || (defined(_MSVC_LANG) && _MSVC_LANG < 201700L)
-    // in lower versions of c++ size_t is not defined globally
-    #include <cstddef>
-#endif
 #include <cuda_runtime_api.h>
 
 #define PI 3.1415926535897932384626433
