@@ -4,6 +4,8 @@
 
 #include "utils.cuh"
 
+unsigned KernelSizes::SM_count;
+
 void KernelSizes::cover(unsigned N) {
     grid = SM_count;
     block = 1 + (N - 1)/grid;
