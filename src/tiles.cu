@@ -31,30 +31,34 @@ __global__ void compute_tile(
 
 __global__ void compute_offset_per_tile(uint32_t N, unsigned int * tile_map, uint32_t * offsets) {
     auto tile = threadIdx.x + blockIdx.x * blockDim.x;
-    offsets[tile] = lower_bound(tile, tile_map, N);
+    auto os = lower_bound(tile, tile_map, N);
+    // os == N when tile is not inside tile_map, i.e. tile value is out of range
+    if(os < N) offsets[tile] = os;
 }
 
 uint32_t * Tiles::sort(complex_t &min, complex_t &max, complex_t *particles, uint32_t N) const {
     timers(2) tick(0)
+    KernelSizes sz
     float times[4];
     uint32_t * offsets;
     auto hscale = 2 * cols / (max.real() - min.real());
     auto vscale = 2 * rows / (max.imag() - min.imag());
     auto tile_count = total();
-    auto M = 1 + (N - 1)/tile_count;
     tick(1)
     KVSorter<unsigned, complex_t> tile_map(N, particles);
     cudaMalloc(&offsets, (1+4*tile_count) * sizeof(uint32_t));
     cudaDeviceSynchronize();
     tock_us(1) times[0] = t_elapsed; tick(1)
-    compute_tile<<<M, tile_count>>>(N, particles, tile_map.keys(), min, hscale, vscale, cols, rows);
+    sz.warp_cover(N);
+    compute_tile<<<sz.grid, sz.block>>>(N, particles, tile_map.keys(), min, hscale, vscale, cols, rows);
     CATCH_CUDA_ERROR(cudaDeviceSynchronize())
     tock_us(1) times[1] = t_elapsed; tick(1)
     // thrust::sort_by_key(thrust::device, tile_map, tile_map + N, particles);
     tile_map.sort();
     CATCH_CUDA_ERROR(cudaDeviceSynchronize())
     tock_us(1) times[2] = t_elapsed; tick(1)
-    compute_offset_per_tile<<<4, tile_count>>>(N, tile_map.keys(), offsets);
+    sz.warp_cover(4*tile_count);
+    compute_offset_per_tile<<<sz.grid, sz.block>>>(N, tile_map.keys(), offsets);
     CATCH_CUDA_ERROR(cudaMemcpy(offsets + 4*tile_count, &N, sizeof(uint32_t), cudaMemcpyHostToDevice))
     tock_us(1) times[3] = t_elapsed;
     tock_us(0)
