@@ -26,9 +26,12 @@ mkdir -p build
 echo "Loading modules..."
 module load nvidia/cudasdk/10.1
 module load cmake/3.14.3
+module load ffmpeg/4.3.4
 
 # Tesla K40: Kepler micro-architecture, compute capability 3.5  ->  sm_35
 export GPU_ARCHITECTURE=sm_35
+
+export FFMPEG_PATH=/share/apps/ffmpeg
 
 echo "Compiling with $SLURM_CPUS_PER_TASK threads..."
 cmake -DCMAKE_BUILD_TYPE=Release -S $source_dir -B ./build
