@@ -71,7 +71,7 @@ complex_t* particles_serial(complex_t z1, complex_t z2, uint32_t N, unsigned ite
                }
             }
         } // Here nearest[] has been filled in
-        tock_s(2) times[0] = t_elapsed; tick(2)
+        tock_s(2) times[0] += t_elapsed; tick(2)
         for(int64_t k=0; k<N; k++) {
             sites[k] = 0;
             count[k] = 0;
@@ -84,7 +84,7 @@ complex_t* particles_serial(complex_t z1, complex_t z2, uint32_t N, unsigned ite
             if (count[k] == 0) rand_complex(z1, z2, sites + k, 1);
             else sites[k] /= (double) count[k];
         }
-        tock_s(2) times[1] = t_elapsed; tock_s(1)
+        tock_s(2) times[1] += t_elapsed; tock_s(1)
         if(verbose) {
             float m = 100.0f / t_elapsed;
             std::cout << "                   " << std::setw(2) << i + 1

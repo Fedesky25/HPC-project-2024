@@ -50,12 +50,12 @@ extern "C" {
     }
 
 
-#define PRINT_SUMMARY(FACTOR) { \
+#define PRINT_SUMMARY { \
     auto m = 0.1f / total;                    \
     auto writing = tw[0] + tw[1] + tw[2] + tw[3] + tw[4] + tw[5] + tw[6] + tw[7];     \
     auto computation = tc[0] + tc[1] + tc[2] + tc[3] + tc[4] + tc[5] + tc[6] + tc[7]; \
     std::cout << frame_count << " frames written in " << std::setprecision(3) << total << "s (computation: "  \
-              << std::fixed << std::setprecision(2) << computation*m*(FACTOR) << "%, file write: "  \
+              << std::fixed << std::setprecision(2) << computation*m << "%, file write: "  \
               << std::fixed << std::setprecision(2) << writing*m << "%)" << std::endl; \
 }
 
@@ -229,7 +229,7 @@ void write_video_serial_internal(const Configuration & config, Canvas canvas) {
         if(verbose && (t&7) == 7) PRINT_TIMES(t+1)
     }
     auto end_all = std::chrono::steady_clock::now();
-    auto total = (std::chrono::duration<float, std::micro>(end_all-start_all)).count();
+    auto total = (std::chrono::duration<float, std::ratio<1>>(end_all-start_all)).count();
     if(verbose) {
 //        auto remaining = (frame_count-1)&7;
 //        if(remaining) {
@@ -241,7 +241,7 @@ void write_video_serial_internal(const Configuration & config, Canvas canvas) {
 //        }
         std::cout << "  :: total " << total << 's' << std::endl;
     }
-    else PRINT_SUMMARY(1)
+    else PRINT_SUMMARY
     av_frame_free(&frame);
     w.close();
 }
@@ -295,7 +295,7 @@ void write_video_omp_internal(const Configuration & config, const Canvas * canva
     float total = (std::chrono::duration<float, std::ratio<1>>(end_all-start_all)).count();
 
     if(verbose) std::cout << "  :: total " << total << 's' << std::endl;
-    else PRINT_SUMMARY(1)
+    else PRINT_SUMMARY
 
     av_frame_free(&frame_buffers[0]);
     av_frame_free(&frame_buffers[1]);
@@ -365,7 +365,7 @@ void write_video_gpu_internal(const Configuration & config, const Canvas * canva
     auto end_all = std::chrono::steady_clock::now();
     float total = (std::chrono::duration<float, std::ratio<1>>(end_all-start_all)).count();
     if(verbose) std::cout << "  :: total " << total << 's' << std::endl;
-    else PRINT_SUMMARY(1e-3f)
+    else PRINT_SUMMARY
 
     w.close();
     av_frame_free(&frame);
