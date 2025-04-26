@@ -44,6 +44,6 @@ for num in "${num_threads[@]}"; do
   echo "=========================================================== Gamma(z)"
   for i in {1..20} do
     echo "# ${i}/20"
-    ./HPC_project_2024 -p omp -o videos/omp-gamma.mp4 -R qHD -D 2 -L 5 -v 0.1 gamma
+    ./HPC_project_2024 -p omp -o videos/omp-gamma.mp4 -R qHD -D 2 -L 5 --speed 0.1 gamma
   done
 done
