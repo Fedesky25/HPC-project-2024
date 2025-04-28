@@ -34,6 +34,7 @@ else ()
 endif ()
 message("-- CXX/CUDA standard set to ${CMAKE_CXX_STANDARD}")
 
+
 # retrieve base path of ffmpeg installation from env variable
 if (DEFINED ENV{FFMPEG_PATH})
     set(FFMPEG_INCLUDE_DIR "$ENV{FFMPEG_PATH}/include/")
@@ -45,40 +46,15 @@ endif ()
 
 # Include libraries and header files for libavcodec, libavformat, libavutils
 # https://stackoverflow.com/questions/50760024/cmake-configuration-for-ffmpeg-in-c-project
-
-# for some reason I don't know find_library does not work
-set(MANUAL_LIB_PREFIX "")
-if (MSVC)
-    set(MANUAL_LIB_SUFFIX ".lib")
-elseif (MINGW)
-    set(MANUAL_LIB_SUFFIX ".dll.a")
-else()
-#if (LINUX)
-    set(MANUAL_LIB_SUFFIX ".so")
-    set(MANUAL_LIB_PREFIX "lib")
-#else ()
-#    message(FATAL_ERROR "I don't know which library prefix/suffix you need in this case")
-endif ()
-
-find_path(AVFORMAT_INCLUDE_DIR libavformat/avformat.h PATHS ${FFMPEG_INCLUDE_DIR} REQUIRED)
-#find_library(AVFORMAT_LIBRARY avformat PATHS ${FFMPEG_LIBRARY_DIR} REQUIRED)
-set(AVFORMAT_LIBRARY "${FFMPEG_LIBRARY_DIR}${MANUAL_LIB_PREFIX}avformat${MANUAL_LIB_SUFFIX}")
-
-find_path(AVCODEC_INCLUDE_DIR libavcodec/avcodec.h PATHS ${FFMPEG_INCLUDE_DIR} REQUIRED)
-#find_library(AVCODEC_LIBRARY NAMES avcodec PATHS ${FFMPEG_LIBRARY_DIR} REQUIRED)
-set(AVCODEC_LIBRARY "${FFMPEG_LIBRARY_DIR}${MANUAL_LIB_PREFIX}avcodec${MANUAL_LIB_SUFFIX}")
-
-find_path(AVUTIL_INCLUDE_DIR libavutil/avutil.h PATHS ${FFMPEG_INCLUDE_DIR} REQUIRED)
-#find_library(AVUTIL_LIBRARY avutil PATHS ${FFMPEG_LIBRARY_DIR} REQUIRED)
-set(AVUTIL_LIBRARY "${FFMPEG_LIBRARY_DIR}${MANUAL_LIB_PREFIX}avutil${MANUAL_LIB_SUFFIX}")
-
+find_library(AVFORMAT_LIBRARY avformat PATHS ${FFMPEG_LIBRARY_DIR} REQUIRED)
+find_library(AVCODEC_LIBRARY  avcodec  PATHS ${FFMPEG_LIBRARY_DIR} REQUIRED)
+find_library(AVUTIL_LIBRARY   avutil   PATHS ${FFMPEG_LIBRARY_DIR} REQUIRED)
 
 # https://stackoverflow.com/questions/9313585/specifying-openmp-cuda-flag-in-a-cmake-project
 # If found, OpenMP_CXX_FLAGS is usually "-fopenmp" -> pass this value to -Xcompiler
 find_package(OpenMP REQUIRED)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
-link_libraries(OpenMP::OpenMP_CXX)
 
 
 add_executable(HPC_project_2024
@@ -98,11 +74,8 @@ add_executable(HPC_project_2024
         include/sorter.cuh
 )
 
-target_include_directories(HPC_project_2024 PRIVATE ${FFMPEG_INCLUDE_DIR})
-target_link_libraries(HPC_project_2024 PRIVATE ${AVFORMAT_LIBRARY} ${AVCODEC_LIBRARY} ${AVUTIL_LIBRARY})
-
-include_directories(include)
-include_directories("${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}")
+target_include_directories(HPC_project_2024 PRIVATE include ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES} ${FFMPEG_INCLUDE_DIR})
+target_link_libraries(HPC_project_2024 PRIVATE OpenMP::OpenMP_CXX ${AVFORMAT_LIBRARY} ${AVCODEC_LIBRARY} ${AVUTIL_LIBRARY})
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     message("-- Windows detected -> injecting getopt port")
@@ -112,7 +85,6 @@ endif()
 
 # https://cmake.org/cmake/help/latest/prop_tgt/CUDA_STANDARD.html
 # https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#options-for-steering-gpu-code-generation
-#set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -arch=native -Xcompiler -openmp")
 if (DEFINED ENV{GPU_ARCHITECTURE})
     set(SELECTED_GPU_ARCH "$ENV{GPU_ARCHITECTURE}")
     message("-- GPU architecture variable detected: ${SELECTED_GPU_ARCH}")
