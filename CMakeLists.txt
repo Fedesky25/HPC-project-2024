@@ -54,7 +54,7 @@ elseif (MINGW)
     set(MANUAL_LIB_SUFFIX ".dll.a")
 else()
 #if (LINUX)
-    set(MANUAL_LIB_SUFFIX ".a")
+    set(MANUAL_LIB_SUFFIX ".so")
     set(MANUAL_LIB_PREFIX "lib")
 #else ()
 #    message(FATAL_ERROR "I don't know which library prefix/suffix you need in this case")
@@ -74,11 +74,12 @@ set(AVUTIL_LIBRARY "${FFMPEG_LIBRARY_DIR}${MANUAL_LIB_PREFIX}avutil${MANUAL_LIB_
 
 
 # https://stackoverflow.com/questions/9313585/specifying-openmp-cuda-flag-in-a-cmake-project
+# If found, OpenMP_CXX_FLAGS is usually "-fopenmp" -> pass this value to -Xcompiler
 find_package(OpenMP REQUIRED)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
-set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler -openmp")
 link_libraries(OpenMP::OpenMP_CXX)
+
 
 add_executable(HPC_project_2024
         main.cu
@@ -133,18 +134,13 @@ endif ()
 
 set_target_properties(HPC_project_2024 PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
-target_compile_options(HPC_project_2024 PRIVATE -Xptxas -maxrregcount=64)
 target_compile_options(HPC_project_2024 PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:
         --generate-line-info
+#	--verbose
 #        --use_fast_math
 #        --relocatable-device-code=true
+	-Xcompiler "${OpenMP_CXX_FLAGS}"
+	-Xptxas -v
+	-Xptxas -maxrregcount=64
 >)
 
-target_compile_options(HPC_project_2024 PRIVATE $<$<CONFIG:Debug>:-Xptxas -v>)
-target_compile_options(HPC_project_2024 PRIVATE $<$<CONFIG:RelWithDebInfo>:-Xptxas -v>)
-
-if (CMAKE_CUDA_COMPILER_VERSION VERSION_LESS 11)
-    target_compile_options(HPC_project_2024 PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler "-include cstddef">)
-endif ()
-
-#target_compile_options(HPC_project_2024 PRIVATE $<$<COMPILE_LANGUAGE:CUDA>: -Xcompiler=-fopenmp>)
