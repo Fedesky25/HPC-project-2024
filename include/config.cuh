@@ -8,28 +8,6 @@
 #include "complex_functions.cuh"
 
 
-template<unsigned N>
-class Timers {
-public:
-    __forceinline__ void tick_(unsigned index = 0) { start[index] = std::chrono::steady_clock::now(); }
-
-    template<class Ratio = std::ratio<1>>
-    __forceinline__ void tock_(float & v, unsigned index = 0) {
-        static_assert(std::_Is_ratio_v<Ratio>);
-        auto end = std::chrono::steady_clock::now();
-        v = (std::chrono::duration<float, Ratio>(end - start[index])).count();
-    }
-
-    template<class Ratio = std::ratio<1>>
-    __forceinline__ void tock_tick(float & v, unsigned index = 0) {
-        static_assert(std::_Is_ratio_v<Ratio>);
-        auto end = std::chrono::steady_clock::now();
-        v = (std::chrono::duration<float, Ratio>(end - start[index])).count();
-        start[index] = std::chrono::steady_clock::now();
-    }
-private:
-    std::chrono::steady_clock::time_point start[N];
-};
 
 template<unsigned N>
 constexpr uint64_t str_to_num(const char str[N+1]) {
