@@ -113,6 +113,7 @@ target_compile_options(HPC_project_2024 PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:
 #        --relocatable-device-code=true
 	-Xcompiler "${OpenMP_CXX_FLAGS}"
 	-Xptxas -v
-	-Xptxas -maxrregcount=64
 >)
+
+set_property(SOURCE src/complex_functions.cu PROPERTY COMPILE_OPTIONS "-Xptxas;-maxrregcount=64")
 
