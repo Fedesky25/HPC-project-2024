@@ -52,7 +52,7 @@ __global__ void evolve_kernel(
         complex_t* particles,
         const uint32_t * tile_offsets,
         const float * rand_offsets,
-        ComplexFunction_t func,
+        FunctionChoice fn_choice,
         const FnVariables * fn_vars,
         int32_t frame_count, uint8_t subtile
 ){
@@ -60,6 +60,7 @@ __global__ void evolve_kernel(
     complex_t z;
     uint32_t offset;
     Canvas canvas;
+    auto func = get_function_device(fn_choice);
 
     {
         auto tile_idx = threadIdx.x + subtile*blockDim.x;
@@ -126,7 +127,6 @@ void evolve_gpu(const Configuration * config,
     std::cout << "Random time offsets generated in " << t_elapsed << "ms" << std::endl;
 
     tick(0);
-    auto func = get_function_global(fn_choice);
     auto d_adapter = devicify(&config->canvas);
     auto d_vars = devicify(&config->vars);
 
@@ -134,28 +134,28 @@ void evolve_gpu(const Configuration * config,
             canvas, d_adapter,
             config->evolution.speed_factor, config->evolution.delta_time,
             particles, tile_offsets, d_rand_floats,
-            func, d_vars,
+            fn_choice, d_vars,
             config->evolution.frame_count, 0);
 
     evolve_kernel<<<canvas_count, tiles_count>>>(
             canvas, d_adapter,
             config->evolution.speed_factor, config->evolution.delta_time,
             particles, tile_offsets, d_rand_floats,
-            func, d_vars,
+            fn_choice, d_vars,
             config->evolution.frame_count, 1);
 
     evolve_kernel<<<canvas_count, tiles_count>>>(
             canvas, d_adapter,
             config->evolution.speed_factor, config->evolution.delta_time,
             particles, tile_offsets, d_rand_floats,
-            func, d_vars,
+            fn_choice, d_vars,
             config->evolution.frame_count, 2);
 
     evolve_kernel<<<canvas_count, tiles_count>>>(
             canvas, d_adapter,
             config->evolution.speed_factor, config->evolution.delta_time,
             particles, tile_offsets, d_rand_floats,
-            func, d_vars,
+            fn_choice, d_vars,
             config->evolution.frame_count, 3);
 
     CATCH_CUDA_ERROR(cudaDeviceSynchronize());
