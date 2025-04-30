@@ -105,7 +105,11 @@ struct StreamWrapper {
         enc_ctx->framerate = AVRational{config.evolution.frame_rate, 1};
         enc_ctx->gop_size = 12;
         enc_ctx->pix_fmt = opaque ? AV_PIX_FMT_YUVJ444P : AV_PIX_FMT_YUVA444P;
-        // if (codec->id == AV_CODEC_ID_H264) av_opt_set(enc_ctx->priv_data, "preset", "slow", 0);
+        if (codec->id == AV_CODEC_ID_H264) {
+            av_opt_set(enc_ctx->priv_data, "preset", "fast", 0);
+            av_opt_set(enc_ctx->priv_data, "tune", "grain", 0);
+            av_opt_set(enc_ctx->priv_data, "crf", "20", 0);
+        }
         if (enc_ctx->codec_id == AV_CODEC_ID_MPEG2VIDEO) enc_ctx->max_b_frames = 2;
         if (enc_ctx->codec_id == AV_CODEC_ID_MPEG1VIDEO) enc_ctx->mb_decision = 2;
         if (fmt_ctx->oformat->flags & AVFMT_GLOBALHEADER) enc_ctx->flags |= AVFMT_GLOBALHEADER;
