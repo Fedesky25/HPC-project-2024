@@ -36,7 +36,6 @@ public:
         init();
     }
     ~KVSorter() {
-        std::cout << "KVSorter destructor" << std::endl;
         cudaFree(KEYS_0);
         if(!use_buffer) cudaFree(VALUES_0);
         #if CUDART_VERSION > 11000
