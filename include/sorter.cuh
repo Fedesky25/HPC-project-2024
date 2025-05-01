@@ -52,11 +52,11 @@ public:
 
     void sort() {
         #if CUDART_VERSION >= 11000
-        cub::DeviceRadixSort::SortPairs(
+        CATCH_CUDA_ERROR(cub::DeviceRadixSort::SortPairs(
                 temp_storage, temp_storage_bytes,
                 m_keys[current], m_keys[1 ^ current],
                 m_values[current], m_values[1 ^ current],
-                m_length);
+                m_length))
         current ^= 1;
         #else
         thrust::sort_by_key(thrust::device, m_keys, m_keys+m_length, m_values);
