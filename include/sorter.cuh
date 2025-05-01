@@ -77,12 +77,12 @@ private:
     bool use_buffer = false;
 
     void init() {
-        cudaMalloc(&KEYS_0, m_length * sizeof(KeyType));
+        CATCH_CUDA_ERROR(cudaMalloc(&KEYS_0, m_length * sizeof(KeyType)))
         #if CUDART_VERSION >= 11000
-        cudaMalloc(&m_keys[1], m_length * sizeof(KeyType));
-        cudaMalloc(&m_values[1], m_length * sizeof(ValueType));
+        CATCH_CUDA_ERROR(cudaMalloc(&m_keys[1], m_length * sizeof(KeyType)))
+        CATCH_CUDA_ERROR(cudaMalloc(&m_values[1], m_length * sizeof(ValueType)))
         cub::DeviceRadixSort::SortPairs(nullptr, temp_storage_bytes, m_keys[0], m_keys[1], m_values[0], m_values[1], m_length);
-        cudaMalloc(&temp_storage, temp_storage_bytes);
+        CATCH_CUDA_ERROR(cudaMalloc(&temp_storage, temp_storage_bytes))
         #endif
     }
 };
