@@ -63,12 +63,14 @@ uint32_t * Tiles::sort(complex_t &min, complex_t &max, complex_t *particles, uin
     tile_map.sort();
     cudaDeviceSynchronize();
     tock_us(1) times[2] = t_elapsed; tick(1)
-    sz.warp_cover(4*tile_count);
+    sz.cover(4*tile_count);
     compute_offset_per_tile<<<sz.grid, sz.block>>>(N, tile_map.keys(), offsets);
     CATCH_CUDA_ERROR(cudaGetLastError())
     CATCH_CUDA_ERROR(cudaMemcpy(offsets + 4*tile_count, &N, sizeof(uint32_t), cudaMemcpyHostToDevice))
     tock_us(1) times[3] = t_elapsed;
     tock_us(0)
+    if(verbose) std::cout << "Tiles-covering kernel sizes: " << sz.grid << 'x' << sz.block
+                          << " = " << sz.size() << '/' << (4*tile_count) << '\n';
     float m = 100.0f / t_elapsed;
     std::cout.precision(1);
     std::cout << "Particles sorted by tile in " << std::fixed << t_elapsed << "us (allocation: "
