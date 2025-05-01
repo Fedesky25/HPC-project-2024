@@ -19,25 +19,24 @@ if [[ ! -e "./build/HPC_project_2024" ]]
 fi
 
 module load ffmpeg/4.3.4
-cd ./build
 
 echo ""
 echo "=========================================================== Fibonacci(z)"
 for i in {1..20} do
   echo "# ${i}/20"
-  ./HPC_project_2024 -p none -o videos/serial-fib.mp4 -R qHD -D 2 -L 5 fib
+  ./build/HPC_project_2024 -p none -o videos/serial-fib.mp4 -R qHD -D 2 -L 5 fib
 done
 
 echo ""
 echo "=========================================================== exp(z^3)"
 for i in {1..20} do
   echo "# ${i}/20"
-  ./HPC_project_2024 -p none -o videos/serial-cubic.mp4 -R qHD -D 2 -L 5 -n 3 exp^n
+  ./build/HPC_project_2024 -p none -o videos/serial-cubic.mp4 -R qHD -D 2 -L 5 -n 3 exp^n
 done
 
 echo ""
 echo "=========================================================== Gamma(z)"
 for i in {1..20} do
   echo "# ${i}/20"
-  ./HPC_project_2024 -p none -o videos/serial-gamma.mp4 -R qHD -D 2 -L 5 --speed 0.1 gamma
+  ./build/HPC_project_2024 -p none -o videos/serial-gamma.mp4 -R qHD -D 2 -L 5 --speed 0.1 gamma
 done
