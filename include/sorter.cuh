@@ -19,22 +19,24 @@
     #define KEYS_CURRENT m_keys
 #endif
 
+extern int verbose;
 
 template<class KeyType, class ValueType>
 class KVSorter {
 
 public:
     explicit KVSorter(size_t len)
-    : m_length(len), use_buffer(false) {
+    : m_length(len), use_buffer(false), temp_storage_bytes(0) {
         cudaMalloc(&VALUES_0, len * sizeof(ValueType));
         init();
     }
     KVSorter(size_t len, ValueType * values_buffer)
-    : m_length(len), use_buffer(true) {
+    : m_length(len), use_buffer(true), temp_storage_bytes(0) {
         VALUES_0 = values_buffer;
         init();
     }
     ~KVSorter() {
+        std::cout << "KVSorter destructor" << std::endl;
         cudaFree(KEYS_0);
         if(!use_buffer) cudaFree(VALUES_0);
         #if CUDART_VERSION > 11000
@@ -81,7 +83,8 @@ private:
         #if CUDART_VERSION >= 11000
         CATCH_CUDA_ERROR(cudaMalloc(&m_keys[1], m_length * sizeof(KeyType)))
         CATCH_CUDA_ERROR(cudaMalloc(&m_values[1], m_length * sizeof(ValueType)))
-        cub::DeviceRadixSort::SortPairs(nullptr, temp_storage_bytes, m_keys[0], m_keys[1], m_values[0], m_values[1], m_length);
+        CATCH_CUDA_ERROR(cub::DeviceRadixSort::SortPairs(nullptr, temp_storage_bytes, m_keys[0], m_keys[1], m_values[0], m_values[1], m_length))
+        if(verbose) std::cout << "Sorter temporary storage: " << ((temp_storage_bytes + 512) >> 10) << "KiB" << std::endl;
         CATCH_CUDA_ERROR(cudaMalloc(&temp_storage, temp_storage_bytes))
         #endif
     }
