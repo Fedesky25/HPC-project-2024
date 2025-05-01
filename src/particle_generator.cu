@@ -354,6 +354,9 @@ complex_t* particles_gpu(complex_t z1, complex_t z2, uint32_t N, unsigned iterat
     KernelSizes ks2;
     ks2.warp_cover(N);
 
+    if(verbose) std::cout << "Generation kernels' sizes { sites: " << ks2.grid << 'x' << ks2.block
+                          << ", density points: " << ks1.grid << 'x' << ks1.block << " }" << std::endl;
+
     int num_SM;
     cudaDeviceGetAttribute(&num_SM, cudaDevAttrMultiProcessorCount, 0);
     auto M = 1 + (N-1)/num_SM; // (n_density + 1023) / 1024 = (n_density-1)/ 2^(10)
