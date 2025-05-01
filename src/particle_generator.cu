@@ -300,8 +300,8 @@ complex_t* particles_mixed(complex_t z1, complex_t z2, uint32_t N, unsigned iter
     return d_sites;
 }
 
-__global__ void scale_complex(double real, double imag, complex_t offset, complex_t * data, uint64_t N) {
-    auto increment = (uint64_t) blockDim.x * gridDim.x;
+__global__ void scale_complex(double real, double imag, complex_t offset, complex_t * data, unsigned N) {
+    auto increment = (unsigned) blockDim.x * gridDim.x;
     for(uint64_t i=threadIdx.x+blockIdx.x*blockDim.x; i<N; i+=increment) {
         data[i].real(data[i].real() * real);
         data[i].imag(data[i].imag() * imag);
@@ -342,7 +342,17 @@ __global__ void update_sites(
 }
 
 complex_t* particles_gpu(complex_t z1, complex_t z2, uint32_t N, unsigned iterations){
-    int64_t n_density = 128*N;
+    unsigned n_density = 128*N;
+
+    KernelSizes ks1;
+    ks1.warp_cover(n_density);
+
+    // Avoid checking index inside kernel
+    // The difference is anyway less than 1024
+    n_density = ks1.size();
+
+    KernelSizes ks2;
+    ks2.warp_cover(N);
 
     int num_SM;
     cudaDeviceGetAttribute(&num_SM, cudaDevAttrMultiProcessorCount, 0);
@@ -382,18 +392,18 @@ complex_t* particles_gpu(complex_t z1, complex_t z2, uint32_t N, unsigned iterat
 
     for(unsigned i=0; i<iterations; i++){  // Iterating to convergence
         tick(1) tick(2)
-//        compute_nearest<<<D,1024>>>(density_points.values(), n_density, d_sites, N, density_points.keys());
-        compute_nearest<<< (n_density >> 10), 1024 >>>(density_points.values()+D, d_sites, N, density_points.keys()+D);
-        if(D) compute_nearest<<<1,D>>>(density_points.values(), d_sites, N, density_points.keys());
-        CATCH_CUDA_ERROR(cudaDeviceSynchronize())
+        compute_nearest<<<ks1.grid, ks1.block>>>(density_points.values()+D, d_sites, N, density_points.keys());
+        CATCH_CUDA_ERROR(cudaGetLastError())
+        cudaDeviceSynchronize();
         tock_ms(2) times[0] += t_elapsed; tick(2)
         // thrust::sort_by_key(thrust::device, d_nearest, d_nearest + n_density, d_density);
         // cub::DeviceRadixSort::SortPairs()
         density_points.sort();
-        CATCH_CUDA_ERROR(cudaDeviceSynchronize())
+        cudaDeviceSynchronize();
         tock_ms(2) times[1] += t_elapsed; tick(2)
-        update_sites<<<num_SM, M>>>(density_points.values(), n_density, d_sites, N, density_points.keys());
-        CATCH_CUDA_ERROR(cudaDeviceSynchronize())
+        update_sites<<<ks2.grid, ks2.block>>>(density_points.values(), n_density, d_sites, N, density_points.keys());
+        CATCH_CUDA_ERROR(cudaGetLastError())
+        cudaDeviceSynchronize();
         tock_ms(2) times[2] += t_elapsed; tock_ms(1)
         if(verbose) {
             float m = 100.0f / t_elapsed;
