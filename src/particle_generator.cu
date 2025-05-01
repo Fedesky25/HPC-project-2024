@@ -379,9 +379,9 @@ complex_t* particles_gpu(complex_t z1, complex_t z2, uint32_t N, unsigned iterat
     auto deltaImag = z2.imag()-z1.imag();
 
     curandGenerateUniformDouble(gen, (double*) d_sites, N*2);
-    scale_complex<<<128, 1024>>>(deltaReal, deltaImag, z1, d_sites, N);
+    scale_complex<<<ks2.grid, ks2.block>>>(deltaReal, deltaImag, z1, d_sites, N);
     curandGenerateUniformDouble(gen, (double*) density_points.values(), n_density*2);
-    scale_complex<<<128, 1024>>>(deltaReal, deltaImag, z1, density_points.values(), n_density);
+    scale_complex<<<ks1.grid, ks1.block>>>(deltaReal, deltaImag, z1, density_points.values(), n_density);
     CATCH_CUDA_ERROR(cudaDeviceSynchronize())
     tock_ms(0) std::cout << " generated in " << t_elapsed << "ms" << std::endl;
 
