@@ -93,10 +93,11 @@ inline std::ostream& operator<<(std::ostream& stream, const complex_t& z) {
 
 
 struct KernelSizes {
-    unsigned grid, block;
+    unsigned grid = 0, block = 0;
 
     void cover(unsigned N);
     void warp_cover(unsigned N);
+    inline unsigned size() const { return grid * block; }
 
     static void set_SM();
     inline static unsigned get_SM() { return SM_count; }
