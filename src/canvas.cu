@@ -111,6 +111,7 @@ const ReducedRow * reshape_canvas_host(uint32_t count, const Canvas * canvases, 
     tock_ms(0)
     uint8_t max_overlap = 0;
     for(int i=0; i<max_threads; i++) if(overlaps[i] > max_overlap) max_overlap = overlaps[i];
+    delete [] overlaps;
 
     auto compression = (float) total_size / (float) (adapter.width * adapter.height);
     std::cout << count << " canvases reshaped into " << height << " rows in " << t_elapsed
