@@ -95,6 +95,7 @@ struct CanvasPixel {
 };
 
 using Canvas = CanvasPixel*;
+using PixelGroupsRows = CanvasPixel const * const *;
 
 /**
  * Creates and initializes an array of canvas on the host
@@ -103,6 +104,22 @@ using Canvas = CanvasPixel*;
  * @return host pointer to array of canvas
  */
 Canvas * create_canvas_host(uint32_t count, CanvasAdapter * adapter);
+
+/**
+ * Reshapes the canvases as an array of rows grouping the same pixels of different canvases
+ * @param count number of canvas
+ * @param canvases array of canvas
+ * @param adapter canvas adapter
+ * @return rows of grouped pixels
+ */
+PixelGroupsRows reshape_canvas_host(uint32_t count, const Canvas * canvases, const CanvasAdapter& adapter);
+
+/**
+ * Frees an array of canvas on the host
+ * @param count number of canvas to free
+ * @param canvases array of canvas
+ */
+void free_canvas_host(uint32_t count, const Canvas * canvases);
 
 /**
  * Creates and initializes an array of canvas on the device

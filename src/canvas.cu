@@ -74,6 +74,30 @@ Canvas * create_canvas_host(uint32_t count, CanvasAdapter * adapter) {
     return p;
 }
 
+void free_canvas_host(uint32_t count, const Canvas * canvases) {
+    for(uint32_t i=0; i<count; i++) free(canvases[i]);
+    free((void*) canvases);
+}
+
+PixelGroupsRows reshape_canvas_host(uint32_t count, const Canvas * canvases, const CanvasAdapter& adapter) {
+    timers(1) tick(0)
+    auto height = adapter.height;
+    auto rows = (CanvasPixel **) malloc(height * sizeof(CanvasPixel*));
+    #pragma omp parallel for schedule(static)
+    for (int y=0; y < height; y++){
+        auto row = rows[y] = (CanvasPixel*) malloc(adapter.width * count * sizeof(CanvasPixel));
+        for (int c=0; c < count; c++){
+            for (int x=0; x < adapter.width; x++){
+                auto i = x + y*height;
+                row[x*count] = canvases[c][i];
+            }
+        }
+    }
+    tock_ms(0)
+    std::cout << count << " canvases reshaped into " << height << " rows in " << t_elapsed << "ms" << std::endl;
+    return rows;
+}
+
 __global__ void init_canvas_array(Canvas * array, uint32_t len) {
     auto canvas = array[blockIdx.x];
     for(unsigned i=threadIdx.x; i<len; i+=blockDim.x) canvas[i].reset();
