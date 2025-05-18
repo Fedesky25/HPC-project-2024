@@ -13,6 +13,14 @@ BOTH void write_color(const YUVA & clr, AVFrame * frame, int x, int y) {
     CONSTEXPR_IF(!opaque) frame->data[3][x + y*frame->linesize[3]] = byte_clr_chl1(clr.A);
 }
 
+template<bool opaque>
+inline void write_bytes(const uint8_t bytes[4], AVFrame * frame, int x, int y) {
+    frame->data[0][x + y*frame->linesize[0]] = bytes[0];
+    frame->data[1][x + y*frame->linesize[1]] = bytes[1];
+    frame->data[2][x + y*frame->linesize[2]] = bytes[2];
+    CONSTEXPR_IF(!opaque) frame->data[3][x + y*frame->linesize[3]] =  bytes[3];
+}
+
 
 DEF_OPAQUE_FN(compute_frame_serial, (
         int32_t time, int32_t frame_count, int32_t lifetime,
@@ -51,8 +59,7 @@ DEF_OPAQUE_FN(compute_frame_serial, (
 
 DEF_OPAQUE_FN(compute_frame_omp, (
         int32_t time, int32_t frame_count, int32_t lifetime,
-        PixelGroupsRows rows, unsigned canvas_count,
-        AVFrame * frame, const YUVA * background
+        const ReducedRow * rows, AVFrame * frame, const YUVA * background
 )) {
     YUVA brush;
     auto inv_lifetime = 1.0f / (float) lifetime;
@@ -62,28 +69,28 @@ DEF_OPAQUE_FN(compute_frame_omp, (
             byte_clr_chl2(background->V),
             byte_clr_chl1(background->A),
     };
-    #pragma omp parallel for schedule(static) private(brush)
+    #pragma omp parallel for schedule(dynamic) private(brush)
     for (int y = 0; y < frame->height; y++) {
-        auto row = rows[y];
+        const auto& row = rows[y];
+        unsigned offset = 0;
         for (int x = 0; x < frame->width; x++) {
-            auto i = x * canvas_count;
-            unsigned selected_canvas = 0;
-            int32_t dt, time_delta = row[i].time_distance(time, frame_count);
-            for(unsigned c=1; c<canvas_count; c++) {
-                dt = row[i+c].time_distance(time, frame_count);
+            if(0 == row.counts[x]) {
+                write_bytes<opaque>(bytes_bg, frame, x, y);
+                continue;
+            }
+            uint8_t canvas_count = row.counts[x];
+            uint8_t selected_canvas = 0;
+            int32_t dt, time_delta = row.pixels[offset].time_distance(time, frame_count);
+            for(uint8_t c=1; c<canvas_count; c++) {
+                dt = row.pixels[offset+c].time_distance(time, frame_count);
                 if(dt < time_delta) {
                     time_delta = dt;
                     selected_canvas = c;
                 }
             }
-            auto pixel = row[i+selected_canvas];
+            auto pixel = row.pixels[offset+selected_canvas];
             time_delta -= pixel.multiplicity;
-            if(time_delta >= lifetime) {
-                frame->data[0][x + y*frame->linesize[0]] = bytes_bg[0];
-                frame->data[1][x + y*frame->linesize[1]] = bytes_bg[1];
-                frame->data[2][x + y*frame->linesize[2]] = bytes_bg[2];
-                CONSTEXPR_IF(!opaque) frame->data[3][x + y*frame->linesize[3]] =  bytes_bg[3];
-            }
+            if(time_delta >= lifetime) write_bytes<opaque>(bytes_bg, frame, x, y);
             else {
                 brush.from_hue(pixel.hue);
                 brush.A = 1.0f;
@@ -93,6 +100,7 @@ DEF_OPAQUE_FN(compute_frame_omp, (
                 }
                 write_color<opaque>(brush, frame, x, y);
             }
+            offset += rows[y].counts[x];
         }
     }
 }

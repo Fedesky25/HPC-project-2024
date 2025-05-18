@@ -257,7 +257,7 @@ void write_video_serial(const Configuration & config, Canvas canvas) {
 
 
 template<bool opaque>
-void write_video_omp_internal(const Configuration & config, PixelGroupsRows canvases, uint32_t canvas_count) {
+void write_video_omp_internal(const Configuration & config, const ReducedRow * canvases) {
     StreamWrapper w = {nullptr};
     w.open(config, opaque);
     AVFrame * frame_buffers[2] = { w.get_frame(), w.get_frame() };
@@ -273,7 +273,7 @@ void write_video_omp_internal(const Configuration & config, PixelGroupsRows canv
 
     TIMEIT(tc[0], {
         frame_buffers[0]->pts = 0;
-        compute_frame_omp<opaque>(0, frame_count, life_time, canvases, canvas_count, frame_buffers[0], &config.background);
+        compute_frame_omp<opaque>(0, frame_count, life_time, canvases, frame_buffers[0], &config.background);
     })
 
     for(int32_t t=1; t<frame_count; t++) {
@@ -286,7 +286,7 @@ void write_video_omp_internal(const Configuration & config, PixelGroupsRows canv
             TIMEIT(tc[t&7], {
                 auto frame = frame_buffers[t&1];
                 HANDLE_AV_ERROR(av_frame_make_writable(frame), "Frame cannot be written")
-                compute_frame_omp<opaque>(t, frame_count, life_time, canvases, canvas_count, frame_buffers[t&1], &config.background);
+                compute_frame_omp<opaque>(t, frame_count, life_time, canvases, frame_buffers[t&1], &config.background);
                 frame->pts = t;
             })
         }
@@ -307,9 +307,9 @@ void write_video_omp_internal(const Configuration & config, PixelGroupsRows canv
 }
 
 
-void write_video_omp(const Configuration & config, PixelGroupsRows rows, uint32_t canvas_count) {
-    if(config.background.A == 1.0f) write_video_omp_internal<true>(config, rows, canvas_count);
-    else write_video_omp_internal<false>(config, rows, canvas_count);
+void write_video_omp(const Configuration & config, const ReducedRow * rows) {
+    if(config.background.A == 1.0f) write_video_omp_internal<true>(config, rows);
+    else write_video_omp_internal<false>(config, rows);
 }
 
 

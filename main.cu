@@ -61,7 +61,7 @@ int main(int argc, char * argv[]) {
             evolve_omp(&config, canvases, points, N, fn_choice);
             auto rows = reshape_canvas_host(canvas_count, canvases, config.canvas);
             free_canvas_host(canvas_count, canvases);
-            write_video_omp(config, rows, canvas_count);
+            write_video_omp(config, rows);
             break;
         }
         case ExecutionMode::GPU:

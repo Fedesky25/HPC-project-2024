@@ -5,12 +5,11 @@
 #ifndef HPC_PROJECT_2024_FRAMES_CUH
 #define HPC_PROJECT_2024_FRAMES_CUH
 
-#include "canvas.cuh"
-
 extern "C" {
 #include <libavutil/frame.h>
 }
 
+#include "canvas.cuh"
 
 /**
  * Computes the frame at a specific time serially
@@ -40,8 +39,7 @@ void compute_frame_serial(
 template<bool opaque>
 void compute_frame_omp(
         int32_t time, int32_t frame_count, int32_t lifetime,
-        PixelGroupsRows rows, unsigned canvas_count,
-        AVFrame * frame, const YUVA * background);
+        const ReducedRow * rows, AVFrame * frame, const YUVA * background);
 
 
 /** Struct containing the constant arguments the gpu kernel needs to compute a frame */

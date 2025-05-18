@@ -22,7 +22,7 @@ void write_video_serial(const Configuration & config, Canvas canvas);
  * @param canvases pointer to list of canvases
  * @param canvas_count number of canvases
  */
-void write_video_omp(const Configuration & config, PixelGroupsRows rows, uint32_t canvas_count);
+void write_video_omp(const Configuration & config, const ReducedRow * rows);
 
 /**
  * Computes frames (parallelizing on pixels) and writes them to the output file
