@@ -51,7 +51,7 @@ DEF_OPAQUE_FN(compute_frame_serial, (
 
 DEF_OPAQUE_FN(compute_frame_omp, (
         int32_t time, int32_t frame_count, int32_t lifetime,
-        const Canvas * canvas_array, unsigned canvas_count,
+        PixelGroupsRows rows, unsigned canvas_count,
         AVFrame * frame, const YUVA * background
 )) {
     YUVA brush;
@@ -64,18 +64,19 @@ DEF_OPAQUE_FN(compute_frame_omp, (
     };
     #pragma omp parallel for schedule(static) private(brush)
     for (int y = 0; y < frame->height; y++) {
+        auto row = rows[y];
         for (int x = 0; x < frame->width; x++) {
-            int i = x + y*frame->width;
+            auto i = x * canvas_count;
             unsigned selected_canvas = 0;
-            int32_t dt, time_delta = canvas_array[0][i].time_distance(time, frame_count);
+            int32_t dt, time_delta = row[i].time_distance(time, frame_count);
             for(unsigned c=1; c<canvas_count; c++) {
-                dt = canvas_array[c][i].time_distance(time, frame_count);
+                dt = row[i+c].time_distance(time, frame_count);
                 if(dt < time_delta) {
                     time_delta = dt;
                     selected_canvas = c;
                 }
             }
-            auto pixel = canvas_array[selected_canvas][i];
+            auto pixel = row[i+selected_canvas];
             time_delta -= pixel.multiplicity;
             if(time_delta >= lifetime) {
                 frame->data[0][x + y*frame->linesize[0]] = bytes_bg[0];

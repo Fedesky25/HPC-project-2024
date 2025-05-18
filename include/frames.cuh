@@ -40,7 +40,7 @@ void compute_frame_serial(
 template<bool opaque>
 void compute_frame_omp(
         int32_t time, int32_t frame_count, int32_t lifetime,
-        const Canvas * canvas_array, unsigned canvas_count,
+        PixelGroupsRows rows, unsigned canvas_count,
         AVFrame * frame, const YUVA * background);
 
 

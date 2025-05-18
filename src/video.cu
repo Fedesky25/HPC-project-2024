@@ -257,7 +257,7 @@ void write_video_serial(const Configuration & config, Canvas canvas) {
 
 
 template<bool opaque>
-void write_video_omp_internal(const Configuration & config, const Canvas * canvases, uint32_t canvas_count) {
+void write_video_omp_internal(const Configuration & config, PixelGroupsRows canvases, uint32_t canvas_count) {
     StreamWrapper w = {nullptr};
     w.open(config, opaque);
     AVFrame * frame_buffers[2] = { w.get_frame(), w.get_frame() };
@@ -307,9 +307,9 @@ void write_video_omp_internal(const Configuration & config, const Canvas * canva
 }
 
 
-void write_video_omp(const Configuration & config, const Canvas * canvases, uint32_t canvas_count) {
-    if(config.background.A == 1.0f) write_video_omp_internal<true>(config, canvases, canvas_count);
-    else write_video_omp_internal<false>(config, canvases, canvas_count);
+void write_video_omp(const Configuration & config, PixelGroupsRows rows, uint32_t canvas_count) {
+    if(config.background.A == 1.0f) write_video_omp_internal<true>(config, rows, canvas_count);
+    else write_video_omp_internal<false>(config, rows, canvas_count);
 }
 
 
