@@ -59,7 +59,9 @@ int main(int argc, char * argv[]) {
             auto canvas_count = omp_get_max_threads();
             auto canvases = create_canvas_host(canvas_count, &config.canvas);
             evolve_omp(&config, canvases, points, N, fn_choice);
-            write_video_omp(config, canvases, canvas_count);
+            auto rows = reshape_canvas_host(canvas_count, canvases, config.canvas);
+            free_canvas_host(canvas_count, canvases);
+            write_video_omp(config, rows, canvas_count);
             break;
         }
         case ExecutionMode::GPU:
