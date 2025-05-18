@@ -93,7 +93,7 @@ const ReducedRow * reshape_canvas_host(uint32_t count, const Canvas * canvases, 
     for (int y=0; y < height; y++){
         rows[y].init(adapter.width);
         for(int x=0; x<adapter.width; x++) {
-            auto i = x + y*height;
+            auto i = x + y*adapter.width;
             uint8_t valid_count = 0;
             for (int c=0; c < count; c++) {
                 if(canvases[c][i]) {
