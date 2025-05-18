@@ -3,6 +3,7 @@
 
 #include "config.cuh"
 #include "color.cuh"
+#include <vector>
 
 struct ARGB {
     uint8_t a, r, g, b;
@@ -94,6 +95,17 @@ struct CanvasPixel {
     uint16_t birthday = UINT16_MAX, multiplicity = 0, hue = 0;
 };
 
+struct ReducedRow {
+    uint8_t * counts = nullptr;
+    std::vector<CanvasPixel> pixels;
+
+    ~ReducedRow() { delete[] counts; }
+    void init(unsigned N) {
+        pixels.reserve(N >> 2);
+        counts = new uint8_t [N];
+    }
+};
+
 using Canvas = CanvasPixel*;
 using PixelGroupsRows = CanvasPixel const * const *;
 
@@ -112,7 +124,7 @@ Canvas * create_canvas_host(uint32_t count, CanvasAdapter * adapter);
  * @param adapter canvas adapter
  * @return rows of grouped pixels
  */
-PixelGroupsRows reshape_canvas_host(uint32_t count, const Canvas * canvases, const CanvasAdapter& adapter);
+const ReducedRow * reshape_canvas_host(uint32_t count, const Canvas * canvases, const CanvasAdapter& adapter);
 
 /**
  * Frees an array of canvas on the host

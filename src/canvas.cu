@@ -1,3 +1,4 @@
+#include <omp.h>
 #include "canvas.cuh"
 #include "thrust/extrema.h"
 
@@ -79,22 +80,42 @@ void free_canvas_host(uint32_t count, const Canvas * canvases) {
     free((void*) canvases);
 }
 
-PixelGroupsRows reshape_canvas_host(uint32_t count, const Canvas * canvases, const CanvasAdapter& adapter) {
+const ReducedRow * reshape_canvas_host(uint32_t count, const Canvas * canvases, const CanvasAdapter& adapter) {
     timers(1) tick(0)
     auto height = adapter.height;
-    auto rows = (CanvasPixel **) malloc(height * sizeof(CanvasPixel*));
-    #pragma omp parallel for schedule(static)
+    auto rows = new ReducedRow[height];
+
+    auto max_threads = omp_get_max_threads();
+    auto overlaps = new uint8_t [max_threads]{0};
+    size_t total_size = 0;
+
+    #pragma omp parallel for schedule(static) reduction(+: total_size)
     for (int y=0; y < height; y++){
-        auto row = rows[y] = (CanvasPixel*) malloc(adapter.width * count * sizeof(CanvasPixel));
-        for (int c=0; c < count; c++){
-            for (int x=0; x < adapter.width; x++){
-                auto i = x + y*height;
-                row[x*count] = canvases[c][i];
+        rows[y].init(adapter.width);
+        for(int x=0; x<adapter.width; x++) {
+            auto i = x + y*height;
+            uint8_t valid_count = 0;
+            for (int c=0; c < count; c++) {
+                if(canvases[c][i]) {
+                    valid_count++;
+                    rows[y].pixels.push_back(canvases[c][i]);
+                }
             }
+            rows[y].counts[x] = valid_count;
+            auto thread = omp_get_thread_num();
+            if(valid_count > overlaps[thread]) overlaps[thread] = valid_count;
         }
+        rows[y].pixels.shrink_to_fit();
+        total_size += rows[y].pixels.size();
     }
     tock_ms(0)
-    std::cout << count << " canvases reshaped into " << height << " rows in " << t_elapsed << "ms" << std::endl;
+    uint8_t max_overlap = 0;
+    for(int i=0; i<max_threads; i++) if(overlaps[i] > max_overlap) max_overlap = overlaps[i];
+
+    auto compression = (float) total_size / (float) (adapter.width * adapter.height);
+    std::cout << count << " canvases reshaped into " << height << " rows in " << t_elapsed
+              << "ms (max overlap: " << (int) max_overlap << ", compression: " << compression
+              << ')' << std::endl;
     return rows;
 }
 
