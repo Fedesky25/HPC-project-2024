@@ -78,10 +78,9 @@ DEF_OPAQUE_FN(compute_frame_omp, (
                 write_bytes<opaque>(bytes_bg, frame, x, y);
                 continue;
             }
-            uint8_t canvas_count = row.counts[x];
             uint8_t selected_canvas = 0;
             int32_t dt, time_delta = row.pixels[offset].time_distance(time, frame_count);
-            for(uint8_t c=1; c<canvas_count; c++) {
+            for(uint8_t c=1; c<row.counts[x]; c++) {
                 dt = row.pixels[offset+c].time_distance(time, frame_count);
                 if(dt < time_delta) {
                     time_delta = dt;
@@ -100,7 +99,7 @@ DEF_OPAQUE_FN(compute_frame_omp, (
                 }
                 write_color<opaque>(brush, frame, x, y);
             }
-            offset += rows[y].counts[x];
+            offset += row.counts[x];
         }
     }
 }
