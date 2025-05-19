@@ -160,7 +160,12 @@ __device__ __host__ complex_t fraction(complex_t z, const FnVariables* variables
 }
 
 __device__ __host__ complex_t fibonacci(complex_t z, const FnVariables* variables){
-    return (calc::pow(PHI, z) - (cos(PI*z) * calc::pow(PHI, -z))) * INV_SQRT_5;
+//    return (calc::pow(PHI, z) - (cos(PI*z) * calc::pow(PHI, -z))) * INV_SQRT_5;
+    return (calc::pow(PHI, z) - calc::exp( z * complex_t(-0.48121182505960347, PI))) * INV_SQRT_5;
+}
+
+__device__ __host__ complex_t flutti(complex_t z, const FnVariables* variables){
+    return calc::exp(z) - calc::cos(z) * calc::exp(-z);
 }
 
 double gamma_p_host[] = {
@@ -214,7 +219,7 @@ __device__ ComplexFunction_t d_fns[] = {
     log_simple, log_parametric, log_mul,
     sin_simple, sin_parametric, cos_simple, cos_parametric, tan_simple, tan_parametric,
     sinh_simple, sinh_parametric, cosh_simple, cosh_parametric, tanh_simple, tanh_parametric,
-    conjugate_z, fraction, fibonacci, gamma
+    conjugate_z, fraction, flutti, fibonacci, gamma
 };
 
 ComplexFunction_t h_fns[] = {
@@ -224,7 +229,7 @@ ComplexFunction_t h_fns[] = {
         log_simple, log_parametric, log_mul,
         sin_simple, sin_parametric, cos_simple, cos_parametric, tan_simple, tan_parametric,
         sinh_simple, sinh_parametric, cosh_simple, cosh_parametric, tanh_simple, tanh_parametric,
-        conjugate_z, fraction, fibonacci, gamma
+        conjugate_z, fraction, flutti, fibonacci, gamma
 };
 
 FunctionChoice strtofn(const char * str) {
@@ -320,6 +325,8 @@ FunctionChoice strtofn(const char * str) {
                     return FunctionChoice::PowIntExp;
                 case bytes_to_uint<6>("^r*exp"):
                     return FunctionChoice::PowRealExp;
+                case bytes_to_uint<6>("flutti"):
+                    return FunctionChoice::Flutti;
                 default:
                     return FunctionChoice::NONE;
             }

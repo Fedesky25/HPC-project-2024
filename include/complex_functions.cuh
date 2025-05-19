@@ -14,7 +14,7 @@ enum class FunctionChoice {
     LogSimple, LogParametric, LogMul,
     SinSimple, SinParametric, CosSimple, CosParametric, TanSimple, TanParametric,
     SinhSimple, SinhParametric, CoshSimple, CoshParametric, TanhSimple, TanhParametric,
-    Conjugate, Fraction, Fibonacci, Gamma,
+    Conjugate, Fraction, Flutti, Fibonacci, Gamma,
     NONE = INT_MAX,
 };
 
