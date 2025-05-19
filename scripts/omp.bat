@@ -1,12 +1,14 @@
 @echo off
+SETLOCAL ENABLEDELAYEDEXPANSION
 
-for %%num in (3, 6, 12) do (
-    echo.
-    set OMP_NUM_THREADS=%%num
-    echo ================================================================================ threads = %%num
+for %%n in (3, 6, 12) do (
+    set OMP_NUM_THREADS=%%n
 
     echo.
-    echo =========================================================== Fibonacci(z)
+    echo ================================================================================ threads = %%n
+
+    echo.
+    echo =========================================================== Fibonacci^(z^)
     for /L %%i in (1,1,20) do (
       echo.
       echo # %%i/20
@@ -14,7 +16,7 @@ for %%num in (3, 6, 12) do (
     )
 
     echo.
-    echo =========================================================== exp(z^3)
+    echo =========================================================== exp^(z^^3^)
     for /L %%i in (1,1,20) do (
       echo.
       echo # %%i/20
@@ -22,10 +24,12 @@ for %%num in (3, 6, 12) do (
     )
 
     echo.
-    echo =========================================================== Gamma(z)
+    echo =========================================================== Gamma^(z^)
     for /L %%i in (1,1,20) do (
       echo.
       echo # %%i/20
       .\HPC_project_2024 -p omp -o videos\omp-gamma.mp4 -R qHD -D 2 -L 5 --speed 0.1 gamma
     )
 )
+
+ENDLOCAL
