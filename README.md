@@ -45,3 +45,9 @@ This tool makes use of two libraries:
 - `getopt` &mdash; Preinstalled on Linux. When compiling for Windows, a port of `getopt` (taken from [Chunde's repository](https://github.com/Chunde/getopt-for-windows)) is injected.
 - `ffmpeg` &mdash; Once installed, the environment variable `FFMPEG_PATH` must be specified with the path to the installation directory of `ffmpeg`. When building for Windows, be sure to add the `${FFMPEG_PATH}/bin` directory in the PATH, so that dll can be used by the executable.
 
+## Debugging tools
+
+```bash
+ncu -o <out_file> <command>
+compute-sanitizer --tool memcheck --log-file <out_file> <command>
+```
