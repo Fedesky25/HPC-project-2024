@@ -117,7 +117,8 @@ const ReducedRow * reshape_canvas_host(uint32_t count, const Canvas * canvases, 
     auto compression = (float) total_size / (float) (adapter.width * adapter.height);
     std::cout << count << " canvases reshaped into " << height << " rows in " << t_elapsed
               << "ms (max overlap: " << (int) max_overlap << ", compression: " << compression
-              << ')' << std::endl;
+              << ", size: " << (((total_size * sizeof(CanvasPixel) + height * adapter.width - 1) >> 20) + 1)
+              << "MB)" << std::endl;
     return rows;
 }
 
