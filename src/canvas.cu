@@ -70,7 +70,8 @@ Canvas * create_canvas_host(uint32_t count, CanvasAdapter * adapter) {
         p[i] = c;
     }
     tock_ms(0)
-    std::cout << "Initialized " << (((area * sizeof(CanvasPixel) - 1) >> 20)+1) << "MB for " << count
+    auto sz = count * area * sizeof(CanvasPixel);
+    std::cout << "Initialized " << (((sz - 1) >> 20)+1) << "MB for " << count
               << " canvases in " << t_elapsed << "ms" << std::endl;
     return p;
 }
