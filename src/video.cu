@@ -69,7 +69,7 @@ struct StreamWrapper {
     /// Format context
     AVFormatContext * fmt_ctx;
 
-    void open(const Configuration& config, bool opaque) {
+    void open(const Configuration& config, bool opaque, int threads = 0) {
         #ifdef NDEBUG
         av_log_set_level(AV_LOG_ERROR);
         #else
@@ -99,6 +99,7 @@ struct StreamWrapper {
         EXIT_IF(!enc_ctx, "Could not allocate encoding context")
         enc_ctx->bit_rate = 400000;
         enc_ctx->codec_id = fmt_ctx->oformat->video_codec;
+        enc_ctx->thread_count = threads;
         enc_ctx->width = config.canvas.width;
         enc_ctx->height = config.canvas.height;
         enc_ctx->time_base = AVRational{1, config.evolution.frame_rate};
@@ -258,8 +259,19 @@ void write_video_serial(const Configuration & config, Canvas canvas) {
 
 template<bool opaque>
 void write_video_omp_internal(const Configuration & config, const ReducedRow * canvases) {
+    int max_threads = omp_get_max_threads();
+    int ffmpeg_threads = std::min((max_threads+1)*2/3, 24);
+    int draw_threads = max_threads - ffmpeg_threads;
+    if(ffmpeg_threads == max_threads) {
+        ffmpeg_threads--;
+        draw_threads++;
+    }
+    // lib264 defaults to using 1.5x available thread count of computer
+    // so we mimic same behaviour on reduced number of initial threads
+    ffmpeg_threads += ffmpeg_threads/2;
+
     StreamWrapper w = {nullptr};
-    w.open(config, opaque);
+    w.open(config, opaque, ffmpeg_threads);
     AVFrame * frame_buffers[2] = { w.get_frame(), w.get_frame() };
 
     auto frame_count = config.evolution.frame_count;
@@ -267,13 +279,17 @@ void write_video_omp_internal(const Configuration & config, const ReducedRow * c
 
     omp_set_nested(1);
 
-    if(verbose) std::cout << header << std::endl << std::setprecision(1);
+    if(verbose) {
+        std::cout << "Thread distribution for frame computation { draw: "
+                  << draw_threads << ", ffmpeg: " << ffmpeg_threads << " }\n"
+                  << header << std::endl << std::setprecision(1);
+    }
     auto start_all = std::chrono::steady_clock::now();
 
     float tc = 0, tw = 0;
     TIMEIT(tc, {
         frame_buffers[0]->pts = 0;
-        compute_frame_omp<opaque>(0, frame_count, life_time, canvases, frame_buffers[0], &config.background);
+        compute_frame_omp<opaque>(max_threads, 0, frame_count, life_time, canvases, frame_buffers[0], &config.background);
     })
     if(verbose) { std::cout << "       0 | "  << std::setw(5) << tc; tc = 0; }
 
@@ -287,7 +303,7 @@ void write_video_omp_internal(const Configuration & config, const ReducedRow * c
             TIMEIT(tc, {
                 auto frame = frame_buffers[t&1];
                 HANDLE_AV_ERROR(av_frame_make_writable(frame), "Frame cannot be written")
-                compute_frame_omp<opaque>(t, frame_count, life_time, canvases, frame_buffers[t&1], &config.background);
+                compute_frame_omp<opaque>(draw_threads, t, frame_count, life_time, canvases, frame_buffers[t&1], &config.background);
                 frame->pts = t;
             })
         }
