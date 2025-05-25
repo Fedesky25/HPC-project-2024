@@ -213,7 +213,7 @@ void encode(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, FILE *outfil
     } while (ret >= 0);
 }
 
-static const char * const header = "Frame computation (iteration, (computation [ms], writing [ms]) * 8):";
+static const char * const header = "Frame computation (iteration, (computation, encoding)[ms] * 8):";
 
 
 template<bool opaque>
@@ -310,7 +310,7 @@ template<bool opaque>
 void write_video_gpu_internal(const Configuration & config, const Canvas * canvases, uint32_t canvas_count) {
     StreamWrapper w = {nullptr};
     w.open(config, opaque);
-    auto frame = w.get_frame();
+    AVFrame * frames[2] = { w.get_frame(), w.get_frame() };
 
 
     auto frame_count = config.evolution.frame_count;
@@ -321,61 +321,96 @@ void write_video_gpu_internal(const Configuration & config, const Canvas * canva
     args[0].canvas_count = args[1].canvas_count = canvas_count;
     args[0].background   = args[1].background   = config.background;
 
-    args[0].init(frame, opaque);
-    args[1].init(frame, opaque);
+    args[0].init(frames[0], opaque);
+    args[1].init(frames[1], opaque);
 
-    if(verbose) std::cout << header << std::endl;
+    if(verbose) std::cout << "Frame computation (iteration, (encoding, copy, computation)[ms] * 8):" << std::endl;
 
-    float tw = 0, tc = 0;
+    float tw = 0, tcomp = 0, tcpy = 0;
     auto start_all = std::chrono::steady_clock::now();
 
-    TIMEIT(tc, {
+    TIMEIT(tcomp, {
         compute_frame_gpu<opaque>(0, args[0]);
-        cudaDeviceSynchronize();
+        CATCH_CUDA_ERROR(cudaDeviceSynchronize());
     })
-    if(verbose) { std::cout << "       0 | "  << std::setw(5) << tc; tc = 0; }
+    if(verbose) { std::cout << "       0 |       ,       , " << std::setw(6) << tcomp; tcomp = 0; }
 
-    for(int32_t t=1; t < frame_count; t++) {
-        #pragma omp parallel sections num_threads(2)
+    #pragma omp parallel sections
+    {
+        #pragma omp section
+        TIMEIT(tcpy, {
+            HANDLE_AV_ERROR(av_frame_make_writable(frames[0]), "Frame cannot be written")
+            args[0].copy_into(frames[0]);
+        })
+        #pragma omp section
+        TIMEIT(tcomp, {
+            compute_frame_gpu<opaque>(1, args[1]);
+            CATCH_CUDA_ERROR(cudaDeviceSynchronize());
+        })
+    };
+    if(verbose) {
+        std::cout << " |       , " << std::setw(6) << tcpy << ", " << std::setw(6) << tcomp;
+        tcpy = tcomp = 0;
+    }
+
+    for(int32_t t=2; t < frame_count; t++) {
+        #pragma omp parallel sections
         {
             #pragma omp section
             TIMEIT(tw, {
-                HANDLE_AV_ERROR(av_frame_make_writable(frame), "Frame cannot be written")
-                args[(t-1)&1].copy_into(frame);
-                frame->pts = t-1;
-                w.encode(frame);
+                frames[t&1]->pts = t-2;
+                w.encode(frames[t&1]);
             })
             #pragma omp section
-            TIMEIT(tc, {
+            TIMEIT(tcpy, {
+                auto i = (t-1)&1;
+                HANDLE_AV_ERROR(av_frame_make_writable(frames[i]), "Frame cannot be written")
+                args[i].copy_into(frames[i]);
+            })
+            #pragma omp section
+            TIMEIT(tcomp, {
                 compute_frame_gpu<opaque>(t, args[t&1]);
-                cudaDeviceSynchronize();
+                CATCH_CUDA_ERROR(cudaDeviceSynchronize());
             })
         }
         if(verbose) {
-            std::cout << " : " << std::setw(6) << tw;
             if(0 == (t&7)) std::cout << "\n   " << std::setw(5) << t;
-            std::cout << " | " << std::setw(5) << tc;
-            tc = tw = 0;
+            std::cout << " | " << std::setw(6) << tw << ", " << std::setw(6) << tcpy << ", " << std::setw(6) << tcomp;
+            tw = tcpy = tcomp = 0;
         }
     }
+    #pragma omp parallel sections
+    {
+        #pragma omp section
+        TIMEIT(tw, {
+            frames[frame_count&1]->pts = frame_count-2;
+            w.encode(frames[frame_count&1]);
+        })
+        #pragma omp section
+        TIMEIT(tcpy, {
+            auto i = (frame_count-1)&1;
+            HANDLE_AV_ERROR(av_frame_make_writable(frames[i]), "Frame cannot be written")
+            args[i].copy_into(frames[i]);
+        })
+    };
     TIMEIT(tw, {
-        args[(frame_count-1)&1].copy_into(frame);
-        frame->pts = frame_count-1;
-        w.encode(frame);
+        auto i = (frame_count-1)&1;
+        frames[i]->pts = frame_count-1;
+        w.encode(frames[i]);
     })
-    if(verbose) std::cout << " : " << std::setw(6) << tw << '\n';
     auto end_all = std::chrono::steady_clock::now();
     float total = (std::chrono::duration<float, std::ratio<1>>(end_all-start_all)).count();
-    if(verbose) std::cout << "  :: total " << total << 's' << std::endl;
+    if(verbose) std::cout << "\n  :: total " << total << 's' << std::endl;
     else {
         auto m = 0.1f / total;
         std::cout << frame_count << " frames written in " << std::setprecision(3) << total << "s (computation: "
-                  << std::fixed << std::setprecision(2) << tc*m << "%, file write: "
+                  << std::fixed << std::setprecision(2) << tcomp * m << "%, file write: "
                   << std::fixed << std::setprecision(2) << tw*m << "%)" << std::endl;
     }
 
     w.close();
-    av_frame_free(&frame);
+    av_frame_free(&frames[0]);
+    av_frame_free(&frames[1]);
     args[0].free();
     args[1].free();
 }
