@@ -56,6 +56,7 @@ struct Configuration {
     YUVA background{0.186f, 0.02f, 0.f, 1};
 //    FixedHSLA background{ IC_16b, icenc(0.06), icenc(0.15), ICE_1 };
     const char * output = "plot.mp4";
+    const char * particles_file = nullptr;
     unsigned long particle_distance = 10;
     unsigned long margin = 4;
     unsigned long lloyd_iterations = 8;

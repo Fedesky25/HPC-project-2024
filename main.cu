@@ -9,7 +9,7 @@
 #include "frames.cuh"
 #include "video.cuh"
 #include "omp.h"
-
+#include <fstream>
 
 int main(int argc, char * argv[]) {
     if(argc < 2) {
@@ -26,27 +26,39 @@ int main(int argc, char * argv[]) {
     EXIT_IF(fn_choice == FunctionChoice::NONE, "Function string name not recognized")
 
     if(verbose) {
-        std::cout << "Configuration:" << std::endl;
-        std::cout << "  Output file: " << config.output << std::endl;
-        std::cout << "  Complex numbers: " << config.vars.z[0] << ' ' << config.vars.z[1] << ' ' << config.vars.z[2] << std::endl;
-        std::cout << "  Real and int numbers: " << config.vars.x << ", " << config.vars.n << std::endl;
-        std::cout << "  Canvas: " << config.canvas << std::endl;
-        std::cout << "  Evolution: " << config.evolution << std::endl;
+        std::cout << "Configuration:";
+        std::cout << "\n  Output file: " << config.output;
+        std::cout << "\n  Complex numbers: " << config.vars.z[0] << ' ' << config.vars.z[1] << ' ' << config.vars.z[2];
+        std::cout << "\n  Real and int numbers: " << config.vars.x << ", " << config.vars.n;
+        std::cout << "\n  Canvas: " << config.canvas;
+        std::cout << "\n  Evolution: " << config.evolution << std::endl;
     }
-
-    auto start_computation = std::chrono::steady_clock::now();
 
     complex_t min, max;
     config.bounds(&min, &max);
-    auto N = config.particle_number();
 
-    complex_t * points;
+    uint32_t N = 0;
+    complex_t * points = nullptr;
+    if(0 == config.lloyd_iterations && config.particles_file != nullptr) {
+        if(verbose) std::cout << '\n';
+        std::cout << "Reading particles from " << config.particles_file << std::flush;
+        std::ifstream f(config.particles_file);
+        f >> N;
+        points = (complex_t *) malloc(N * sizeof(complex_t));
+        for(uint32_t i=0; i<N; i++) f >> points[i];
+        f.close();
+        std::cout << " -> done" << std::endl;
+    }
+    else N = config.particle_number();
     auto frame_size = config.canvas.height * config.canvas.width;
+
+    auto start_computation = std::chrono::steady_clock::now();
 
     switch (config.mode) {
         case ExecutionMode::Serial:
         {
-            points = particles_serial(min, max, N, config.lloyd_iterations);
+            if(!points) points = particles_serial(min, max, N, config.lloyd_iterations);
+            if(!config.evolution.frame_count) break;
             auto canvas = new CanvasPixel [frame_size];
             evolve_serial(&config, canvas, points, N, fn_choice);
             write_video_serial(config, canvas);
@@ -55,7 +67,8 @@ int main(int argc, char * argv[]) {
         }
         case ExecutionMode::OpenMP:
         {
-            points = particles_omp(min, max, N, config.lloyd_iterations);
+            if(!points) points = particles_omp(min, max, N, config.lloyd_iterations);
+            if(!config.evolution.frame_count) break;
             auto canvas_count = omp_get_max_threads();
             auto canvases = create_canvas_host(canvas_count, &config.canvas);
             evolve_omp(&config, canvases, points, N, fn_choice);
@@ -66,7 +79,6 @@ int main(int argc, char * argv[]) {
         }
         case ExecutionMode::GPU:
         {
-
             int gpu_count;
             cudaGetDeviceCount(&gpu_count);
             if(gpu_count < 1) {
@@ -81,10 +93,10 @@ int main(int argc, char * argv[]) {
             Tiles tiles(&config, tile_count_target);
             unsigned tiles_count = tiles.total();
             if(verbose) {
-                std::cout << "  Tiles: " << tiles.rows << 'x' << tiles.cols << '=' << tiles_count
+                std::cout << "\nTiles: " << tiles.rows << 'x' << tiles.cols << '=' << tiles_count
                           << " (target: " << tile_count_target << ") with "
                           << (float) N / (float) tiles_count << " particles each" << std::endl;
-                std::cout << "\nCUDA SM count: " << KernelSizes::get_SM();
+                std::cout << "CUDA SM count: " << KernelSizes::get_SM();
                 WHEN_OK(
                     std::cout << "\nRegisters used by kernels: \n";
                     pgen_print_regs();
@@ -95,14 +107,26 @@ int main(int argc, char * argv[]) {
                 )
             }
 
-            points = particles_gpu(min, max, N, config.lloyd_iterations);
-            auto tile_offsets = tiles.sort(min, max, points, N);
+            complex_t * d_points;
+            if(points) {
+                CATCH_CUDA_ERROR(cudaMalloc(&d_points, N*sizeof(complex_t)))
+                cudaMemcpy(d_points, points, N*sizeof(complex_t), cudaMemcpyHostToDevice);
+            }
+            else {
+                d_points = particles_gpu(min, max, N, config.lloyd_iterations);
+                if(config.particles_file && config.lloyd_iterations) {
+                    points = (complex_t*) malloc(N * sizeof(complex_t));
+                    cudaMemcpy(points, d_points, N*sizeof(complex_t), cudaMemcpyDeviceToHost);
+                }
+            }
+            if(!config.evolution.frame_count) break;
+            auto tile_offsets = tiles.sort(min, max, d_points, N);
             auto canvas_count = get_canvas_count_serial(tile_offsets, tiles_count);
             auto canvases = create_canvas_device(canvas_count, &config.canvas);
-            evolve_gpu(&config, canvases, canvas_count, points, N,
+            evolve_gpu(&config, canvases, canvas_count, d_points, N,
                        tile_offsets, tiles_count, fn_choice);
             cudaFree(tile_offsets);
-            cudaFree(points);
+            cudaFree(d_points);
             write_video_gpu(config, canvases, canvas_count);
             break;
         }
@@ -111,6 +135,16 @@ int main(int argc, char * argv[]) {
     auto end_computation = std::chrono::steady_clock::now();
     float time_all = (std::chrono::duration<float,std::ratio<1>>(end_computation-start_computation)).count();
     std::cout << "All computations completed in " << time_all << 's' << std::endl;
+
+    if(config.particles_file && config.lloyd_iterations) {
+        std::cout << "Saving particles inside " << config.particles_file << std::flush;
+        std::ofstream f(config.particles_file);
+        f << N;
+        for(uint32_t i=0; i<N; i++) f << points[i];
+        f << std::endl;
+        f.close();
+        std::cout << " -> done!" << std::endl;
+    }
 
     #if 0
     std::ofstream test("test.raw");

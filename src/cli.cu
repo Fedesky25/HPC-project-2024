@@ -392,8 +392,19 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
                 CHECK_DISTANCE
                 break;
             case 'L':
-                config->lloyd_iterations = strtoul(optarg, &rest, 10);
-                CHECK_REMAINING("number of iterations of Lloyd's algorithm")
+                if(isdigit(optarg[0])) {
+                    config->lloyd_iterations = strtoul(optarg, &rest, 10);
+                    if(rest[0] == ':') config->particles_file = rest+1;
+                    else {
+                        config->particles_file = nullptr;
+                        CHECK_REMAINING("number of iterations of Lloyd's algorithm")
+                    }
+                }
+                else {
+                    config->lloyd_iterations = 0;
+                    config->particles_file = optarg;
+                }
+
                 break;
             case 'R':
                 parse_resolution(optarg, &(config->canvas));
@@ -425,7 +436,7 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
             case 'D':
                 duration = strtol(optarg, &rest, 10);
                 CHECK_REMAINING("duration")
-                if(duration < 1) {
+                if(duration < 0) {
                     std::cerr << "Video duration cannot be less than 1 second" << std::endl;
                     return true;
                 }
