@@ -404,7 +404,8 @@ void write_video_gpu_internal(const Configuration & config, const Canvas * canva
     else {
         auto m = 0.1f / total;
         std::cout << frame_count << " frames written in " << std::setprecision(3) << total << "s (computation: "
-                  << std::fixed << std::setprecision(2) << tcomp * m << "%, file write: "
+                  << std::fixed << std::setprecision(2) << tcomp * m << "%, copy: "
+                  << std::fixed << std::setprecision(2) << tcpy*m << "%, encoding: "
                   << std::fixed << std::setprecision(2) << tw*m << "%)" << std::endl;
     }
 
