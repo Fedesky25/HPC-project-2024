@@ -29,15 +29,14 @@ void Configuration::bounds(complex_t *min, complex_t *max) const {
 }
 
 void Configuration::sizes(unsigned int *width, unsigned int *height) const {
-    auto extra = 2*margin*particle_distance;
+    unsigned extra = 2*margin*particle_distance;
     *width = canvas.width + extra;
     *height = canvas.height + extra;
 }
 
 uint32_t Configuration::particle_number() const {
-    auto extra = 2*margin*particle_distance;
+    auto extra = 2.f*margin*particle_distance;
     auto w = canvas.width + extra;
     auto h = canvas.height + extra;
-    if(w > 65000 || h > 65000) return (w/particle_distance) * (h/particle_distance);
-    else return (w * h) / (particle_distance * particle_distance);
+    return static_cast<uint32_t>((w * h) / (particle_distance * particle_distance));
 }

@@ -388,7 +388,7 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
                 if(config->canvas.scale == 0.0) return true;
                 break;
             case 'd':
-                config->particle_distance = strtoul(optarg, &rest, 10);
+                config->particle_distance = strtod(optarg, &rest);
                 CHECK_DISTANCE
                 break;
             case 'L':
