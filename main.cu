@@ -21,9 +21,12 @@ int main(int argc, char * argv[]) {
     auto error = parse_args(argc, argv, &config);
     if(error) return 1;
 
-    EXIT_IF(optind >= argc, "Missing function to plot")
-    auto fn_choice = strtofn(argv[optind]);
-    EXIT_IF(fn_choice == FunctionChoice::NONE, "Function string name not recognized")
+    auto fn_choice = FunctionChoice::NONE;
+    if(config.evolution.frame_count) {
+        EXIT_IF(optind >= argc, "Missing function to plot")
+        fn_choice = strtofn(argv[optind]);
+        EXIT_IF(fn_choice == FunctionChoice::NONE, "Function string name not recognized")
+    }
 
     if(verbose) {
         std::cout << "Configuration:";
