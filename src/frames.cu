@@ -58,7 +58,7 @@ DEF_OPAQUE_FN(compute_frame_serial, (
 }
 
 DEF_OPAQUE_FN(compute_frame_omp, (
-        int threads, int32_t time, int32_t frame_count, int32_t lifetime,
+        int32_t time, int32_t frame_count, int32_t lifetime,
         const ReducedRow * rows, AVFrame * frame, const YUVA * background
 )) {
     YUVA brush;
@@ -69,7 +69,7 @@ DEF_OPAQUE_FN(compute_frame_omp, (
             byte_clr_chl2(background->V),
             byte_clr_chl1(background->A),
     };
-    #pragma omp parallel for schedule(dynamic) private(brush) num_threads(threads)
+    #pragma omp parallel for schedule(static,1) private(brush)
     for (int y = 0; y < frame->height; y++) {
         const auto& row = rows[y];
         unsigned offset = 0;

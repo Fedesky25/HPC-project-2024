@@ -38,7 +38,7 @@ void compute_frame_serial(
  */
 template<bool opaque>
 void compute_frame_omp(
-        int threads, int32_t time, int32_t frame_count, int32_t lifetime,
+        int32_t time, int32_t frame_count, int32_t lifetime,
         const ReducedRow * rows, AVFrame * frame, const YUVA * background);
 
 
