@@ -46,6 +46,10 @@ int main(int argc, char * argv[]) {
         if(verbose) std::cout << '\n';
         std::cout << "Reading particles from " << config.particles_file << std::flush;
         std::ifstream f(config.particles_file);
+        if(!f.good()) {
+            std::cerr << "\nFile '" << config.particles_file << "' does not exists!" << std::endl;
+            return 1;
+        }
         f >> N;
         points = (complex_t *) malloc(N * sizeof(complex_t));
         for(uint32_t i=0; i<N; i++) f >> points[i];
