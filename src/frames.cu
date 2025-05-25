@@ -212,7 +212,7 @@ __global__ void compute_frame_no_divergence(
 DEF_OPAQUE_FN(compute_frame_gpu, (int32_t time, const FrameKernelArguments & args)) {
     dim3 block_size(32, 32);
     dim3 grid_size((args.width + 31) >> 5, (args.height + 31) >> 5);
-    compute_frame_kernel<opaque><<<block_size, grid_size>>>(time, args.device_copy);
+    compute_frame_kernel<opaque><<<grid_size, block_size>>>(time, args.device_copy);
 //    uint32_t block_count = size >> 10;
 //    compute_frame_no_divergence<opaque><<<block_count, 1024>>>(
 //            time, frame_count, canvas_array, canvas_count, frame, lifetime, 0, background);
