@@ -20,8 +20,7 @@ fi
 
 module load ffmpeg/4.3.4
 
-num_threads=(4,8,16,32,64)
-for num in "${num_threads[@]}"; do
+for num in 4 8 16 32 64 112; do
   export OMP_NUM_THREADS $num
   echo "================================================================================ threads = $num"
 

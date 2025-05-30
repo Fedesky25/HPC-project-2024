@@ -2,11 +2,12 @@
 SETLOCAL ENABLEDELAYEDEXPANSION
 
 
-    set OMP_NUM_THREADS= 6
+
+    set OMP_NUM_THREADS=6
     echo.
     echo ================================================================================ threads = 6
 
-    for %%n in (39, 28, 23, 20, 18, 16, 15, 14) do (
+    for %%n in (39, 32, 28, 24, 22, 20, 19, 18) do (
 
         echo.
         echo =========================================================== d = %%n
