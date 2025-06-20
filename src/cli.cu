@@ -518,7 +518,7 @@ void print_usage() {
     std::cout << "  -f  --framerate      60             Number of frames per seconds i.e. the refresh rate\n";
     std::cout << "  -R  --resolution     1920x1080      Pixel sizes of the video: it can be either a supported screen resolution name (such as FHD, WXGA+)\n"
               << "                                      or a custom size specified in the format <width>x<height>. Optionally, the character '^' may be\n"
-              << "                                      prepended to invert the horizontal and vertical sizes.\n";
+              << "                                      prepended to invert the horizontal and vertical sizes. Both sizes must be multiple of 2.\n";
     std::cout << "  -B  --background     242429         RGB or RGBA color of the background using hexadecimal representation\n";
     std::cout << "  -d  --distance       10             Average distance (in pixels) between two nearby particles in the starting positions\n";
     std::cout << "  -m  --margin         4              Number of layers of additional particles outside the video. Too low values lead to empty borders.\n";
@@ -540,6 +540,17 @@ void print_usage() {
     std::cout << "COMPLEX NUMBER FORMAT\n";
     std::cout << "  Complex number can be specified in cartesian and polar coordinates:\n";
     std::cout << "  - Cartesian format is the sum of a real and imaginary part. The latter is denote by prepending or appending 'i' or 'j' to the number\n";
-    std::cout << "  - Polar coords. are in the format <radius>\\<angle><unit>, where the angle unit can be degree (d), radian (r), gon (g), or turns (t)\n";
+    std::cout << "  - Polar coords. are in the format <radius>\\<angle><unit>, where the angle unit can be degree (d), radian (r), gon (g), or turns (t)\n\n";
+    std::cout << "SCREEN RESOLUTION NAMES\n";
+    std::cout << "  Name    Resolution  |  Name    Resolution\n"
+                 "  VGA      640x480    |  FHD+    1920x1280\n"
+                 "  SVGA     800x600    |  UW-FHD  2560x1080\n"
+                 "  XGA     1024x768    |  UW-QHD  3440x1440\n"
+                 "  QXGA    2048x1536   |  WXQA    1280x800 \n"
+                 "  qHD      960x540    |  WXGA+   1440x900 \n"
+                 "  FHD     1920x1080   |  WSXGA+  1680x1050\n"
+                 "  WQHD    2560x1440   |  WUXGA   1920x1200\n"
+                 "  WQXGA+  3200x1800   |  WQXGA   2560x1600\n"
+                 "  UHD     3840x2160   |  WQUXGA  3840x2400\n";
     std::cout << std::endl;
 }
