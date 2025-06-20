@@ -502,44 +502,44 @@ bool parse_args(int argc, char * argv[], Configuration * config) {
 }
 
 void print_usage() {
-    std::cout << "CFSPlt v0.1.0" << std::endl;
-    std::cout << "  Complex functions streamplot  -  Generator of webp videos representing the streamplot of a selection of complex functions" << std::endl << std::endl;
-    std::cout << "SYNOPSIS:" << std::endl;
-    std::cout << "  cfsplt [-c center_point] [-d particle_distance] [-D duration] [-f framerate] [-l lifetime] [-L Lloyd iterations]" << std::endl
-              << "         [-m margin_layers] [-n integer] [-o file] [-p parallelization] [-r real] [-R resolution] [-s pixel_scale]" << std::endl
-              << "         [-t time_scale] [-v speed] [-1 complex] [-2 complex] [-3 complex] function" << std::endl << std::endl;
-    std::cout << "OPTIONS" << std::endl;
-    std::cout << "  Name                 Default        Description" << std::endl;
-    std::cout << "  -v  --verbose                       Increases the verbosity level" <<std::endl;
-    std::cout << "  -p  --parallel       gpu            Which parallelization to adopt in computations. It must be one of: none, omp, gpu" << std::endl;
-    std::cout << "  -o  --output         plot.raw       Path of the output file. If an extension different from '.raw' is specified, it attempts to run" << std::endl
-              << "                                      ffmpeg to produce a video with such format. If it fails, the raw version is left available." << std::endl;
-    std::cout << "  -D  --duration       10             Duration in seconds of the webp animation" << std::endl;
-    std::cout << "  -f  --framerate      60             Number of frames per seconds i.e. the refresh rate" << std::endl;
-    std::cout << "  -R  --resolution     1920x1080      Pixel sizes of the video: it can be either a supported screen resolution name (such as FHD, WXGA+)" << std::endl
-              << "                                      or a custom size specified in the format <width>x<height>. Optionally, the character '^' may be" << std::endl
-              << "                                      prepended to invert the horizontal and vertical sizes." << std::endl;
-    std::cout << "  -B  --background     242429         RGB or RGBA color of the background using hexadecimal representation" << std::endl;
-    std::cout << "  -d  --distance       10             Average distance (in pixels) between two nearby particles in the starting positions" << std::endl;
-    std::cout << "  -m  --margin         4              Number of layers of additional particles outside the video. Too low values lead to empty borders." << std::endl;
-    std::cout << "  -L  --lloyd          8              Particles' lifetime in seconds; must be less than the video duration." << std::endl;
-    std::cout << "  -l  --lifetime       100.0          Percentage of video duration for which each particle is alive (visible)." << std::endl;
-    std::cout << "  -V  --speed          1.0            Value of speed around which logarithmic color sensitivity is maximum. Red or blue" << std::endl
-              << "                                      occur when the speed is respectively one order less or more than the specified value." << std::endl;
-    std::cout << "  -t  --time-scale     0.12           Time scale used to convert 1 real second into the computational time unit. Lower values guarantee" << std::endl
-              << "                                      a more precise computation of the particle evolution at the cost of less motion." << std::endl;
-    std::cout << "  -s  --pixel-scale    100px/u        Scale used to convert distance between complex numbers to pixels. The required unit must be one of:" << std::endl
-              << "                                      u/px, u/w, u/h, px/u, w/u, h/u; where 'px' is pixel, 'w' is the width of the video (in pixel), 'h'" << std::endl
-              << "                                      is the height of the video (in pixel), and 'u' is the unitary distance" << std::endl;
-    std::cout << "  -c  --center         0+0i           The complex number at the center of the video. See later on supported complex number formats." << std::endl;
-    std::cout << "  -n  --int            0              Integer number used in some functions" << std::endl;
-    std::cout << "  -r  --real           3.14159...     Real number used in some functions" << std::endl;
-    std::cout << "  -1  --complex1       1              First complex number used in some functions" << std::endl;
-    std::cout << "  -2  --complex2       1i             Second complex number used in some functions" << std::endl;
-    std::cout << "  -3  --complex3       1\\45d          Third complex number used in some functions" << std::endl << std::endl;
-    std::cout << "COMPLEX NUMBER FORMAT" << std::endl;
-    std::cout << "  Complex number can be specified in cartesian and polar coordinates:" << std::endl;
-    std::cout << "  - Cartesian format is the sum of a real and imaginary part. The latter is denote by prepending or appending 'i' or 'j' to the number" << std::endl;
-    std::cout << "  - Polar coords. are in the format <radius>\\<angle><unit>, where the angle unit can be degree (d), radian (r), gon (g), or turns (t)" << std::endl;
+    std::cout << "CFSPlt v1.0.0" << std::endl;
+    std::cout << "  Complex functions streamplot  -  Generator of videos representing the streamplot of a selection of complex functions\n\n";
+    std::cout << "SYNOPSIS:\n";
+    std::cout << "  cfsplt [-c center_point] [-d particle_distance] [-D duration] [-f framerate] [-l lifetime] [-L Lloyd iterations]\n"
+              << "         [-m margin_layers] [-n integer] [-o file] [-p parallelization] [-r real] [-R resolution] [-s pixel_scale]\n"
+              << "         [-t time_scale] [-v speed] [-1 complex] [-2 complex] [-3 complex] function\n\n";
+    std::cout << "OPTIONS\n";
+    std::cout << "  Name                 Default        Description\n";
+    std::cout << "  -v  --verbose                       Increases the verbosity level\n";
+    std::cout << "  -p  --parallel       gpu            Which parallelization to adopt in computations. It must be one of: none, omp, gpu\n";
+    std::cout << "  -o  --output         plot.mp4       Path of the output file. The file format specified must support the pixel format YUVJ444P (with \n"
+              << "                                      opaque background) or YUVA444P (with partially transparent background). mp4 is a safe choice.\n";
+    std::cout << "  -D  --duration       10             Duration in seconds of the webp animation\n";
+    std::cout << "  -f  --framerate      60             Number of frames per seconds i.e. the refresh rate\n";
+    std::cout << "  -R  --resolution     1920x1080      Pixel sizes of the video: it can be either a supported screen resolution name (such as FHD, WXGA+)\n"
+              << "                                      or a custom size specified in the format <width>x<height>. Optionally, the character '^' may be\n"
+              << "                                      prepended to invert the horizontal and vertical sizes.\n";
+    std::cout << "  -B  --background     242429         RGB or RGBA color of the background using hexadecimal representation\n";
+    std::cout << "  -d  --distance       10             Average distance (in pixels) between two nearby particles in the starting positions\n";
+    std::cout << "  -m  --margin         4              Number of layers of additional particles outside the video. Too low values lead to empty borders.\n";
+    std::cout << "  -L  --lloyd          8              Particles' lifetime in seconds; must be less than the video duration.\n";
+    std::cout << "  -l  --lifetime       100.0          Percentage of video duration for which each particle is alive (visible).\n";
+    std::cout << "  -V  --speed          1.0            Value of speed around which logarithmic color sensitivity is maximum. Red or blue\n"
+              << "                                      occur when the speed is respectively one order less or more than the specified value.\n";
+    std::cout << "  -t  --time-scale     0.12           Time scale used to convert 1 real second into the computational time unit. Lower values guarantee\n"
+              << "                                      a more precise computation of the particle evolution at the cost of less motion.\n";
+    std::cout << "  -s  --pixel-scale    100px/u        Scale used to convert distance between complex numbers to pixels. The required unit must be one of:\n"
+              << "                                      u/px, u/w, u/h, px/u, w/u, h/u; where 'px' is pixel, 'w' is the width of the video (in pixel), 'h'\n"
+              << "                                      is the height of the video (in pixel), and 'u' is the unitary distance\n";
+    std::cout << "  -c  --center         0+0i           The complex number at the center of the video. See later on supported complex number formats.\n";
+    std::cout << "  -n  --int            0              Integer number used in some functions\n";
+    std::cout << "  -r  --real           3.14159...     Real number used in some functions\n";
+    std::cout << "  -1  --complex1       1              First complex number used in some functions\n";
+    std::cout << "  -2  --complex2       1i             Second complex number used in some functions\n";
+    std::cout << "  -3  --complex3       1\\45d          Third complex number used in some functions\n\n";
+    std::cout << "COMPLEX NUMBER FORMAT\n";
+    std::cout << "  Complex number can be specified in cartesian and polar coordinates:\n";
+    std::cout << "  - Cartesian format is the sum of a real and imaginary part. The latter is denote by prepending or appending 'i' or 'j' to the number\n";
+    std::cout << "  - Polar coords. are in the format <radius>\\<angle><unit>, where the angle unit can be degree (d), radian (r), gon (g), or turns (t)\n";
     std::cout << std::endl;
 }
